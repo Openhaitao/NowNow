@@ -23,6 +23,15 @@ export default function MentionInput({
   const [picker, setPicker] = useState(null) // {start, query} | null
   const [active, setActive] = useState(0)
 
+  // 高度手动跟随内容（textarea 不自己长高会在切换编辑时跳一下；field-sizing Safari 不支持）
+  const resize = () => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  }
+  useEffect(resize, [value])
+
   // 自动聚焦：光标落在点击处（没有就放末尾），并滚进视野
   useEffect(() => {
     if (autoFocus && ref.current) {
@@ -136,10 +145,9 @@ export default function MentionInput({
         onKeyDown={handleKeyDown}
         onBlur={() => { setTimeout(() => setPicker(null), 150); onBlur?.() }}
         className={
-          'w-full resize-none bg-transparent outline-none text-[14.5px] leading-relaxed placeholder:text-stone-300 ' +
+          'block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[14.5px] leading-relaxed outline-none placeholder:text-stone-300 ' +
           (className || '')
         }
-        style={{ fieldSizing: 'content' }}
       />
       {picker && candidates.length > 0 && (
         <div className="absolute left-0 top-full z-30 mt-1 w-56 rounded-lg border border-stone-200 bg-white py-1 shadow-lg">
