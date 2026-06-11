@@ -1,0 +1,61 @@
+import { Bell } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import Inbox from './Inbox'
+
+const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
+
+// 完整通知页：待认领的@ + 我派出去已解决等我关闭的
+export default function NotificationsPage({ mentions, resolvedMine, profiles, onChanged, mutate, onBack }) {
+  function closeEntry(e) {
+    mutate(
+      (list) => list.map((x) => (x.id === e.id ? { ...x, status: 'closed' } : x)),
+      () => supabase.from('entries').update({ status: 'closed' }).eq('id', e.id),
+    )
+  }
+
+  const empty = mentions.length === 0 && resolvedMine.length === 0
+
+  return (
+    <div>
+      <div className="mt-4 flex items-center gap-2 text-[15px] font-semibold">
+        <Bell size={16} /> 通知
+      </div>
+
+      {empty && (
+        <p className="mt-6 text-sm text-stone-300">
+          没有新通知。别人 @你 的事、你派出去等验收的事，都会出现在这里。
+        </p>
+      )}
+
+      <Inbox mentions={mentions} profiles={profiles} onChanged={onChanged} />
+
+      {resolvedMine.length > 0 && (
+        <div className="mt-5 rounded-xl bg-amber-50 px-4 py-3">
+          <div className="mb-1.5 text-xs font-medium text-amber-700">
+            ✅ 已解决 · {resolvedMine.length} 条等你验收关闭
+          </div>
+          {resolvedMine.map((e) => (
+            <div key={e.id} className="flex items-center gap-2 py-1 text-[13.5px] text-amber-900">
+              <span className="min-w-0 flex-1">
+                {e.content}
+                <span className="ml-1.5 text-[11.5px] text-amber-600">
+                  {SECTION_LABELS[e.section]}
+                </span>
+              </span>
+              <button
+                onClick={() => closeEntry(e)}
+                className="shrink-0 rounded-md border border-amber-600 bg-white px-2.5 py-0.5 text-xs text-amber-700 hover:bg-amber-600 hover:text-white"
+              >
+                验收关闭
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button onClick={onBack} className="mt-6 text-sm text-stone-400 hover:text-stone-600">
+        ← 回到我的纸
+      </button>
+    </div>
+  )
+}

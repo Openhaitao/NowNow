@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bell, Search, Settings } from 'lucide-react'
+import { Bell, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import Inbox from './components/Inbox'
+import NotificationsPage from './components/NotificationsPage'
 import QuickCapture from './components/QuickCapture'
 import SearchModal from './components/SearchModal'
 import Section from './components/Section'
+import SettingsModal from './components/SettingsModal'
 
 const SECTIONS = [
   { key: 'today', label: '今日' },
@@ -154,6 +156,7 @@ export default function Board({ session }) {
 
   // 切到某人页面 = 记录"看过的时间"，红点据此熄灭
   const viewPage = useCallback((pid) => {
+    setView('paper')
     setPageUserId(pid)
     const next = { ...loadLastViewed(), [pid]: new Date().toISOString() }
     localStorage.setItem(LAST_VIEWED_KEY, JSON.stringify(next))
@@ -179,7 +182,7 @@ export default function Board({ session }) {
   }, [me])
 
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [notifOpen, setNotifOpen] = useState(false)
+  const [view, setView] = useState('paper') // paper | notifications
 
   // 通知内容 = 待认领的@ + 我派出去已解决等我关闭的
   const resolvedMine = useMemo(
@@ -227,13 +230,23 @@ export default function Board({ session }) {
             </div>
           ))}
         </div>
+        {/* flomo 式「全部目标」：无视周期看全量 */}
+        <button
+          onClick={() => setView(view === 'all' ? 'paper' : 'all')}
+          className={
+            'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
+            (view === 'all' ? 'bg-emerald-50 font-medium text-emerald-700' : 'text-stone-600 hover:bg-stone-100')
+          }
+        >
+          <LayoutList size={14} /> 全部目标
+        </button>
         {profiles.map((p) => (
           <button
             key={p.id}
             onClick={() => viewPage(p.id)}
             className={
               'flex items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
-              (p.id === pageUserId ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
+              (p.id === pageUserId && view === 'paper' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
             }
           >
             <span className="truncate">
@@ -243,73 +256,28 @@ export default function Board({ session }) {
             {hasNews(p) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
           </button>
         ))}
-        {/* 底部：通知（有内容才出现，不常驻）+ 设置 */}
+        {/* 底部：通知（完整页面）+ 设置 */}
         <div className="mt-auto">
-          {notifCount > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => setNotifOpen((v) => !v)}
-                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
-              >
-                <Bell size={14} /> 通知
-                <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] font-medium text-white">
-                  {notifCount}
-                </span>
-              </button>
-              {notifOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                  <div className="absolute bottom-full left-1 z-50 mb-1 w-64 rounded-lg border border-stone-200 bg-white py-1 text-[13px] shadow-xl">
-                    {mentions.map((m) => {
-                      const from = profiles.find((p) => p.id === m.entries?.creator)
-                      return (
-                        <button
-                          key={m.id}
-                          className="block w-full px-3 py-1.5 text-left hover:bg-stone-50"
-                          onClick={() => { setNotifOpen(false); viewPage(me.id) }}
-                        >
-                          <span className="text-blue-600">待认领</span> {from?.display_name}：
-                          <span className="text-stone-600">{m.entries?.content?.slice(0, 24)}</span>
-                        </button>
-                      )
-                    })}
-                    {resolvedMine.map((e) => (
-                      <button
-                        key={e.id}
-                        className="block w-full px-3 py-1.5 text-left hover:bg-stone-50"
-                        onClick={() => { setNotifOpen(false); viewPage(e.owner) }}
-                      >
-                        <span className="text-amber-600">等你关闭</span>{' '}
-                        <span className="text-stone-600">{e.content.slice(0, 24)}</span>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-          <div className="relative">
-            <button
-              onClick={() => setSettingsOpen((v) => !v)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
-            >
-              <Settings size={14} /> 设置
-            </button>
-            {settingsOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setSettingsOpen(false)} />
-                <div className="absolute bottom-full left-2 z-50 mb-1 w-32 rounded-lg border border-stone-200 bg-white py-1 text-[13px] shadow-xl">
-                  <div className="px-3 py-1.5 text-stone-400">@{me.handle}</div>
-                  <button
-                    className="block w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50"
-                    onClick={() => supabase.auth.signOut()}
-                  >
-                    退出登录
-                  </button>
-                </div>
-              </>
+          <button
+            onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
+            className={
+              'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] hover:bg-stone-100 ' +
+              (view === 'notifications' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-500')
+            }
+          >
+            <Bell size={14} /> 通知
+            {notifCount > 0 && (
+              <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] font-medium text-white">
+                {notifCount}
+              </span>
             )}
-          </div>
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+          >
+            <Settings size={14} /> 设置
+          </button>
         </div>
       </aside>
 
@@ -341,7 +309,8 @@ export default function Board({ session }) {
           </button>
         </div>
 
-        <div className="paper-top shrink-0 pt-3">
+        <div className="flex min-h-0 flex-1 flex-col px-5 md:px-6">
+        <div className="shrink-0 pt-3">
           {/* flomo 式顶部搜索条（右侧，点开 ⌘K 弹窗） */}
           <div className="hidden justify-end md:flex">
             <button
@@ -353,28 +322,45 @@ export default function Board({ session }) {
               <kbd className="ml-auto text-[10px]">⌘K</kbd>
             </button>
           </div>
-          {!isMyPage && (
-            <div className="mt-2 text-[13px] text-stone-400">{pageUser.display_name} 的纸（只读）</div>
+          {view !== 'notifications' && !isMyPage && (
+            <div className="mt-2 text-[13px] text-stone-400">
+              {pageUser.display_name} 的纸（只读）{view === 'all' ? ' · 全部' : ''}
+            </div>
           )}
-          {isMyPage && (
+          {view !== 'notifications' && isMyPage && (
             <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
           )}
         </div>
-        <div className="paper-scroll flex-1 overflow-y-auto pb-24">
-          {isMyPage && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
-          {SECTIONS.map((sec) => (
-            <Section
-              key={sec.key}
-              sec={sec}
-              entries={pageEntries}
-              me={me}
-              isMyPage={isMyPage}
+        <div className="paper-scroll flex-1 overflow-y-auto pb-24 pr-1">
+          {view === 'notifications' ? (
+            <NotificationsPage
+              mentions={mentions}
+              resolvedMine={resolvedMine}
               profiles={profiles}
-              allEntries={allEntries}
-              hasAnchor={hasAnchor}
+              onChanged={loadData}
               mutate={mutateEntries}
+              onBack={() => viewPage(me.id)}
             />
-          ))}
+          ) : (
+            <>
+              {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
+              {SECTIONS.map((sec) => (
+                <Section
+                  key={sec.key}
+                  sec={sec}
+                  entries={pageEntries}
+                  me={me}
+                  isMyPage={isMyPage}
+                  profiles={profiles}
+                  allEntries={allEntries}
+                  hasAnchor={hasAnchor}
+                  allTime={view === 'all'}
+                  mutate={mutateEntries}
+                />
+              ))}
+            </>
+          )}
+        </div>
         </div>
       </main>
       <SearchModal
@@ -384,6 +370,16 @@ export default function Board({ session }) {
         profiles={profiles}
         onJump={(e) => viewPage(e.owner)}
       />
+      {settingsOpen && (
+        <SettingsModal
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          me={me}
+          email={user.email}
+          allEntries={allEntries}
+          onProfileSaved={loadProfiles}
+        />
+      )}
     </div>
   )
 }

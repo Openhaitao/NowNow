@@ -18,27 +18,10 @@ body {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* 纸的内部滚动：细灰滚动条 + 顶部固定区与滚动区对齐（右侧补滚动条宽度） */
-.paper-top {
-  padding-left: 1.25rem;
-  padding-right: calc(1.25rem + 6px);
-}
+/* 纸的内部滚动：细灰滚动条，贴着内容右缘（横向 padding 在外层，容器本身不带） */
 .paper-scroll {
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: #e7e5e4 transparent;
-}
-@media (min-width: 768px) {
-  .paper-top {
-    padding-left: 1.5rem;
-    padding-right: calc(1.5rem + 6px);
-  }
-  .paper-scroll {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
 }
 .paper-scroll::-webkit-scrollbar {
   width: 6px;

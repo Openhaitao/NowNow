@@ -43,7 +43,8 @@ function SortableRow({ entry, draggable, children }) {
   )
 }
 
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, mutate }) {
+// allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, mutate }) {
   const [draft, setDraft] = useState('')
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
@@ -51,7 +52,9 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   const range = periodRange(sec.key, offset)
 
   const { active, closed, prevUnfinished } = useMemo(() => {
-    const list = entries.filter((e) => e.section === sec.key && inPeriod(e.anchor ?? null, range))
+    const list = entries.filter(
+      (e) => e.section === sec.key && (allTime || inPeriod(e.anchor ?? null, range)),
+    )
     const prevRange = periodRange(sec.key, offset - 1)
     return {
       active: list.filter((e) => e.status !== 'closed').sort((a, b) => a.position - b.position),
@@ -59,7 +62,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         .filter((e) => e.status === 'closed')
         .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)),
       prevUnfinished:
-        isMyPage && hasAnchor && offset === 0
+        isMyPage && hasAnchor && offset === 0 && !allTime
           ? entries.filter(
               (e) =>
                 e.section === sec.key &&
@@ -69,7 +72,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             )
           : [],
     }
-  }, [entries, sec.key, offset, range, isMyPage, hasAnchor])
+  }, [entries, sec.key, offset, range, isMyPage, hasAnchor, allTime])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -157,7 +160,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           {sec.label}
           {range.label && <span className="ml-1.5 text-stone-300">· {range.label}</span>}
         </h3>
-        {hasAnchor && (
+        {hasAnchor && !allTime && (
           <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/head:opacity-100">
             <button
               onClick={() => setOffset((o) => o - 1)}
