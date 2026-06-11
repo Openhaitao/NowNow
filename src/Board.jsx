@@ -3,6 +3,7 @@ import { Bell, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
+import DatePicker from './components/DatePicker'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import QuickCapture from './components/QuickCapture'
@@ -93,6 +94,7 @@ export default function Board({ session }) {
 
   const [searchOpen, setSearchOpen] = useState(false)
   const [baseDate, setBaseDate] = useState(null) // null = 真实今天；设了 = 整张纸拨回那天
+  const [dateOpen, setDateOpen] = useState(false)
   const isLive = !baseDate
 
   // 快捷键：/ 聚焦捕捉框；⌘K / Ctrl+K 搜索（mac/win 通吃）
@@ -332,10 +334,7 @@ export default function Board({ session }) {
               {hasAnchor ? (
                 <>
                   <button
-                    onClick={(e) => {
-                      const inp = e.currentTarget.nextSibling
-                      inp.showPicker ? inp.showPicker() : inp.click()
-                    }}
+                    onClick={() => setDateOpen((v) => !v)}
                     className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] text-stone-500 hover:bg-stone-100"
                     title="点击回看任何一天"
                   >
@@ -345,18 +344,17 @@ export default function Board({ session }) {
                       {isLive ? ' · 今天' : ''}
                     </span>
                   </button>
-                  <input
-                    type="date"
-                    className="absolute left-0 top-0 h-0 w-0 opacity-0"
-                    value={baseDate ? `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}` : ''}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      if (!v) return setBaseDate(null)
-                      const d = new Date(v + 'T00:00:00')
-                      const t = new Date(); t.setHours(0, 0, 0, 0)
-                      setBaseDate(d.getTime() === t.getTime() ? null : d)
-                    }}
-                  />
+                  {dateOpen && (
+                    <DatePicker
+                      value={baseDate}
+                      onClose={() => setDateOpen(false)}
+                      onSelect={(d) => {
+                        if (!d) return setBaseDate(null)
+                        const t = new Date(); t.setHours(0, 0, 0, 0)
+                        setBaseDate(d.getTime() === t.getTime() ? null : d)
+                      }}
+                    />
+                  )}
                   {!isLive && (
                     <button
                       onClick={() => setBaseDate(null)}
