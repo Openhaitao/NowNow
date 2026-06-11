@@ -243,15 +243,8 @@ export default function Board({ session }) {
             {hasNews(p) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
           </button>
         ))}
-        {/* 底部：搜索 + 通知（有内容才出现，不常驻）+ 设置 */}
+        {/* 底部：通知（有内容才出现，不常驻）+ 设置 */}
         <div className="mt-auto">
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
-          >
-            <Search size={14} /> 搜索
-            <kbd className="ml-auto text-[10px] text-stone-300">⌘K</kbd>
-          </button>
           {notifCount > 0 && (
             <div className="relative">
               <button
@@ -348,9 +341,20 @@ export default function Board({ session }) {
           </button>
         </div>
 
-        <div className="paper-top shrink-0 pt-2">
+        <div className="paper-top shrink-0 pt-3">
+          {/* flomo 式顶部搜索条（右侧，点开 ⌘K 弹窗） */}
+          <div className="hidden justify-end md:flex">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex w-44 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[12.5px] text-stone-300 hover:border-stone-300"
+            >
+              <Search size={13} />
+              搜索
+              <kbd className="ml-auto text-[10px]">⌘K</kbd>
+            </button>
+          </div>
           {!isMyPage && (
-            <div className="mt-4 text-[13px] text-stone-400">{pageUser.display_name} 的纸（只读）</div>
+            <div className="mt-2 text-[13px] text-stone-400">{pageUser.display_name} 的纸（只读）</div>
           )}
           {isMyPage && (
             <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
