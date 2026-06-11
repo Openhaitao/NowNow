@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
+import { fmtDate } from '../lib/period'
 import MentionInput from './MentionInput'
 
 const SECTIONS = [
@@ -10,7 +11,7 @@ const SECTIONS = [
 ]
 
 // flomo 式顶部快速捕捉：写任务 → @分配 → 挑放进哪个区 → 回车
-export default function QuickCapture({ me, profiles, allEntries, onChanged }) {
+export default function QuickCapture({ me, profiles, allEntries, hasAnchor, onChanged }) {
   const [draft, setDraft] = useState('')
   const [section, setSection] = useState('today')
   const [isGoal, setIsGoal] = useState(true)
@@ -26,18 +27,16 @@ export default function QuickCapture({ me, profiles, allEntries, onChanged }) {
     }
     const sectionEntries = allEntries.filter((e) => e.owner === me.id && e.section === section)
     const maxPos = Math.max(0, ...sectionEntries.map((x) => x.position))
-    const { data, error } = await supabase
-      .from('entries')
-      .insert({
-        owner: me.id,
-        creator: me.id,
-        section,
-        content,
-        is_goal: goal,
-        position: maxPos + 1,
-      })
-      .select()
-      .single()
+    const row = {
+      owner: me.id,
+      creator: me.id,
+      section,
+      content,
+      is_goal: goal,
+      position: maxPos + 1,
+    }
+    if (hasAnchor) row.anchor = fmtDate(new Date())
+    const { data, error } = await supabase.from('entries').insert(row).select().single()
     if (!error && data) await syncMentions(data.id, content, profiles, me.id)
     setDraft('')
     onChanged()
@@ -46,11 +45,12 @@ export default function QuickCapture({ me, profiles, allEntries, onChanged }) {
   return (
     <div className="mt-5 rounded-xl border border-stone-200 bg-white p-3 shadow-sm focus-within:border-stone-300">
       <MentionInput
+        id="quick-capture"
         value={draft}
         onChange={setDraft}
         onSubmit={submit}
         profiles={profiles}
-        placeholder="现在要做什么？@ 可以派人，回车即存"
+        placeholder="现在要做什么？@ 可以派人，回车即存（按 / 聚焦）"
         className="px-1 pt-0.5"
       />
       <div className="mt-2 flex items-center gap-1">

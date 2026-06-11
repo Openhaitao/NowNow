@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from './lib/supabase'
+import { inPeriod, periodRange } from './lib/period'
 import Inbox from './components/Inbox'
 import QuickCapture from './components/QuickCapture'
 import Section from './components/Section'
@@ -72,8 +73,30 @@ export default function Board({ session }) {
   const [allEntries, setAllEntries] = useState([])
   const [mentions, setMentions] = useState([])
   const [lastViewed, setLastViewed] = useState(loadLastViewed)
+  const [hasAnchor, setHasAnchor] = useState(false)
 
   const me = profiles.find((p) => p.id === user.id) || null
+
+  // 探测时间锚定列是否已迁移（migration-001 跑过后自动启用日历导航）
+  useEffect(() => {
+    supabase
+      .from('entries')
+      .select('anchor')
+      .limit(1)
+      .then(({ error }) => setHasAnchor(!error))
+  }, [])
+
+  // 快捷键：/ 聚焦顶部捕捉框
+  useEffect(() => {
+    const h = (e) => {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+        e.preventDefault()
+        document.getElementById('quick-capture')?.focus()
+      }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [])
 
   const loadProfiles = useCallback(async () => {
     const { data } = await supabase.from('profiles').select('*').order('handle')
@@ -136,15 +159,15 @@ export default function Board({ session }) {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // flomo 式三格：未完成 / 已完成 / 第 N 天
+  // flomo 式三格：今日 / 本周 / 本月 当前周期的未完成目标数
   const stats = useMemo(() => {
-    if (!me) return { open: 0, done: 0, days: 1 }
-    const mine = allEntries.filter((e) => e.owner === me.id && e.is_goal)
-    return {
-      open: mine.filter((e) => e.status !== 'closed').length,
-      done: mine.filter((e) => e.status === 'closed').length,
-      days: Math.max(1, Math.floor((Date.now() - new Date(me.created_at)) / 86400000) + 1),
+    if (!me) return { today: 0, week: 0, month: 0 }
+    const mine = allEntries.filter((e) => e.owner === me.id && e.is_goal && e.status !== 'closed')
+    const count = (key) => {
+      const range = periodRange(key, 0)
+      return mine.filter((e) => e.section === key && inPeriod(e.anchor ?? null, range)).length
     }
+    return { today: count('today'), week: count('week'), month: count('month') }
   }, [me, allEntries])
 
   if (needSetup) return <SetupCard user={user} onDone={loadProfiles} />
@@ -154,28 +177,26 @@ export default function Board({ session }) {
   const isMyPage = pageUser.id === me.id
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-3xl">
-      {/* 左栏：人员列表（桌面，flomo 式贴近内容） */}
-      <aside className="hidden w-44 shrink-0 flex-col px-2 py-5 md:flex">
+    <div className="mx-auto flex h-screen max-w-3xl overflow-hidden">
+      {/* 左栏：人员列表（固定不随内容滚动） */}
+      <aside className="hidden h-full w-44 shrink-0 flex-col overflow-y-auto px-2 py-5 md:flex">
         {/* 顶部：当前用户 */}
         <div className="flex items-center gap-2 px-2.5 text-[15px] font-semibold">
           <img src="/logo.png" alt="" className="h-6 w-6 rounded" />
           <span className="truncate">{me.display_name}</span>
         </div>
-        {/* flomo 式三格统计 */}
-        <div className="mb-4 mt-3 grid grid-cols-3 gap-1 px-2.5 text-center">
-          <div>
-            <div className="text-[15px] font-semibold">{stats.open}</div>
-            <div className="text-[11px] text-stone-400">未完成</div>
-          </div>
-          <div>
-            <div className="text-[15px] font-semibold">{stats.done}</div>
-            <div className="text-[11px] text-stone-400">已完成</div>
-          </div>
-          <div>
-            <div className="text-[15px] font-semibold">{stats.days}</div>
-            <div className="text-[11px] text-stone-400">天</div>
-          </div>
+        {/* flomo 式三格统计：各周期未完成目标数 */}
+        <div className="mb-4 mt-4 grid grid-cols-3 gap-1 px-2.5 text-center" title="未完成的目标数">
+          {[
+            ['today', '今日'],
+            ['week', '本周'],
+            ['month', '本月'],
+          ].map(([k, label]) => (
+            <div key={k}>
+              <div className="text-[22px] font-bold leading-tight">{stats[k]}</div>
+              <div className="mt-0.5 text-[11px] text-stone-400">{label}</div>
+            </div>
+          ))}
         </div>
         {profiles.map((p) => (
           <button
@@ -231,10 +252,10 @@ export default function Board({ session }) {
         </div>
       </aside>
 
-      {/* 主区 */}
-      <main className="min-w-0 flex-1">
+      {/* 主区：输入框固定，纸内部滚动 */}
+      <main className="flex h-full min-w-0 flex-1 flex-col">
         {/* 移动端：顶部人名横排 */}
-        <div className="flex items-center gap-1.5 border-b border-stone-100 px-4 py-2.5 md:hidden">
+        <div className="flex shrink-0 items-center gap-1.5 border-b border-stone-100 px-4 py-2.5 md:hidden">
           <img src="/logo.png" alt="" className="h-6 w-6 rounded" />
           <div className="flex flex-1 gap-1 overflow-x-auto">
             {profiles.map((p) => (
@@ -256,13 +277,15 @@ export default function Board({ session }) {
           </button>
         </div>
 
-        <div className="px-5 pb-24 pt-2 md:px-6">
+        <div className="shrink-0 px-5 pt-2 md:px-6">
           {!isMyPage && (
             <div className="mt-4 text-[13px] text-stone-400">{pageUser.display_name} 的纸（只读）</div>
           )}
           {isMyPage && (
-            <QuickCapture me={me} profiles={profiles} allEntries={allEntries} onChanged={loadData} />
+            <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} onChanged={loadData} />
           )}
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 pb-24 md:px-6">
           {isMyPage && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
           {SECTIONS.map((sec) => (
             <Section
@@ -273,6 +296,7 @@ export default function Board({ session }) {
               isMyPage={isMyPage}
               profiles={profiles}
               allEntries={allEntries}
+              hasAnchor={hasAnchor}
               onChanged={loadData}
             />
           ))}

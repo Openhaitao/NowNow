@@ -1,22 +1,99 @@
 import { useMemo, useState } from 'react'
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
+import { fmtDate, inPeriod, periodRange } from '../lib/period'
 import EntryRow from './EntryRow'
 import MentionInput from './MentionInput'
 
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, onChanged }) {
+const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到本月' }
+
+function SortableRow({ entry, draggable, children }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: entry.id,
+    disabled: !draggable,
+  })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={'group/drag relative ' + (isDragging ? 'z-10 opacity-70' : '')}
+    >
+      {draggable && (
+        <span
+          {...attributes}
+          {...listeners}
+          className="absolute -left-5 top-[7px] cursor-grab touch-none text-stone-300 opacity-0 group-hover/drag:opacity-100"
+          title="拖动排序"
+        >
+          ⠿
+        </span>
+      )}
+      {children}
+    </div>
+  )
+}
+
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, onChanged }) {
   const [draft, setDraft] = useState('')
   const [showClosed, setShowClosed] = useState(false)
+  const [offset, setOffset] = useState(0)
 
-  const { active, closed } = useMemo(() => {
-    const list = entries.filter((e) => e.section === sec.key)
+  const range = periodRange(sec.key, offset)
+
+  const { active, closed, prevUnfinished } = useMemo(() => {
+    const list = entries.filter((e) => e.section === sec.key && inPeriod(e.anchor ?? null, range))
+    const prevRange = periodRange(sec.key, offset - 1)
     return {
       active: list.filter((e) => e.status !== 'closed').sort((a, b) => a.position - b.position),
       closed: list
         .filter((e) => e.status === 'closed')
         .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)),
+      prevUnfinished:
+        isMyPage && hasAnchor && offset === 0
+          ? entries.filter(
+              (e) =>
+                e.section === sec.key &&
+                inPeriod(e.anchor ?? null, prevRange) &&
+                e.is_goal &&
+                e.status !== 'closed',
+            )
+          : [],
     }
-  }, [entries, sec.key])
+  }, [entries, sec.key, offset, range, isMyPage, hasAnchor])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  )
+
+  async function onDragEnd({ active: a, over }) {
+    if (!over || a.id === over.id) return
+    const from = active.findIndex((e) => e.id === a.id)
+    const to = active.findIndex((e) => e.id === over.id)
+    if (from === -1 || to === -1) return
+    // 移除自己后，落点的前后邻居决定新 position（取均值，浮点数永远插得进）
+    const rest = active.filter((e) => e.id !== a.id)
+    const insertAt = from < to ? to : to // over 的索引即落点
+    const prev = rest[insertAt - 1] || null
+    const next = rest[insertAt] || null
+    let pos
+    if (prev && next) pos = (prev.position + next.position) / 2
+    else if (prev) pos = prev.position + 1
+    else if (next) pos = next.position - 1
+    else pos = 0
+    await supabase.from('entries').update({ position: pos }).eq('id', a.id)
+    onChanged()
+  }
 
   // 幽灵输入行：回车即存。默认备忘；行首 [] = 目标。新条目落区底。
   async function add() {
@@ -29,29 +106,85 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       if (!content) return
     }
     const maxPos = Math.max(0, ...active.map((x) => x.position), ...closed.map((x) => x.position))
-    const { data, error } = await supabase
-      .from('entries')
-      .insert({
-        owner: me.id,
-        creator: me.id,
-        section: sec.key,
-        content,
-        is_goal: isGoal,
-        position: maxPos + 1,
-      })
-      .select()
-      .single()
+    const row = {
+      owner: me.id,
+      creator: me.id,
+      section: sec.key,
+      content,
+      is_goal: isGoal,
+      position: maxPos + 1,
+    }
+    if (hasAnchor) row.anchor = offset === 0 ? fmtDate(new Date()) : fmtDate(range.start)
+    const { data, error } = await supabase.from('entries').insert(row).select().single()
     if (!error && data) await syncMentions(data.id, content, profiles, me.id)
     setDraft('')
     onChanged()
   }
 
+  // 上一周期的未完成目标一键挪过来（手动，系统不自动滚动）
+  async function carryOver() {
+    const today = fmtDate(new Date())
+    for (const e of prevUnfinished) {
+      await supabase.from('entries').update({ anchor: today }).eq('id', e.id)
+    }
+    onChanged()
+  }
+
   return (
     <section className="pt-6">
-      <h3 className="mb-1 text-[13px] font-medium tracking-wide text-stone-400">{sec.label}</h3>
-      {active.map((e) => (
-        <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} onChanged={onChanged} />
-      ))}
+      <div className="group/head mb-1 flex items-center gap-1.5">
+        <h3 className="text-[13px] font-medium tracking-wide text-stone-400">
+          {sec.label}
+          {range.label && <span className="ml-1.5 text-stone-300">· {range.label}</span>}
+        </h3>
+        {hasAnchor && (
+          <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/head:opacity-100">
+            <button
+              onClick={() => setOffset((o) => o - 1)}
+              className="rounded px-1 text-xs text-stone-300 hover:bg-stone-100 hover:text-stone-500"
+              title="往回看"
+            >
+              ◀
+            </button>
+            <button
+              onClick={() => setOffset((o) => o + 1)}
+              disabled={offset >= 0}
+              className="rounded px-1 text-xs text-stone-300 hover:bg-stone-100 hover:text-stone-500 disabled:opacity-30"
+              title="往后翻"
+            >
+              ▶
+            </button>
+          </span>
+        )}
+        {offset !== 0 && (
+          <button
+            onClick={() => setOffset(0)}
+            className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+          >
+            {BACK_LABEL[sec.key]}
+          </button>
+        )}
+      </div>
+
+      {prevUnfinished.length > 0 && (
+        <button
+          onClick={carryOver}
+          className="mb-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs text-amber-700 hover:bg-amber-100"
+        >
+          {sec.key === 'today' ? '昨天' : sec.key === 'week' ? '上周' : '上月'}还有 {prevUnfinished.length} 条未完成 → 挪过来
+        </button>
+      )}
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={active.map((e) => e.id)} strategy={verticalListSortingStrategy}>
+          {active.map((e) => (
+            <SortableRow key={e.id} entry={e} draggable={isMyPage && offset === 0}>
+              <EntryRow entry={e} me={me} profiles={profiles} allEntries={allEntries} onChanged={onChanged} />
+            </SortableRow>
+          ))}
+        </SortableContext>
+      </DndContext>
+
       {isMyPage && (
         <div className="flex items-start gap-2.5 py-[5px]">
           <span className="w-[15px] shrink-0" />
@@ -64,6 +197,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           />
         </div>
       )}
+
       {/* 已完成折叠：不让灰色尸体堆满整页 */}
       {closed.length > 0 && (
         <button

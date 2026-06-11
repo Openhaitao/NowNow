@@ -10,6 +10,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
+  const [closing, setClosing] = useState(false) // 完成动画：先划线变灰，再沉底
 
   const isMine = entry.owner === me.id
   const isCreator = entry.creator === me.id
@@ -31,10 +32,15 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
 
   async function toggleDone() {
     const next = closed ? 'open' : 'closed'
+    if (next === 'closed') {
+      setClosing(true)
+      await new Promise((r) => setTimeout(r, 350)) // 让打勾→划线的爽感停留一拍再沉底
+    }
     if (entry.source_entry && next === 'closed') {
       await supabase.rpc('resolve_entry', { p_entry_id: entry.source_entry })
     }
     await supabase.from('entries').update({ status: next }).eq('id', entry.id)
+    setClosing(false)
     onChanged()
   }
 
@@ -82,7 +88,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
     <div
       className={
         'entry-row group flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed ' +
-        (closed ? 'text-stone-300' : resolved ? 'rounded-md bg-blue-50/60 -mx-2 px-2' : '')
+        (closed || closing ? 'text-stone-300' : resolved ? 'rounded-md bg-blue-50/60 -mx-2 px-2' : '')
       }
       onContextMenu={(e) => {
         if (!isMine) return
@@ -93,8 +99,8 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
       {entry.is_goal ? (
         <input
           type="checkbox"
-          checked={closed}
-          disabled={!isMine}
+          checked={closed || closing}
+          disabled={!isMine || closing}
           onChange={toggleDone}
           className="mt-[5px] h-[15px] w-[15px] shrink-0 accent-stone-700"
           title={entry.source_entry ? '完成（会通知发起人）' : '完成'}
@@ -115,7 +121,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
         />
       ) : (
         <span
-          className={'min-w-0 flex-1 whitespace-pre-wrap ' + (closed ? 'line-through' : '')}
+          className={'min-w-0 flex-1 whitespace-pre-wrap ' + (closed || closing ? 'line-through' : '')}
           onClick={() => isMine && !closed && (setText(entry.content), setEditing(true))}
         >
           {entry.is_private && <span title="仅自己可见">🔒 </span>}

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 
 // 带 @人选择器的输入框：输入 @ 弹出人员列表，选中后以 @handle 嵌入文本
 export default function MentionInput({
+  id,
   value,
   onChange,
   onSubmit,
@@ -70,6 +71,7 @@ export default function MentionInput({
   return (
     <div className="relative flex-1 min-w-0">
       <textarea
+        id={id}
         ref={ref}
         rows={1}
         value={value}
