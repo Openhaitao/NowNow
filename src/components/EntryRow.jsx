@@ -102,6 +102,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate }) {
     <div
       className={
         'entry-row group flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed ' +
+        (closing ? 'closing ' : '') +
         (closed || closing ? 'text-stone-300' : resolved ? 'rounded-md bg-blue-50/60 -mx-2 px-2' : '')
       }
       onContextMenu={(e) => {
@@ -152,7 +153,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate }) {
               const r = e.currentTarget.getBoundingClientRect()
               setMenu({ x: Math.min(r.left, window.innerWidth - 170), y: r.bottom + 4 })
             }}
-            className="rounded px-1 text-stone-400 opacity-0 transition-opacity hover:bg-stone-100 hover:text-stone-600 group-hover:opacity-100 max-md:opacity-50"
+            className="rounded px-1 text-stone-400 opacity-0 hover:bg-stone-100 hover:text-stone-600 group-hover:opacity-100 max-md:opacity-50"
           >
             ⋯
           </button>

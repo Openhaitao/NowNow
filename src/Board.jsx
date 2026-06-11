@@ -92,6 +92,8 @@ export default function Board({ session }) {
   }, [])
 
   const [searchOpen, setSearchOpen] = useState(false)
+  const [baseDate, setBaseDate] = useState(null) // null = 真实今天；设了 = 整张纸拨回那天
+  const isLive = !baseDate
 
   // 快捷键：/ 聚焦捕捉框；⌘K / Ctrl+K 搜索（mac/win 通吃）
   useEffect(() => {
@@ -241,16 +243,18 @@ export default function Board({ session }) {
             </div>
           ))}
         </div>
-        {/* flomo 式「全部目标」：无视周期看全量 */}
-        <button
-          onClick={() => setView(view === 'all' ? 'paper' : 'all')}
-          className={
-            'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
-            (view === 'all' ? 'bg-emerald-50 font-medium text-emerald-700' : 'text-stone-600 hover:bg-stone-100')
-          }
-        >
-          <LayoutList size={14} /> 全部目标
-        </button>
+        {/* flomo 式「全部目标」：无视周期看全量（时间锚定启用后才有意义，之前不显示） */}
+        {hasAnchor && (
+          <button
+            onClick={() => setView(view === 'all' ? 'paper' : 'all')}
+            className={
+              'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
+              (view === 'all' ? 'bg-emerald-50 font-medium text-emerald-700' : 'text-stone-600 hover:bg-stone-100')
+            }
+          >
+            <LayoutList size={14} /> 全部目标
+          </button>
+        )}
         {profiles.map((p) => (
           <button
             key={p.id}
@@ -322,11 +326,53 @@ export default function Board({ session }) {
 
         <div className="flex min-h-0 flex-1 flex-col px-5 md:px-6">
         <div className="shrink-0 pb-4 pt-3">
-          {/* flomo 式顶部搜索条（右侧，点开 ⌘K 弹窗） */}
-          <div className="hidden justify-end md:flex">
+          {/* 顶栏：左=日期锚（点了整张纸拨回任意一天），右=搜索（flomo 位） */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="relative flex items-center gap-1.5">
+              {hasAnchor ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      const inp = e.currentTarget.nextSibling
+                      inp.showPicker ? inp.showPicker() : inp.click()
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] text-stone-500 hover:bg-stone-100"
+                    title="点击回看任何一天"
+                  >
+                    📅 {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日
+                    <span className="text-stone-300">
+                      周{'日一二三四五六'[(baseDate || new Date()).getDay()]}
+                      {isLive ? ' · 今天' : ''}
+                    </span>
+                  </button>
+                  <input
+                    type="date"
+                    className="absolute left-0 top-0 h-0 w-0 opacity-0"
+                    value={baseDate ? `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}` : ''}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      if (!v) return setBaseDate(null)
+                      const d = new Date(v + 'T00:00:00')
+                      const t = new Date(); t.setHours(0, 0, 0, 0)
+                      setBaseDate(d.getTime() === t.getTime() ? null : d)
+                    }}
+                  />
+                  {!isLive && (
+                    <button
+                      onClick={() => setBaseDate(null)}
+                      className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+                    >
+                      回到今天
+                    </button>
+                  )}
+                </>
+              ) : (
+                <span />
+              )}
+            </span>
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex w-64 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-[13px] text-stone-300 hover:border-stone-300"
+              className="hidden w-64 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-[13px] text-stone-300 hover:border-stone-300 md:flex"
             >
               <Search size={14} />
               搜索
@@ -368,6 +414,8 @@ export default function Board({ session }) {
                   allEntries={allEntries}
                   hasAnchor={hasAnchor}
                   allTime={view === 'all'}
+                  baseDate={baseDate}
+                  isLive={isLive}
                   mutate={mutateEntries}
                 />
               ))}

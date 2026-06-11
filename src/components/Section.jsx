@@ -44,25 +44,26 @@ function SortableRow({ entry, draggable, children }) {
 }
 
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, mutate }) {
+// baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate }) {
   const [draft, setDraft] = useState('')
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
 
-  const range = periodRange(sec.key, offset)
+  const range = periodRange(sec.key, offset, baseDate)
 
   const { active, closed, prevUnfinished } = useMemo(() => {
     const list = entries.filter(
       (e) => e.section === sec.key && (allTime || inPeriod(e.anchor ?? null, range)),
     )
-    const prevRange = periodRange(sec.key, offset - 1)
+    const prevRange = periodRange(sec.key, offset - 1, baseDate)
     return {
       active: list.filter((e) => e.status !== 'closed').sort((a, b) => a.position - b.position),
       closed: list
         .filter((e) => e.status === 'closed')
         .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)),
       prevUnfinished:
-        isMyPage && hasAnchor && offset === 0 && !allTime
+        isMyPage && hasAnchor && offset === 0 && !allTime && isLive
           ? entries.filter(
               (e) =>
                 e.section === sec.key &&
@@ -72,7 +73,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             )
           : [],
     }
-  }, [entries, sec.key, offset, range, isMyPage, hasAnchor, allTime])
+  }, [entries, sec.key, offset, range, isMyPage, hasAnchor, allTime, baseDate, isLive])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -119,7 +120,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       is_goal: isGoal,
       position: maxPos + 1,
     }
-    if (hasAnchor) row.anchor = offset === 0 ? fmtDate(new Date()) : fmtDate(range.start)
+    if (hasAnchor) row.anchor = range.isCurrent ? fmtDate(new Date()) : fmtDate(range.start)
     const temp = {
       ...row,
       id: `tmp-${Date.now()}`,
@@ -201,7 +202,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={active.map((e) => e.id)} strategy={verticalListSortingStrategy}>
           {active.map((e) => (
-            <SortableRow key={e.id} entry={e} draggable={isMyPage && offset === 0}>
+            <SortableRow key={e.id} entry={e} draggable={isMyPage && (allTime || range.isCurrent)}>
               <EntryRow entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} />
             </SortableRow>
           ))}
