@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Inbox from './components/Inbox'
+import QuickCapture from './components/QuickCapture'
 import Section from './components/Section'
 
 const SECTIONS = [
@@ -192,19 +193,19 @@ export default function Board({ session }) {
             {hasNews(p) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
           </button>
         ))}
-        {/* 底部：通知 + 设置 */}
+        {/* 底部：通知（有待认领才出现，不常驻）+ 设置 */}
         <div className="mt-auto">
-          <button
-            onClick={() => viewPage(me.id)}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
-          >
-            🔔 通知
-            {mentions.length > 0 && (
+          {mentions.length > 0 && (
+            <button
+              onClick={() => viewPage(me.id)}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+            >
+              🔔 通知
               <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] font-medium text-white">
                 {mentions.length}
               </span>
-            )}
-          </button>
+            </button>
+          )}
           <div className="relative">
             <button
               onClick={() => setSettingsOpen((v) => !v)}
@@ -258,6 +259,9 @@ export default function Board({ session }) {
         <div className="px-5 pb-24 pt-2 md:px-6">
           {!isMyPage && (
             <div className="mt-4 text-[13px] text-stone-400">{pageUser.display_name} 的纸（只读）</div>
+          )}
+          {isMyPage && (
+            <QuickCapture me={me} profiles={profiles} allEntries={allEntries} onChanged={loadData} />
           )}
           {isMyPage && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
           {SECTIONS.map((sec) => (

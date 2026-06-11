@@ -6,6 +6,7 @@ export default function MentionInput({
   onChange,
   onSubmit,
   onBlur,
+  onEscape,
   placeholder,
   profiles,
   autoFocus,
@@ -55,6 +56,10 @@ export default function MentionInput({
       if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => (a - 1 + candidates.length) % candidates.length); return }
       if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(candidates[active]); return }
       if (e.key === 'Escape') { setPicker(null); return }
+    }
+    if (e.key === 'Escape') {
+      onEscape?.()
+      return
     }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()

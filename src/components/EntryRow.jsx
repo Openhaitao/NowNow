@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { mentionSplitRegex, syncMentions } from '../lib/mentions'
+import { syncMentions } from '../lib/mentions'
+import { renderEntryContent } from '../lib/render'
 import MentionInput from './MentionInput'
+
+const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
 export default function EntryRow({ entry, me, profiles, allEntries, onChanged }) {
   const [editing, setEditing] = useState(false)
@@ -59,22 +62,21 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
 
   async function remove() {
     setMenu(null)
+    if (!window.confirm('删除这条？')) return
     await supabase.from('entries').delete().eq('id', entry.id)
     onChanged()
   }
 
-  const splitRe = mentionSplitRegex(profiles)
-  const rendered = splitRe
-    ? entry.content.split(splitRe).map((part, i) => {
-        if (!part || !part.startsWith('@')) return part
-        const isMe = part.slice(1).toLowerCase() === me.handle
-        return (
-          <span key={i} className={isMe && !isMine ? 'mention-me' : 'mention'}>
-            {part}
-          </span>
-        )
-      })
-    : entry.content
+  async function moveTo(section) {
+    setMenu(null)
+    await supabase.from('entries').update({ section }).eq('id', entry.id)
+    onChanged()
+  }
+
+  const rendered = renderEntryContent(entry.content, profiles, {
+    meHandle: me.handle,
+    highlightMe: !isMine,
+  })
 
   return (
     <div
@@ -107,6 +109,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
           onChange={setText}
           onSubmit={saveEdit}
           onBlur={saveEdit}
+          onEscape={() => { setText(entry.content); setEditing(false) }}
           profiles={profiles}
           autoFocus
         />
@@ -177,6 +180,13 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
             <button className="block w-full px-3 py-1.5 text-left hover:bg-stone-50" onClick={toggleGoal}>
               {entry.is_goal ? '¶ 转为备忘' : '☐ 转为目标'}
             </button>
+            {Object.keys(SECTION_LABELS)
+              .filter((s) => s !== entry.section)
+              .map((s) => (
+                <button key={s} className="block w-full px-3 py-1.5 text-left hover:bg-stone-50" onClick={() => moveTo(s)}>
+                  → 移到{SECTION_LABELS[s]}
+                </button>
+              ))}
             {isCreator && (
               <button className="block w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50" onClick={remove}>
                 删除

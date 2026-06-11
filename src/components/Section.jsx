@@ -6,13 +6,16 @@ import MentionInput from './MentionInput'
 
 export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, onChanged }) {
   const [draft, setDraft] = useState('')
+  const [showClosed, setShowClosed] = useState(false)
 
-  const sorted = useMemo(() => {
+  const { active, closed } = useMemo(() => {
     const list = entries.filter((e) => e.section === sec.key)
-    return [
-      ...list.filter((e) => e.status !== 'closed').sort((a, b) => a.position - b.position),
-      ...list.filter((e) => e.status === 'closed').sort((a, b) => a.position - b.position),
-    ]
+    return {
+      active: list.filter((e) => e.status !== 'closed').sort((a, b) => a.position - b.position),
+      closed: list
+        .filter((e) => e.status === 'closed')
+        .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)),
+    }
   }, [entries, sec.key])
 
   // 幽灵输入行：回车即存。默认备忘；行首 [] = 目标。新条目落区底。
@@ -25,7 +28,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       content = content.slice(2).trim()
       if (!content) return
     }
-    const maxPos = Math.max(0, ...sorted.map((x) => x.position))
+    const maxPos = Math.max(0, ...active.map((x) => x.position), ...closed.map((x) => x.position))
     const { data, error } = await supabase
       .from('entries')
       .insert({
@@ -46,7 +49,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   return (
     <section className="pt-6">
       <h3 className="mb-1 text-[13px] font-medium tracking-wide text-stone-400">{sec.label}</h3>
-      {sorted.map((e) => (
+      {active.map((e) => (
         <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} onChanged={onChanged} />
       ))}
       {isMyPage && (
@@ -61,7 +64,22 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           />
         </div>
       )}
-      {!isMyPage && sorted.length === 0 && <p className="py-1 text-stone-200">—</p>}
+      {/* 已完成折叠：不让灰色尸体堆满整页 */}
+      {closed.length > 0 && (
+        <button
+          onClick={() => setShowClosed((v) => !v)}
+          className="mt-0.5 text-xs text-stone-300 hover:text-stone-500"
+        >
+          {showClosed ? '▾' : '▸'} 已完成 {closed.length}
+        </button>
+      )}
+      {showClosed &&
+        closed.map((e) => (
+          <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} onChanged={onChanged} />
+        ))}
+      {!isMyPage && active.length === 0 && closed.length === 0 && (
+        <p className="py-1 text-stone-200">—</p>
+      )}
     </section>
   )
 }
