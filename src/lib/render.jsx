@@ -7,8 +7,8 @@ const DATE_CHIP_CLS = {
   future: 'bg-amber-50 text-amber-700',
 }
 
-// 日期 token → 黄色 chip（过期红 / 今天深黄 / 未来浅黄）
-function renderDates(text, keyBase) {
+// 日期 token → 黄色 chip（过期红 / 今天深黄 / 未来浅黄）；可点击改/删
+function renderDates(text, keyBase, onDateClick) {
   return text.split(DATE_TOKEN_RE).map((part, i) => {
     const k = `${keyBase}d${i}`
     if (!part) return null
@@ -18,8 +18,13 @@ function renderDates(text, keyBase) {
     return (
       <span
         key={k}
-        title={d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : ''}
-        className={'mx-px rounded-full px-1.5 py-px text-[12px] ' + DATE_CHIP_CLS[state]}
+        onClick={onDateClick ? (e) => onDateClick(part, e) : undefined}
+        title={d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}${onDateClick ? '（点击修改）' : ''}` : ''}
+        className={
+          'mx-px rounded-full px-1.5 py-px text-[12px] ' +
+          DATE_CHIP_CLS[state] +
+          (onDateClick ? ' cursor-pointer hover:ring-1 hover:ring-amber-400' : '')
+        }
       >
         {part}
       </span>
@@ -48,8 +53,8 @@ function renderInline(text, keyBase) {
   })
 }
 
-// 完整渲染：标题前缀（#/##）→ 加粗加大；@token 高亮；其余行内 md
-export function renderEntryContent(content, profiles, { meHandle, highlightMe } = {}) {
+// 完整渲染：标题前缀（#/##）→ 加粗加大；@token 高亮；日期 chip 可点；其余行内 md
+export function renderEntryContent(content, profiles, { meHandle, highlightMe, onDateClick } = {}) {
   let body = content
   let heading = 0
   const hm = /^(#{1,3})\s+/.exec(body)
@@ -70,7 +75,7 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe } 
         </span>
       )
     }
-    return renderDates(part, i)
+    return renderDates(part, i, onDateClick)
   })
 
   if (heading === 1) return <span className="text-[17px] font-bold">{nodes}</span>

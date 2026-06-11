@@ -19,8 +19,8 @@ const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到
 
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
 function DraftRow({ draft, profiles, onCommit, onCancel }) {
-  const [val, setVal] = useState('')
-  const [isGoal, setIsGoal] = useState(true)
+  const [val, setVal] = useState(draft.initial || '')
+  const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
   return (
     <div className="flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed">
@@ -34,6 +34,7 @@ function DraftRow({ draft, profiles, onCommit, onCancel }) {
         value={val}
         onChange={setVal}
         autoFocus
+        initialCaret={draft.caret ?? null}
         profiles={profiles}
         onTab={() => setIsGoal((v) => !v)}
         onSubmit={() => (val.trim() ? onCommit(d, val, true) : onCancel(draft.key))}
@@ -73,7 +74,7 @@ function SortableRow({ entry, draggable, children }) {
 
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate }) {
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId }) {
   const [draft, setDraft] = useState('')
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
@@ -201,6 +202,24 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     setDrafts((d) => [...d, { key: `d${Date.now()}`, pos, is_goal: entry.is_goal, anchor: entry.anchor ?? null }])
   }
 
+  // 行中回车 = 分裂：前半段留在原条，后半段进下方新行接着编辑（真文本编辑器行为）
+  function splitEntry(entry, before, after) {
+    mutate(
+      (list) => list.map((e) => (e.id === entry.id ? { ...e, content: before } : e)),
+      async () => {
+        await supabase.from('entries').update({ content: before }).eq('id', entry.id)
+        await syncMentions(entry.id, before, profiles, me.id)
+      },
+    )
+    const idx = active.findIndex((e) => e.id === entry.id)
+    const next = idx >= 0 ? active[idx + 1] : null
+    const pos = next ? (entry.position + next.position) / 2 : entry.position + 1
+    setDrafts((d) => [
+      ...d,
+      { key: `d${Date.now()}-s`, pos, is_goal: entry.is_goal, anchor: entry.anchor ?? null, initial: after, caret: 0 },
+    ])
+  }
+
   function cancelDraft(key) {
     setDrafts((d) => d.filter((x) => x.key !== key))
   }
@@ -323,6 +342,9 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     onEditNext={isMyPage ? editNext : undefined}
                     onNavUp={isMyPage ? navUp : undefined}
                     onNavDown={isMyPage ? navDown : undefined}
+                    onSplit={isMyPage ? splitEntry : undefined}
+                    pushUndo={pushUndo}
+                    flash={flashId === item.v.id}
                   />
                 </SortableRow>
               ) : (
@@ -361,7 +383,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       )}
       {showClosed &&
         closed.map((e) => (
-          <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} />
+          <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} pushUndo={pushUndo} />
         ))}
       {!isMyPage && active.length === 0 && closed.length === 0 && (
         <p className="py-1 text-stone-200">—</p>

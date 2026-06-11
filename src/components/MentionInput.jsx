@@ -95,16 +95,31 @@ export default function MentionInput({
       onArrowDown()
       return
     }
+    // 退格落在 @token 末尾 = 整个 token 一次删掉
+    if (e.key === 'Backspace' && !picker) {
+      const caret = e.target.selectionStart
+      if (caret > 0 && caret === e.target.selectionEnd) {
+        const before = value.slice(0, caret).toLowerCase()
+        const hit = profiles.find((p) => before.endsWith('@' + p.handle))
+        if (hit) {
+          e.preventDefault()
+          const tok = hit.handle.length + 1
+          onChange(value.slice(0, caret - tok) + value.slice(caret))
+          requestAnimationFrame(() => ref.current?.setSelectionRange(caret - tok, caret - tok))
+          return
+        }
+      }
+    }
     // 删空了再按一下退格 = 删掉这条、跳回上一条（block 编辑器行为）
     if (e.key === 'Backspace' && value === '' && onEmptyBackspace) {
       e.preventDefault()
       onEmptyBackspace()
       return
     }
-    // 回车 或 ⌘/Ctrl+回车 都是确定（mac/win 通吃）；Shift+回车换行
+    // 回车 或 ⌘/Ctrl+回车 都是确定（mac/win 通吃）；Shift+回车换行。把光标位置传出去（行中回车=分裂）
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
       e.preventDefault()
-      onSubmit?.()
+      onSubmit?.(e.target.selectionStart)
     }
   }
 

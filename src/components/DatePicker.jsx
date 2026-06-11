@@ -6,8 +6,8 @@ function sameDay(a, b) {
   return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
-// 自家样式的小日历（弹在日期按钮下方）
-export default function DatePicker({ value, onSelect, onClose }) {
+// 自家样式的小日历（弹在日期按钮下方）。onDelete 提供时显示"删除这个日期"
+export default function DatePicker({ value, onSelect, onClose, onDelete }) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const init = value || today
@@ -68,6 +68,14 @@ export default function DatePicker({ value, onSelect, onClose }) {
         >
           回到今天
         </button>
+        {onDelete && (
+          <button
+            onClick={() => { onDelete(); onClose() }}
+            className="mt-1 w-full rounded-lg py-1 text-[12px] text-red-600 hover:bg-red-50"
+          >
+            删除这个日期
+          </button>
+        )}
       </div>
     </>
   )

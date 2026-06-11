@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Bell, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
@@ -95,23 +95,14 @@ export default function Board({ session }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [baseDate, setBaseDate] = useState(null) // null = 真实今天；设了 = 整张纸拨回那天
   const [dateOpen, setDateOpen] = useState(false)
+  const [flashId, setFlashId] = useState(null) // 搜索跳转后高亮定位的条目
   const isLive = !baseDate
 
-  // 快捷键：/ 聚焦捕捉框；⌘K / Ctrl+K 搜索（mac/win 通吃）
-  useEffect(() => {
-    const h = (e) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setSearchOpen((v) => !v)
-        return
-      }
-      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
-        e.preventDefault()
-        document.getElementById('quick-capture')?.focus()
-      }
-    }
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
+  // ⌘Z 撤销栈：完成/关闭/删除 这类非文字操作（文字编辑用 textarea 原生撤销）
+  const undoStack = useRef([])
+  const pushUndo = useCallback((item) => {
+    undoStack.current.push(item)
+    if (undoStack.current.length > 50) undoStack.current.shift()
   }, [])
 
   const loadProfiles = useCallback(async () => {
@@ -120,7 +111,9 @@ export default function Board({ session }) {
     setNeedSetup(!(data || []).some((p) => p.id === user.id))
   }, [user.id])
 
-  const loadData = useCallback(async () => {
+  const [loaded, setLoaded] = useState(false)
+
+  const doLoad = useCallback(async () => {
     const [{ data: es }, { data: ms }] = await Promise.all([
       supabase.from('entries').select('*'),
       supabase
@@ -131,7 +124,15 @@ export default function Board({ session }) {
     ])
     setAllEntries(es || [])
     setMentions(ms || [])
+    setLoaded(true)
   }, [user.id])
+
+  // 对齐请求 250ms 合并：自己操作的同步 + Realtime 回声不再各刷一次
+  const loadTimer = useRef(null)
+  const loadData = useCallback(() => {
+    clearTimeout(loadTimer.current)
+    loadTimer.current = setTimeout(doLoad, 250)
+  }, [doLoad])
 
   // 乐观更新（flomo 式先本地后同步）：UI 立即生效，服务端后台跑，完成后与库对齐
   const mutateEntries = useCallback(
@@ -145,8 +146,47 @@ export default function Board({ session }) {
     [loadData],
   )
 
+  // 快捷键：/ 聚焦捕捉框；⌘K 搜索；⌘Z 撤销完成/删除（mac/win 通吃）
+  useEffect(() => {
+    const h = (e) => {
+      const inText = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setSearchOpen((v) => !v)
+        return
+      }
+      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !inText) {
+        const it = undoStack.current.pop()
+        if (!it) return
+        e.preventDefault()
+        if (it.type === 'status') {
+          mutateEntries(
+            (list) => list.map((x) => (x.id === it.id ? { ...x, status: it.prev } : x)),
+            () => supabase.from('entries').update({ status: it.prev }).eq('id', it.id),
+          )
+        } else if (it.type === 'delete') {
+          const r = it.row
+          const row = {
+            id: r.id, owner: r.owner, creator: r.creator, section: r.section,
+            content: r.content, is_goal: r.is_goal, status: r.status,
+            is_private: r.is_private, source_entry: r.source_entry, position: r.position,
+          }
+          if (hasAnchor && r.anchor) row.anchor = r.anchor
+          mutateEntries((list) => [...list, r], () => supabase.from('entries').insert(row))
+        }
+        return
+      }
+      if (e.key === '/' && !inText) {
+        e.preventDefault()
+        document.getElementById('quick-capture')?.focus()
+      }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [mutateEntries, hasAnchor])
+
   useEffect(() => { loadProfiles() }, [loadProfiles])
-  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { doLoad() }, [doLoad])
   useEffect(() => { if (me && !pageUserId) setPageUserId(me.id) }, [me, pageUserId])
 
   // Realtime：库一变就重拉（两三个人的量级，重拉最简单可靠）
@@ -217,8 +257,45 @@ export default function Board({ session }) {
     return { today: count('today'), week: count('week'), month: count('month') }
   }, [me, allEntries])
 
+  // 搜索跳转：纸拨回那条所在的日期 + 高亮闪烁定位
+  const jumpToEntry = useCallback(
+    (e) => {
+      viewPage(e.owner)
+      if (e.anchor) {
+        const t = new Date(); t.setHours(0, 0, 0, 0)
+        const d = new Date(e.anchor + 'T00:00:00')
+        setBaseDate(d.getTime() === t.getTime() ? null : d)
+      }
+      setFlashId(e.id)
+      setTimeout(() => setFlashId(null), 2200)
+    },
+    [viewPage],
+  )
+
   if (needSetup) return <SetupCard user={user} onDone={loadProfiles} />
-  if (!me) return null
+  // 首屏骨架：别让用户对着白屏等两个网络往返
+  if (!me || !loaded)
+    return (
+      <div className="mx-auto flex h-screen max-w-4xl animate-pulse">
+        <div className="hidden w-52 shrink-0 px-4 py-6 md:block">
+          <div className="h-5 w-24 rounded bg-stone-100" />
+          <div className="mt-6 h-10 rounded bg-stone-100" />
+          <div className="mt-6 space-y-2">
+            <div className="h-6 rounded bg-stone-100" />
+            <div className="h-6 rounded bg-stone-100" />
+          </div>
+        </div>
+        <div className="flex-1 px-6 py-6">
+          <div className="h-20 rounded-xl bg-stone-100" />
+          <div className="mt-8 space-y-3">
+            <div className="h-4 w-12 rounded bg-stone-100" />
+            <div className="h-5 w-3/4 rounded bg-stone-100" />
+            <div className="h-5 w-2/3 rounded bg-stone-100" />
+            <div className="h-5 w-1/2 rounded bg-stone-100" />
+          </div>
+        </div>
+      </div>
+    )
 
   const pageUser = profiles.find((p) => p.id === pageUserId) || me
   const isMyPage = pageUser.id === me.id
@@ -414,6 +491,8 @@ export default function Board({ session }) {
                   baseDate={baseDate}
                   isLive={isLive}
                   mutate={mutateEntries}
+                  pushUndo={pushUndo}
+                  flashId={flashId}
                 />
               ))}
             </>
@@ -426,7 +505,7 @@ export default function Board({ session }) {
         onClose={() => setSearchOpen(false)}
         allEntries={allEntries}
         profiles={profiles}
-        onJump={(e) => viewPage(e.owner)}
+        onJump={jumpToEntry}
       />
       {settingsOpen && (
         <SettingsModal

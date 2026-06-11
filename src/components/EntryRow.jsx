@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { renderEntryContent } from '../lib/render'
+import { resolveDateToken } from '../lib/dates'
+import DatePicker from './DatePicker'
 import MentionInput from './MentionInput'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
@@ -16,12 +18,19 @@ function caretOffsetIn(container) {
   return range.toString().length
 }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, pushUndo, flash }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
   const [closing, setClosing] = useState(false) // 完成动画：先划线变灰，再沉底
   const [clickCaret, setClickCaret] = useState(null)
+  const [datePop, setDatePop] = useState(null) // {token, x, y} 日期 chip 的修改/删除弹层
+  const rowRef = useRef(null)
+
+  // 搜索定位：高亮闪烁 + 滚进视野
+  useEffect(() => {
+    if (flash) rowRef.current?.scrollIntoView({ block: 'center' })
+  }, [flash])
 
   // Section 让我进入编辑态（退格删条后跳回上一条）
   useEffect(() => {
@@ -66,8 +75,14 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     saveTimer.current = setTimeout(() => persist(v), 600)
   }
 
-  function saveEdit(advance = false) {
+  function saveEdit(advance = false, caret = null) {
     clearTimeout(saveTimer.current)
+    // 行中回车 = 分裂：前半段留下，后半段带进下一行
+    if (advance && onSplit && caret != null && caret < text.length && text.slice(caret).trim()) {
+      setEditing(false)
+      onSplit(entry, text.slice(0, caret).trimEnd(), text.slice(caret).trimStart())
+      return
+    }
     persist(text)
     setEditing(false)
     if (!text.trim()) {
@@ -87,6 +102,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   async function toggleDone() {
     const next = closed ? 'open' : 'closed'
     if (next === 'closed') {
+      pushUndo?.({ type: 'status', id: entry.id, prev: entry.status })
       setClosing(true)
       if (entry.source_entry && originalCreator) {
         setNotified(true)
@@ -104,6 +120,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   }
 
   function closeOriginal() {
+    pushUndo?.({ type: 'status', id: original.id, prev: original.status })
     mutate(
       (list) => list.map((e) => (e.id === original.id ? { ...e, status: 'closed' } : e)),
       () => supabase.from('entries').update({ status: 'closed' }).eq('id', original.id),
@@ -111,6 +128,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   }
 
   function closeSelf() {
+    pushUndo?.({ type: 'status', id: entry.id, prev: entry.status })
     mutate(patchLocal({ status: 'closed' }), () =>
       supabase.from('entries').update({ status: 'closed' }).eq('id', entry.id),
     )
@@ -132,7 +150,8 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
 
   function remove() {
     setMenu(null)
-    if (!window.confirm('删除这条？')) return
+    if (!window.confirm('删除这条？（⌘Z 可撤销）')) return
+    pushUndo?.({ type: 'delete', row: entry })
     mutate(
       (list) => list.filter((e) => e.id !== entry.id),
       () => supabase.from('entries').delete().eq('id', entry.id),
@@ -160,17 +179,33 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     )
   }
 
+  // 日期 chip 点击 → 改日期/删除
+  function persistContent(c) {
+    mutate(patchLocal({ content: c }), () =>
+      supabase.from('entries').update({ content: c }).eq('id', entry.id),
+    )
+  }
+
   const rendered = renderEntryContent(entry.content, profiles, {
     meHandle: me.handle,
     highlightMe: !isMine,
+    onDateClick: isMine
+      ? (token, e) => {
+          e.stopPropagation()
+          const r = e.target.getBoundingClientRect()
+          setDatePop({ token, x: Math.min(r.left, window.innerWidth - 280), y: r.bottom + 4 })
+        }
+      : undefined,
   })
 
   return (
     <div
+      ref={rowRef}
       className={
-        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] text-[14.5px] leading-relaxed ' +
+        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] text-[14.5px] leading-relaxed transition-colors ' +
         (closing ? 'closing ' : '') +
         (editing ? '' : 'hover:bg-stone-50 ') +
+        (flash ? 'bg-amber-100 ' : '') +
         (closed || closing ? 'text-stone-300' : resolved ? 'bg-blue-50/60 px-1.5 -ml-1.5' : '')
       }
       onContextMenu={(e) => {
@@ -196,7 +231,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         <MentionInput
           value={text}
           onChange={handleEditChange}
-          onSubmit={() => saveEdit(true)}
+          onSubmit={(caret) => saveEdit(true, caret)}
           onBlur={() => saveEdit(false)}
           onEscape={() => { setText(entry.content); setEditing(false) }}
           onEmptyBackspace={onDeleteEmpty ? () => { setEditing(false); onDeleteEmpty(entry) } : undefined}
@@ -271,6 +306,28 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           </button>
         )}
       </span>
+
+      {datePop && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setDatePop(null)} />
+          <div className="fixed z-50" style={{ left: datePop.x, top: datePop.y }}>
+            <div className="relative">
+              <DatePicker
+                value={resolveDateToken(datePop.token)}
+                onClose={() => setDatePop(null)}
+                onSelect={(d) => {
+                  const t = d || new Date()
+                  const newTok = `${t.getMonth() + 1}月${t.getDate()}日`
+                  persistContent(entry.content.replace(datePop.token, newTok))
+                }}
+                onDelete={() =>
+                  persistContent(entry.content.replace(datePop.token, '').replace(/\s{2,}/g, ' ').trim())
+                }
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       {menu && (
         <>
