@@ -40,6 +40,12 @@ body {
   background: transparent;
 }
 
+/* 透明文字输入框的选区：用半透明蓝，让垫在下面的着色层文字透出来 */
+.colored-input::selection {
+  background: rgba(59, 130, 246, 0.22);
+  color: transparent;
+}
+
 /* @token */
 .mention {
   color: #2563eb;

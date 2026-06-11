@@ -180,7 +180,7 @@ export default function MentionInput({
         onKeyDown={handleKeyDown}
         onBlur={() => { setTimeout(() => setPicker(null), 150); onBlur?.() }}
         className={
-          'relative block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[14.5px] leading-relaxed text-transparent caret-stone-800 outline-none placeholder:text-stone-300 ' +
+          'colored-input relative block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[14.5px] leading-relaxed text-transparent caret-stone-800 outline-none placeholder:text-stone-300 ' +
           (className || '')
         }
       />
