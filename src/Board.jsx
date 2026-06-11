@@ -318,7 +318,7 @@ export default function Board({ session }) {
           </button>
         </div>
 
-        <div className="shrink-0 px-5 pt-2 md:px-6">
+        <div className="paper-top shrink-0 pt-2">
           {!isMyPage && (
             <div className="mt-4 text-[13px] text-stone-400">{pageUser.display_name} 的纸（只读）</div>
           )}
@@ -326,7 +326,7 @@ export default function Board({ session }) {
             <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} onChanged={loadData} />
           )}
         </div>
-        <div className="flex-1 overflow-y-auto px-5 pb-24 md:px-6">
+        <div className="paper-scroll flex-1 overflow-y-auto pb-24">
           {isMyPage && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
           {SECTIONS.map((sec) => (
             <Section
