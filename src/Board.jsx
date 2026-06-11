@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Bell, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
+import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import QuickCapture from './components/QuickCapture'
@@ -189,7 +190,17 @@ export default function Board({ session }) {
     () => (me ? allEntries.filter((e) => e.creator === me.id && e.status === 'resolved') : []),
     [me, allEntries],
   )
-  const notifCount = mentions.length + resolvedMine.length
+  // 到期提醒：我的未完成目标里，日期 token = 今天或已过期的
+  const dueMine = useMemo(() => {
+    if (!me) return []
+    return allEntries.filter((e) => {
+      if (e.owner !== me.id || !e.is_goal || e.status !== 'open') return false
+      const tokens = e.content.match(DATE_TOKEN_RE) || []
+      return tokens.some((t) => ['today', 'overdue'].includes(dateTokenState(t)))
+    })
+  }, [me, allEntries])
+
+  const notifCount = mentions.length + resolvedMine.length + dueMine.length
 
   // flomo 式三格：今日 / 本周 / 本月 当前周期的未完成目标数
   const stats = useMemo(() => {
@@ -336,10 +347,12 @@ export default function Board({ session }) {
             <NotificationsPage
               mentions={mentions}
               resolvedMine={resolvedMine}
+              dueMine={dueMine}
               profiles={profiles}
               onChanged={loadData}
               mutate={mutateEntries}
               onBack={() => viewPage(me.id)}
+              onJumpHome={() => viewPage(me.id)}
             />
           ) : (
             <>

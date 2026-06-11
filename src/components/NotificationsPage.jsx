@@ -4,8 +4,8 @@ import Inbox from './Inbox'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
-// 完整通知页：待认领的@ + 我派出去已解决等我关闭的
-export default function NotificationsPage({ mentions, resolvedMine, profiles, onChanged, mutate, onBack }) {
+// 完整通知页：待认领的@ + 我派出去已解决等我关闭的 + 到期/过期的目标
+export default function NotificationsPage({ mentions, resolvedMine, dueMine = [], profiles, onChanged, mutate, onBack, onJumpHome }) {
   function closeEntry(e) {
     mutate(
       (list) => list.map((x) => (x.id === e.id ? { ...x, status: 'closed' } : x)),
@@ -13,7 +13,7 @@ export default function NotificationsPage({ mentions, resolvedMine, profiles, on
     )
   }
 
-  const empty = mentions.length === 0 && resolvedMine.length === 0
+  const empty = mentions.length === 0 && resolvedMine.length === 0 && dueMine.length === 0
 
   return (
     <div>
@@ -23,8 +23,26 @@ export default function NotificationsPage({ mentions, resolvedMine, profiles, on
 
       {empty && (
         <p className="mt-6 text-sm text-stone-300">
-          没有新通知。别人 @你 的事、你派出去等验收的事，都会出现在这里。
+          没有新通知。别人 @你 的事、你派出去等验收的事、到期的目标，都会出现在这里。
         </p>
+      )}
+
+      {dueMine.length > 0 && (
+        <div className="mt-5 rounded-xl bg-red-50 px-4 py-3">
+          <div className="mb-1.5 text-xs font-medium text-red-700">
+            ⏰ 到期 · {dueMine.length} 条今天到期或已过期
+          </div>
+          {dueMine.map((e) => (
+            <button
+              key={e.id}
+              onClick={onJumpHome}
+              className="flex w-full items-center gap-2 py-1 text-left text-[13.5px] text-red-900 hover:underline"
+            >
+              <span className="min-w-0 flex-1">{e.content}</span>
+              <span className="shrink-0 text-[11.5px] text-red-500">{SECTION_LABELS[e.section]}</span>
+            </button>
+          ))}
+        </div>
       )}
 
       <Inbox mentions={mentions} profiles={profiles} onChanged={onChanged} />
