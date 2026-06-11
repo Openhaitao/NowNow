@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const SECTIONS = [
@@ -7,9 +8,11 @@ const SECTIONS = [
 ]
 
 export default function Inbox({ mentions, profiles, onChanged }) {
+  const [expandedId, setExpandedId] = useState(null)
   if (mentions.length === 0) return null
 
   async function claim(m, section) {
+    setExpandedId(null)
     await supabase.rpc('claim_mention', { p_mention_id: m.id, p_section: section })
     onChanged()
   }
@@ -21,23 +24,37 @@ export default function Inbox({ mentions, profiles, onChanged }) {
       </div>
       {mentions.map((m) => {
         const from = profiles.find((p) => p.id === m.entries?.creator)
+        const expanded = expandedId === m.id
         return (
-          <div key={m.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1 text-[13.5px] text-blue-900">
-            <span className="min-w-0 flex-1 basis-52">
-              <b>{from?.display_name || '?'}：</b>
-              {m.entries?.content}
-            </span>
-            <span className="flex shrink-0 gap-1">
-              {SECTIONS.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => claim(m, s.key)}
-                  className="rounded-md border border-blue-600 bg-white px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-600 hover:text-white"
-                >
-                  认领到{s.label}
-                </button>
-              ))}
-            </span>
+          <div key={m.id} className="py-1">
+            <div className="flex items-center gap-2 text-[13.5px] text-blue-900">
+              <span className="min-w-0 flex-1">
+                <b>{from?.display_name || '?'}：</b>
+                {m.entries?.content}
+              </span>
+              <button
+                onClick={() => setExpandedId(expanded ? null : m.id)}
+                className={
+                  'shrink-0 rounded-md border border-blue-600 px-2.5 py-0.5 text-xs ' +
+                  (expanded ? 'bg-blue-600 text-white' : 'bg-white text-blue-700 hover:bg-blue-600 hover:text-white')
+                }
+              >
+                认领 {expanded ? '▴' : '▾'}
+              </button>
+            </div>
+            {expanded && (
+              <div className="mt-1.5 flex justify-end gap-1.5">
+                {SECTIONS.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => claim(m, s.key)}
+                    className="rounded-md bg-white px-2.5 py-1 text-xs text-blue-700 shadow-sm hover:bg-blue-600 hover:text-white"
+                  >
+                    认领到{s.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )
       })}
