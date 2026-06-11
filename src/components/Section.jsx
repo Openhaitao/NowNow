@@ -401,6 +401,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     flash={flashId === item.v.id}
                     pastDue={isPastDue(item.v)}
                     ownerLabel={q ? profiles.find((p) => p.id === item.v.owner)?.display_name : null}
+                    searchTerm={q || null}
                   />
                 </SortableRow>
               ) : (

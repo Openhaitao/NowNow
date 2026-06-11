@@ -10,12 +10,12 @@ export const DATE_CHIP_CLS = {
 }
 
 // 日期 token → 黄色 chip（过期红 / 今天深黄 / 未来浅黄）；可点击改/删
-function renderDates(text, keyBase, onDateClick) {
+function renderDates(text, keyBase, onDateClick, q) {
   return text.split(DATE_TOKEN_RE).map((part, i) => {
     const k = `${keyBase}d${i}`
     if (!part) return null
     const state = dateTokenState(part) // 整段恰好是日期 token 才命中，普通文字返回 null
-    if (!state) return renderInline(part, k)
+    if (!state) return renderInline(part, k, q)
     const d = resolveDateToken(part)
     return (
       <span
@@ -30,29 +30,43 @@ function renderDates(text, keyBase, onDateClick) {
   })
 }
 
+// 搜索命中的字串 → 黄色 mark（只亮命中的字，不亮整行）
+function hl(text, q, keyBase) {
+  if (!q) return text
+  const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const re = new RegExp(`(${esc})`, 'gi')
+  return text.split(re).map((seg, i) =>
+    seg.toLowerCase() === q.toLowerCase() ? (
+      <mark key={`${keyBase}h${i}`} className="rounded-sm bg-yellow-200">{seg}</mark>
+    ) : (
+      seg
+    ),
+  )
+}
+
 // 行内 Markdown：**粗体** __下划线__ ~~删除线~~ `代码` *斜体*（doc M3 的最小集）
 const INLINE = /(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|`[^`]+`|\*[^*\s][^*]*\*)/g
 
-function renderInline(text, keyBase) {
+function renderInline(text, keyBase, q) {
   return text.split(INLINE).map((part, i) => {
     const k = `${keyBase}-${i}`
     if (!part) return null
-    if (part.startsWith('**') && part.endsWith('**')) return <b key={k}>{part.slice(2, -2)}</b>
-    if (part.startsWith('__') && part.endsWith('__')) return <u key={k}>{part.slice(2, -2)}</u>
-    if (part.startsWith('~~') && part.endsWith('~~')) return <s key={k}>{part.slice(2, -2)}</s>
+    if (part.startsWith('**') && part.endsWith('**')) return <b key={k}>{hl(part.slice(2, -2), q, k)}</b>
+    if (part.startsWith('__') && part.endsWith('__')) return <u key={k}>{hl(part.slice(2, -2), q, k)}</u>
+    if (part.startsWith('~~') && part.endsWith('~~')) return <s key={k}>{hl(part.slice(2, -2), q, k)}</s>
     if (part.startsWith('`') && part.endsWith('`'))
       return (
         <code key={k} className="rounded bg-stone-100 px-1 text-[13px]">
-          {part.slice(1, -1)}
+          {hl(part.slice(1, -1), q, k)}
         </code>
       )
-    if (part.startsWith('*') && part.endsWith('*')) return <i key={k}>{part.slice(1, -1)}</i>
-    return part
+    if (part.startsWith('*') && part.endsWith('*')) return <i key={k}>{hl(part.slice(1, -1), q, k)}</i>
+    return hl(part, q, k)
   })
 }
 
 // 完整渲染：标题前缀（#/##）→ 加粗加大；@token 高亮；日期 chip 可点；其余行内 md
-export function renderEntryContent(content, profiles, { meHandle, highlightMe, onDateClick } = {}) {
+export function renderEntryContent(content, profiles, { meHandle, highlightMe, onDateClick, searchTerm } = {}) {
   let body = content
   let heading = 0
   const hm = /^(#{1,3})\s+/.exec(body)
@@ -73,7 +87,7 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe, o
         </span>
       )
     }
-    return renderDates(part, i, onDateClick)
+    return renderDates(part, i, onDateClick, searchTerm)
   })
 
   if (heading === 1) return <span className="text-[17px] font-bold">{nodes}</span>

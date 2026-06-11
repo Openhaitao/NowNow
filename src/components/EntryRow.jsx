@@ -19,7 +19,7 @@ function caretOffsetIn(container) {
   return range.toString().length
 }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, pushUndo, flash, pastDue, ownerLabel }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, pushUndo, flash, pastDue, ownerLabel, searchTerm }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
@@ -190,6 +190,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   const rendered = renderEntryContent(entry.content, profiles, {
     meHandle: me.handle,
     highlightMe: !isMine,
+    searchTerm: searchTerm || null,
     onDateClick: isMine
       ? (token, e) => {
           e.stopPropagation()
