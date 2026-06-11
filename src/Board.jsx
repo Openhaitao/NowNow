@@ -133,6 +133,19 @@ export default function Board({ session }) {
     if (me) document.title = `${me.display_name} | NowNow`
   }, [me])
 
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // flomo 式三格：未完成 / 已完成 / 第 N 天
+  const stats = useMemo(() => {
+    if (!me) return { open: 0, done: 0, days: 1 }
+    const mine = allEntries.filter((e) => e.owner === me.id && e.is_goal)
+    return {
+      open: mine.filter((e) => e.status !== 'closed').length,
+      done: mine.filter((e) => e.status === 'closed').length,
+      days: Math.max(1, Math.floor((Date.now() - new Date(me.created_at)) / 86400000) + 1),
+    }
+  }, [me, allEntries])
+
   if (needSetup) return <SetupCard user={user} onDone={loadProfiles} />
   if (!me) return null
 
@@ -142,10 +155,26 @@ export default function Board({ session }) {
   return (
     <div className="mx-auto flex min-h-screen max-w-4xl">
       {/* 左栏：人员列表（桌面，flomo 式贴近内容） */}
-      <aside className="hidden w-40 shrink-0 flex-col px-2 py-5 md:flex">
-        <div className="mb-4 flex items-center gap-1.5 px-2.5 text-[13px] font-semibold">
-          <img src="/logo.png" alt="" className="h-5 w-5 rounded" />
-          <span className="truncate">{me.display_name} | NowNow</span>
+      <aside className="hidden w-44 shrink-0 flex-col px-2 py-5 md:flex">
+        {/* 顶部：当前用户 */}
+        <div className="flex items-center gap-2 px-2.5 text-[15px] font-semibold">
+          <img src="/logo.png" alt="" className="h-6 w-6 rounded" />
+          <span className="truncate">{me.display_name}</span>
+        </div>
+        {/* flomo 式三格统计 */}
+        <div className="mb-4 mt-3 grid grid-cols-3 gap-1 px-2.5 text-center">
+          <div>
+            <div className="text-[15px] font-semibold">{stats.open}</div>
+            <div className="text-[11px] text-stone-400">未完成</div>
+          </div>
+          <div>
+            <div className="text-[15px] font-semibold">{stats.done}</div>
+            <div className="text-[11px] text-stone-400">已完成</div>
+          </div>
+          <div>
+            <div className="text-[15px] font-semibold">{stats.days}</div>
+            <div className="text-[11px] text-stone-400">天</div>
+          </div>
         </div>
         {profiles.map((p) => (
           <button
@@ -163,12 +192,42 @@ export default function Board({ session }) {
             {hasNews(p) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
           </button>
         ))}
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="mt-auto px-2.5 py-1 text-left text-xs text-stone-300 hover:text-stone-500"
-        >
-          退出登录
-        </button>
+        {/* 底部：通知 + 设置 */}
+        <div className="mt-auto">
+          <button
+            onClick={() => viewPage(me.id)}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+          >
+            🔔 通知
+            {mentions.length > 0 && (
+              <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] font-medium text-white">
+                {mentions.length}
+              </span>
+            )}
+          </button>
+          <div className="relative">
+            <button
+              onClick={() => setSettingsOpen((v) => !v)}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+            >
+              ⚙️ 设置
+            </button>
+            {settingsOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setSettingsOpen(false)} />
+                <div className="absolute bottom-full left-2 z-50 mb-1 w-32 rounded-lg border border-stone-200 bg-white py-1 text-[13px] shadow-xl">
+                  <div className="px-3 py-1.5 text-stone-400">@{me.handle}</div>
+                  <button
+                    className="block w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50"
+                    onClick={() => supabase.auth.signOut()}
+                  >
+                    退出登录
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </aside>
 
       {/* 主区 */}
