@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { mentionSplitRegex } from '../lib/mentions'
 import { DATE_TOKEN_RE, dateTokenState } from '../lib/dates'
+import { DATE_CHIP_CLS } from '../lib/render'
 
 // 编辑态着色层：@人蓝、日期黄（纯颜色不带胶囊底，字宽与 textarea 完全一致才能重叠）
 function colorize(text, profiles) {
@@ -15,13 +16,16 @@ function colorize(text, profiles) {
           {part}
         </span>
       )
-    return part.split(DATE_TOKEN_RE).map((t, j) =>
-      !t ? null : dateTokenState(t) ? (
-        <span key={`${i}-${j}`} className="text-amber-600">{t}</span>
+    return part.split(DATE_TOKEN_RE).map((t, j) => {
+      if (!t) return null
+      const st = dateTokenState(t)
+      return st ? (
+        // 和显示态完全同一套日期高亮（零内边距），编辑时胶囊不消失、宽度不变
+        <span key={`${i}-${j}`} className={DATE_CHIP_CLS[st]}>{t}</span>
       ) : (
         <span key={`${i}-${j}`}>{t}</span>
-      ),
-    )
+      )
+    })
   })
 }
 
