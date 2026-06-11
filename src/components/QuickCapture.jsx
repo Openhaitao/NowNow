@@ -81,9 +81,9 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, onCh
           onClick={submit}
           disabled={!draft.trim()}
           title="存（回车，或 ⌘/Ctrl+回车）"
-          className="ml-auto flex h-7 w-7 items-center justify-center rounded-lg bg-stone-900 text-white disabled:opacity-30"
+          className="ml-auto flex h-7 w-10 items-center justify-center rounded-md bg-stone-900 text-white disabled:opacity-30"
         >
-          <SendHorizontal size={14} />
+          <SendHorizontal size={15} />
         </button>
       </div>
     </div>
