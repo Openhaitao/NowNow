@@ -90,6 +90,7 @@ function SortableRow({ entry, draggable, children }) {
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
 export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId }) {
   const [draft, setDraft] = useState('')
+  const [ghostGoal, setGhostGoal] = useState(false) // 区底输入行的类型（默认备忘，Tab/点击切换）
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
   const [editId, setEditId] = useState(null) // 退格删条后让上一条进入编辑态
@@ -150,11 +151,11 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     )
   }
 
-  // 幽灵输入行：回车即存（乐观插入，行立即出现）。默认备忘；行首 [] = 目标。新条目落区底。
+  // 幽灵输入行：回车即存（乐观插入，行立即出现）。类型由行首标记定（Tab/点击切换）。新条目落区底。
   function add() {
     let content = draft.trim()
     if (!content) return
-    let isGoal = false
+    let isGoal = ghostGoal
     if (content.startsWith('[]')) {
       isGoal = true
       content = content.slice(2).trim()
@@ -410,12 +411,21 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
 
       {isMyPage && (
         <div className="flex items-start gap-2.5 py-[5px]">
-          <span className="w-[15px] shrink-0" />
+          <button
+            type="button"
+            tabIndex={-1}
+            onMouseDown={(e) => { e.preventDefault(); setGhostGoal((v) => !v) }}
+            title={ghostGoal ? '目标（Tab 或点击转备忘）' : '备忘（Tab 或点击转目标）'}
+            className="mt-[3px] flex h-[17px] w-[15px] shrink-0 items-center justify-center text-stone-300 hover:text-stone-500"
+          >
+            {ghostGoal ? <Square size={13} /> : <Pilcrow size={13} />}
+          </button>
           <MentionInput
             id={`ghost-${sec.key}`}
             value={draft}
             onChange={setDraft}
             onSubmit={add}
+            onTab={() => setGhostGoal((v) => !v)}
             profiles={profiles}
             onEmptyBackspace={() => {
               const last = active[active.length - 1]
@@ -429,7 +439,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             onArrowDown={
               nextSecKey ? () => document.getElementById(`ghost-${nextSecKey}`)?.focus() : undefined
             }
-            placeholder="随便写点什么，回车即存…（行首 [] = 目标，@ 可以派人）"
+            placeholder="随便写点什么，回车即存…（Tab 或点行首切换目标/备忘，@ 派人）"
           />
         </div>
       )}
