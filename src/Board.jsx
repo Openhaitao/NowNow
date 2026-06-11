@@ -153,7 +153,7 @@ export default function Board({ session }) {
   const isMyPage = pageUser.id === me.id
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-4xl">
+    <div className="mx-auto flex min-h-screen max-w-3xl">
       {/* 左栏：人员列表（桌面，flomo 式贴近内容） */}
       <aside className="hidden w-44 shrink-0 flex-col px-2 py-5 md:flex">
         {/* 顶部：当前用户 */}
@@ -255,7 +255,7 @@ export default function Board({ session }) {
           </button>
         </div>
 
-        <div className="max-w-xl px-5 pb-24 pt-2 md:px-6">
+        <div className="px-5 pb-24 pt-2 md:px-6">
           {!isMyPage && (
             <div className="mt-4 text-[13px] text-stone-400">{pageUser.display_name} 的纸（只读）</div>
           )}
