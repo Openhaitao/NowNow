@@ -367,6 +367,10 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
               const last = active[active.length - 1]
               if (last) setEditId(last.id)
             }}
+            onArrowUp={() => {
+              const last = active[active.length - 1]
+              if (last) setEditId(last.id)
+            }}
             placeholder="随便写点什么，回车即存…（行首 [] = 目标，@ 可以派人）"
           />
         </div>
