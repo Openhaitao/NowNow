@@ -62,7 +62,8 @@ export default function MentionInput({
       onEscape?.()
       return
     }
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // 回车 或 ⌘/Ctrl+回车 都是确定（mac/win 通吃）；Shift+回车换行
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
       e.preventDefault()
       onSubmit?.()
     }

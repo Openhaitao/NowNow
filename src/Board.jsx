@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Bell, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import Inbox from './components/Inbox'
@@ -158,6 +159,14 @@ export default function Board({ session }) {
   }, [me])
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
+
+  // 通知内容 = 待认领的@ + 我派出去已解决等我关闭的
+  const resolvedMine = useMemo(
+    () => (me ? allEntries.filter((e) => e.creator === me.id && e.status === 'resolved') : []),
+    [me, allEntries],
+  )
+  const notifCount = mentions.length + resolvedMine.length
 
   // flomo 式三格：今日 / 本周 / 本月 当前周期的未完成目标数
   const stats = useMemo(() => {
@@ -214,25 +223,57 @@ export default function Board({ session }) {
             {hasNews(p) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
           </button>
         ))}
-        {/* 底部：通知（有待认领才出现，不常驻）+ 设置 */}
+        {/* 底部：通知（有内容才出现，不常驻）+ 设置 */}
         <div className="mt-auto">
-          {mentions.length > 0 && (
-            <button
-              onClick={() => viewPage(me.id)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
-            >
-              🔔 通知
-              <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] font-medium text-white">
-                {mentions.length}
-              </span>
-            </button>
+          {notifCount > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setNotifOpen((v) => !v)}
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+              >
+                <Bell size={14} /> 通知
+                <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] font-medium text-white">
+                  {notifCount}
+                </span>
+              </button>
+              {notifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                  <div className="absolute bottom-full left-1 z-50 mb-1 w-64 rounded-lg border border-stone-200 bg-white py-1 text-[13px] shadow-xl">
+                    {mentions.map((m) => {
+                      const from = profiles.find((p) => p.id === m.entries?.creator)
+                      return (
+                        <button
+                          key={m.id}
+                          className="block w-full px-3 py-1.5 text-left hover:bg-stone-50"
+                          onClick={() => { setNotifOpen(false); viewPage(me.id) }}
+                        >
+                          <span className="text-blue-600">待认领</span> {from?.display_name}：
+                          <span className="text-stone-600">{m.entries?.content?.slice(0, 24)}</span>
+                        </button>
+                      )
+                    })}
+                    {resolvedMine.map((e) => (
+                      <button
+                        key={e.id}
+                        className="block w-full px-3 py-1.5 text-left hover:bg-stone-50"
+                        onClick={() => { setNotifOpen(false); viewPage(e.owner) }}
+                      >
+                        <span className="text-amber-600">等你关闭</span>{' '}
+                        <span className="text-stone-600">{e.content.slice(0, 24)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
           <div className="relative">
             <button
               onClick={() => setSettingsOpen((v) => !v)}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
             >
-              ⚙️ 设置
+              <Settings size={14} /> 设置
             </button>
             {settingsOpen && (
               <>

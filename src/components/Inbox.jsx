@@ -1,4 +1,3 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { supabase } from '../lib/supabase'
 
 const SECTIONS = [
@@ -23,34 +22,22 @@ export default function Inbox({ mentions, profiles, onChanged }) {
       {mentions.map((m) => {
         const from = profiles.find((p) => p.id === m.entries?.creator)
         return (
-          <div key={m.id} className="flex items-center gap-2 py-1 text-[13.5px] text-blue-900">
-            <span className="min-w-0 flex-1 truncate">
+          <div key={m.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1 text-[13.5px] text-blue-900">
+            <span className="min-w-0 flex-1 basis-52">
               <b>{from?.display_name || '?'}：</b>
               {m.entries?.content}
             </span>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button className="shrink-0 rounded-md border border-blue-600 bg-white px-2.5 py-0.5 text-xs text-blue-700 hover:bg-blue-600 hover:text-white">
-                  认领到…
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="z-50 w-28 rounded-lg border border-stone-200 bg-white py-1 text-sm shadow-xl"
-                  sideOffset={4}
+            <span className="flex shrink-0 gap-1">
+              {SECTIONS.map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => claim(m, s.key)}
+                  className="rounded-md border border-blue-600 bg-white px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-600 hover:text-white"
                 >
-                  {SECTIONS.map((s) => (
-                    <DropdownMenu.Item
-                      key={s.key}
-                      onSelect={() => claim(m, s.key)}
-                      className="cursor-pointer px-3 py-1.5 outline-none hover:bg-blue-50 data-[highlighted]:bg-blue-50"
-                    >
-                      {s.label}
-                    </DropdownMenu.Item>
-                  ))}
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+                  认领到{s.label}
+                </button>
+              ))}
+            </span>
           </div>
         )
       })}

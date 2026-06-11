@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SendHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { fmtDate } from '../lib/period'
@@ -79,9 +80,10 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, onCh
           type="button"
           onClick={submit}
           disabled={!draft.trim()}
-          className="ml-auto rounded-lg bg-stone-900 px-3 py-1 text-xs text-white disabled:opacity-30"
+          title="存（回车，或 ⌘/Ctrl+回车）"
+          className="ml-auto flex h-7 w-7 items-center justify-center rounded-lg bg-stone-900 text-white disabled:opacity-30"
         >
-          存
+          <SendHorizontal size={14} />
         </button>
       </div>
     </div>
