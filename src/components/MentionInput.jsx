@@ -91,9 +91,6 @@ export default function MentionInput({
                 (i === active ? 'bg-blue-50 text-blue-700' : 'text-stone-700')
               }
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-[10px] text-blue-700">
-                {p.display_name[0]}
-              </span>
               <span>{p.display_name}</span>
               <span className="ml-auto text-xs text-stone-400">@{p.handle}</span>
             </button>

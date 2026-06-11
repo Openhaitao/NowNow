@@ -121,6 +121,19 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
       )}
 
       <span className="flex shrink-0 items-center gap-1.5">
+        {isMine && !editing && (
+          <button
+            title="操作"
+            onClick={(e) => {
+              e.stopPropagation()
+              const r = e.currentTarget.getBoundingClientRect()
+              setMenu({ x: Math.min(r.left, window.innerWidth - 170), y: r.bottom + 4 })
+            }}
+            className="rounded px-1 text-stone-400 opacity-0 transition-opacity hover:bg-stone-100 hover:text-stone-600 group-hover:opacity-100 max-md:opacity-50"
+          >
+            ⋯
+          </button>
+        )}
         {resolved && (
           <span className="rounded-full bg-blue-100 px-2 py-px text-xs text-blue-700">
             已解决{isCreator ? ' · 等你关闭' : ''}
@@ -152,6 +165,12 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
             className="fixed z-50 w-40 rounded-lg border border-stone-200 bg-white py-1 text-sm shadow-xl"
             style={{ left: menu.x, top: menu.y }}
           >
+            <button
+              className="block w-full px-3 py-1.5 text-left hover:bg-stone-50"
+              onClick={() => { setMenu(null); setText(entry.content); setEditing(true) }}
+            >
+              ✏️ 编辑
+            </button>
             <button className="block w-full px-3 py-1.5 text-left hover:bg-stone-50" onClick={togglePrivate}>
               {entry.is_private ? '👁 设为公开' : '🔒 仅自己可见'}
             </button>
