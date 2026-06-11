@@ -16,20 +16,24 @@ import EntryRow from './EntryRow'
 import MentionInput from './MentionInput'
 
 const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到本月' }
+const SEC_ORDER = ['today', 'week', 'month']
 
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
-function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev }) {
+function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, ghostId }) {
   const [val, setVal] = useState(draft.initial || '')
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
   return (
     <div className="flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed">
-      <span
-        title={isGoal ? '目标（Tab 转备忘）' : '备忘（Tab 转目标）'}
-        className="mt-[3px] flex h-[17px] w-[15px] shrink-0 items-center justify-center text-stone-400"
+      <button
+        type="button"
+        tabIndex={-1}
+        onMouseDown={(e) => { e.preventDefault(); setIsGoal((v) => !v) }}
+        title={isGoal ? '目标（Tab 或点击转备忘）' : '备忘（Tab 或点击转目标）'}
+        className="mt-[3px] flex h-[17px] w-[15px] shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
       >
         {isGoal ? '☐' : '¶'}
-      </span>
+      </button>
       <MentionInput
         value={val}
         onChange={setVal}
@@ -37,7 +41,14 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev }) {
         initialCaret={draft.caret ?? null}
         profiles={profiles}
         onTab={() => setIsGoal((v) => !v)}
-        onSubmit={() => (val.trim() ? onCommit(d, val, true) : onCancel(draft.key))}
+        onSubmit={() => {
+          if (val.trim()) onCommit(d, val, true)
+          else {
+            // 空行回车 = 结束插入，回到区底输入行（光标不丢）
+            onCancel(draft.key)
+            document.getElementById(ghostId)?.focus()
+          }
+        }}
         onBlur={() => (val.trim() ? onCommit(d, val, false) : onCancel(draft.key))}
         onEmptyBackspace={() => onCancelToPrev(draft)}
         onEscape={() => onCancelToPrev(draft)}
@@ -187,10 +198,14 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     if (prev) setEditId(prev.id)
   }
 
-  // ↑↓ 在相邻条目间移动编辑光标
+  // ↑↓ 在相邻条目间移动编辑光标；区与区之间通过幽灵行接力（整张纸连续）
+  const prevSecKey = SEC_ORDER[SEC_ORDER.indexOf(sec.key) - 1]
+  const nextSecKey = SEC_ORDER[SEC_ORDER.indexOf(sec.key) + 1]
+
   function navUp(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
     if (idx > 0) setEditId(active[idx - 1].id)
+    else if (prevSecKey) document.getElementById(`ghost-${prevSecKey}`)?.focus()
   }
   function navDown(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
@@ -368,6 +383,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                   onCommit={commitDraft}
                   onCancel={cancelDraft}
                   onCancelToPrev={cancelDraftToPrev}
+                  ghostId={`ghost-${sec.key}`}
                 />
               ),
             )}
@@ -390,7 +406,11 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             onArrowUp={() => {
               const last = active[active.length - 1]
               if (last) setEditId(last.id)
+              else if (prevSecKey) document.getElementById(`ghost-${prevSecKey}`)?.focus()
             }}
+            onArrowDown={
+              nextSecKey ? () => document.getElementById(`ghost-${nextSecKey}`)?.focus() : undefined
+            }
             placeholder="随便写点什么，回车即存…（行首 [] = 目标，@ 可以派人）"
           />
         </div>
