@@ -7,14 +7,16 @@ const SECTIONS = [
   { key: 'month', label: '本月' },
 ]
 
-export default function Inbox({ mentions, profiles, onChanged }) {
+export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
   const [expandedId, setExpandedId] = useState(null)
+  const [claimedIds, setClaimedIds] = useState([]) // 乐观隐藏：点了认领立刻从收件箱消失
+  const mentions = rawMentions.filter((m) => !claimedIds.includes(m.id))
   if (mentions.length === 0) return null
 
-  async function claim(m, section) {
+  function claim(m, section) {
     setExpandedId(null)
-    await supabase.rpc('claim_mention', { p_mention_id: m.id, p_section: section })
-    onChanged()
+    setClaimedIds((ids) => [...ids, m.id])
+    supabase.rpc('claim_mention', { p_mention_id: m.id, p_section: section }).then(onChanged)
   }
 
   return (

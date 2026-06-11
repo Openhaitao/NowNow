@@ -126,6 +126,18 @@ export default function Board({ session }) {
     setMentions(ms || [])
   }, [user.id])
 
+  // 乐观更新（flomo 式先本地后同步）：UI 立即生效，服务端后台跑，完成后与库对齐
+  const mutateEntries = useCallback(
+    (transform, op) => {
+      setAllEntries(transform)
+      Promise.resolve()
+        .then(op)
+        .catch(() => {})
+        .finally(() => loadData())
+    },
+    [loadData],
+  )
+
   useEffect(() => { loadProfiles() }, [loadProfiles])
   useEffect(() => { loadData() }, [loadData])
   useEffect(() => { if (me && !pageUserId) setPageUserId(me.id) }, [me, pageUserId])
@@ -341,7 +353,7 @@ export default function Board({ session }) {
             <div className="mt-4 text-[13px] text-stone-400">{pageUser.display_name} 的纸（只读）</div>
           )}
           {isMyPage && (
-            <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} onChanged={loadData} />
+            <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
           )}
         </div>
         <div className="paper-scroll flex-1 overflow-y-auto pb-24">
@@ -356,7 +368,7 @@ export default function Board({ session }) {
               profiles={profiles}
               allEntries={allEntries}
               hasAnchor={hasAnchor}
-              onChanged={loadData}
+              mutate={mutateEntries}
             />
           ))}
         </div>

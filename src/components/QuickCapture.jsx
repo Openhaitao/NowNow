@@ -12,12 +12,12 @@ const SECTIONS = [
 ]
 
 // flomo 式顶部快速捕捉：写任务 → @分配 → 挑放进哪个区 → 回车
-export default function QuickCapture({ me, profiles, allEntries, hasAnchor, onChanged }) {
+export default function QuickCapture({ me, profiles, allEntries, hasAnchor, mutate }) {
   const [draft, setDraft] = useState('')
   const [section, setSection] = useState('today')
   const [isGoal, setIsGoal] = useState(true)
 
-  async function submit() {
+  function submit() {
     let content = draft.trim()
     if (!content) return
     let goal = isGoal
@@ -26,6 +26,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, onCh
       content = content.slice(2).trim()
       if (!content) return
     }
+    setDraft('')
     const sectionEntries = allEntries.filter((e) => e.owner === me.id && e.section === section)
     const maxPos = Math.max(0, ...sectionEntries.map((x) => x.position))
     const row = {
@@ -37,10 +38,23 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, onCh
       position: maxPos + 1,
     }
     if (hasAnchor) row.anchor = fmtDate(new Date())
-    const { data, error } = await supabase.from('entries').insert(row).select().single()
-    if (!error && data) await syncMentions(data.id, content, profiles, me.id)
-    setDraft('')
-    onChanged()
+    const temp = {
+      ...row,
+      id: `tmp-${Date.now()}`,
+      status: 'open',
+      is_private: false,
+      source_entry: null,
+      anchor: row.anchor ?? null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    mutate(
+      (list) => [...list, temp],
+      async () => {
+        const { data, error } = await supabase.from('entries').insert(row).select().single()
+        if (!error && data) await syncMentions(data.id, content, profiles, me.id)
+      },
+    )
   }
 
   return (

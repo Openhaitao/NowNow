@@ -6,7 +6,7 @@ import MentionInput from './MentionInput'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
-export default function EntryRow({ entry, me, profiles, allEntries, onChanged }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
@@ -21,13 +21,18 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
   const original = entry.source_entry ? allEntries.find((e) => e.id === entry.source_entry) : null
   const canCloseOriginal = original && original.creator === me.id && original.status === 'resolved'
 
-  async function saveEdit() {
+  // 全部走乐观更新：本地立即生效，服务端后台同步
+  const patchLocal = (fields) => (list) =>
+    list.map((e) => (e.id === entry.id ? { ...e, ...fields } : e))
+
+  function saveEdit() {
     setEditing(false)
     const t = text.trim()
     if (!t || t === entry.content) { setText(entry.content); return }
-    await supabase.from('entries').update({ content: t }).eq('id', entry.id)
-    await syncMentions(entry.id, t, profiles, me.id)
-    onChanged()
+    mutate(patchLocal({ content: t }), async () => {
+      await supabase.from('entries').update({ content: t }).eq('id', entry.id)
+      await syncMentions(entry.id, t, profiles, me.id)
+    })
   }
 
   async function toggleDone() {
@@ -35,48 +40,57 @@ export default function EntryRow({ entry, me, profiles, allEntries, onChanged })
     if (next === 'closed') {
       setClosing(true)
       await new Promise((r) => setTimeout(r, 350)) // 让打勾→划线的爽感停留一拍再沉底
+      setClosing(false)
     }
-    if (entry.source_entry && next === 'closed') {
-      await supabase.rpc('resolve_entry', { p_entry_id: entry.source_entry })
-    }
-    await supabase.from('entries').update({ status: next }).eq('id', entry.id)
-    setClosing(false)
-    onChanged()
+    mutate(patchLocal({ status: next }), async () => {
+      if (entry.source_entry && next === 'closed') {
+        await supabase.rpc('resolve_entry', { p_entry_id: entry.source_entry })
+      }
+      await supabase.from('entries').update({ status: next }).eq('id', entry.id)
+    })
   }
 
-  async function closeOriginal() {
-    await supabase.from('entries').update({ status: 'closed' }).eq('id', original.id)
-    onChanged()
+  function closeOriginal() {
+    mutate(
+      (list) => list.map((e) => (e.id === original.id ? { ...e, status: 'closed' } : e)),
+      () => supabase.from('entries').update({ status: 'closed' }).eq('id', original.id),
+    )
   }
 
-  async function closeSelf() {
-    await supabase.from('entries').update({ status: 'closed' }).eq('id', entry.id)
-    onChanged()
+  function closeSelf() {
+    mutate(patchLocal({ status: 'closed' }), () =>
+      supabase.from('entries').update({ status: 'closed' }).eq('id', entry.id),
+    )
   }
 
-  async function togglePrivate() {
+  function togglePrivate() {
     setMenu(null)
-    await supabase.from('entries').update({ is_private: !entry.is_private }).eq('id', entry.id)
-    onChanged()
+    mutate(patchLocal({ is_private: !entry.is_private }), () =>
+      supabase.from('entries').update({ is_private: !entry.is_private }).eq('id', entry.id),
+    )
   }
 
-  async function toggleGoal() {
+  function toggleGoal() {
     setMenu(null)
-    await supabase.from('entries').update({ is_goal: !entry.is_goal, status: 'open' }).eq('id', entry.id)
-    onChanged()
+    mutate(patchLocal({ is_goal: !entry.is_goal, status: 'open' }), () =>
+      supabase.from('entries').update({ is_goal: !entry.is_goal, status: 'open' }).eq('id', entry.id),
+    )
   }
 
-  async function remove() {
+  function remove() {
     setMenu(null)
     if (!window.confirm('删除这条？')) return
-    await supabase.from('entries').delete().eq('id', entry.id)
-    onChanged()
+    mutate(
+      (list) => list.filter((e) => e.id !== entry.id),
+      () => supabase.from('entries').delete().eq('id', entry.id),
+    )
   }
 
-  async function moveTo(section) {
+  function moveTo(section) {
     setMenu(null)
-    await supabase.from('entries').update({ section }).eq('id', entry.id)
-    onChanged()
+    mutate(patchLocal({ section }), () =>
+      supabase.from('entries').update({ section }).eq('id', entry.id),
+    )
   }
 
   const rendered = renderEntryContent(entry.content, profiles, {

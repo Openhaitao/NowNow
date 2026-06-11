@@ -43,7 +43,7 @@ function SortableRow({ entry, draggable, children }) {
   )
 }
 
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, onChanged }) {
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, mutate }) {
   const [draft, setDraft] = useState('')
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
@@ -76,27 +76,28 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
   )
 
-  async function onDragEnd({ active: a, over }) {
+  function onDragEnd({ active: a, over }) {
     if (!over || a.id === over.id) return
     const from = active.findIndex((e) => e.id === a.id)
     const to = active.findIndex((e) => e.id === over.id)
     if (from === -1 || to === -1) return
     // 移除自己后，落点的前后邻居决定新 position（取均值，浮点数永远插得进）
     const rest = active.filter((e) => e.id !== a.id)
-    const insertAt = from < to ? to : to // over 的索引即落点
-    const prev = rest[insertAt - 1] || null
-    const next = rest[insertAt] || null
+    const prev = rest[to - 1] || null
+    const next = rest[to] || null
     let pos
     if (prev && next) pos = (prev.position + next.position) / 2
     else if (prev) pos = prev.position + 1
     else if (next) pos = next.position - 1
     else pos = 0
-    await supabase.from('entries').update({ position: pos }).eq('id', a.id)
-    onChanged()
+    mutate(
+      (list) => list.map((e) => (e.id === a.id ? { ...e, position: pos } : e)),
+      () => supabase.from('entries').update({ position: pos }).eq('id', a.id),
+    )
   }
 
-  // 幽灵输入行：回车即存。默认备忘；行首 [] = 目标。新条目落区底。
-  async function add() {
+  // 幽灵输入行：回车即存（乐观插入，行立即出现）。默认备忘；行首 [] = 目标。新条目落区底。
+  function add() {
     let content = draft.trim()
     if (!content) return
     let isGoal = false
@@ -105,6 +106,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       content = content.slice(2).trim()
       if (!content) return
     }
+    setDraft('')
     const maxPos = Math.max(0, ...active.map((x) => x.position), ...closed.map((x) => x.position))
     const row = {
       owner: me.id,
@@ -115,19 +117,37 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       position: maxPos + 1,
     }
     if (hasAnchor) row.anchor = offset === 0 ? fmtDate(new Date()) : fmtDate(range.start)
-    const { data, error } = await supabase.from('entries').insert(row).select().single()
-    if (!error && data) await syncMentions(data.id, content, profiles, me.id)
-    setDraft('')
-    onChanged()
+    const temp = {
+      ...row,
+      id: `tmp-${Date.now()}`,
+      status: 'open',
+      is_private: false,
+      source_entry: null,
+      anchor: row.anchor ?? null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    mutate(
+      (list) => [...list, temp],
+      async () => {
+        const { data, error } = await supabase.from('entries').insert(row).select().single()
+        if (!error && data) await syncMentions(data.id, content, profiles, me.id)
+      },
+    )
   }
 
   // 上一周期的未完成目标一键挪过来（手动，系统不自动滚动）
-  async function carryOver() {
+  function carryOver() {
     const today = fmtDate(new Date())
-    for (const e of prevUnfinished) {
-      await supabase.from('entries').update({ anchor: today }).eq('id', e.id)
-    }
-    onChanged()
+    const ids = prevUnfinished.map((e) => e.id)
+    mutate(
+      (list) => list.map((e) => (ids.includes(e.id) ? { ...e, anchor: today } : e)),
+      async () => {
+        for (const id of ids) {
+          await supabase.from('entries').update({ anchor: today }).eq('id', id)
+        }
+      },
+    )
   }
 
   return (
@@ -179,7 +199,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         <SortableContext items={active.map((e) => e.id)} strategy={verticalListSortingStrategy}>
           {active.map((e) => (
             <SortableRow key={e.id} entry={e} draggable={isMyPage && offset === 0}>
-              <EntryRow entry={e} me={me} profiles={profiles} allEntries={allEntries} onChanged={onChanged} />
+              <EntryRow entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} />
             </SortableRow>
           ))}
         </SortableContext>
@@ -209,7 +229,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       )}
       {showClosed &&
         closed.map((e) => (
-          <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} onChanged={onChanged} />
+          <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} />
         ))}
       {!isMyPage && active.length === 0 && closed.length === 0 && (
         <p className="py-1 text-stone-200">—</p>
