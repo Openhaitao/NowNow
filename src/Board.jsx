@@ -321,16 +321,16 @@ export default function Board({ session }) {
           <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg" />
           <span className="truncate">{me.display_name}</span>
         </div>
-        {/* flomo 式三格统计：数字行与右侧输入框平齐 */}
-        <div className="mb-4 mt-5 grid grid-cols-3">
+        {/* flomo 式三格统计：左中右铺开（首格贴左、末格贴右），数字行与右侧输入框平齐 */}
+        <div className="mb-4 mt-5 flex justify-between px-2.5">
           {[
-            ['today', '今日'],
-            ['week', '本周'],
-            ['done', '已完成'],
-          ].map(([k, label]) => (
-            <div key={k} className="flex flex-col items-center">
+            ['today', '今日', 'items-start'],
+            ['week', '本周', 'items-center'],
+            ['done', '已完成', 'items-end'],
+          ].map(([k, label, align]) => (
+            <div key={k} className={`flex flex-col ${align}`}>
               <div className="text-[24px] font-bold leading-tight">{stats[k]}</div>
-              <div className="mt-0.5 text-xs text-stone-400">{label}</div>
+              <div className="mt-0.5 text-xs text-stone-300">{label}</div>
             </div>
           ))}
         </div>
