@@ -9,6 +9,7 @@ export default function MentionInput({
   onBlur,
   onEscape,
   onEmptyBackspace,
+  onTab,
   placeholder,
   profiles,
   autoFocus,
@@ -71,6 +72,11 @@ export default function MentionInput({
     }
     if (e.key === 'Escape') {
       onEscape?.()
+      return
+    }
+    if (e.key === 'Tab' && onTab) {
+      e.preventDefault()
+      onTab()
       return
     }
     // 删空了再按一下退格 = 删掉这条、跳回上一条（block 编辑器行为）
