@@ -76,24 +76,26 @@ function Avatar({ p, size = 'h-[22px] w-[22px] text-[11px]', highlight }) {
   )
 }
 
-export default function Board({ session }) {
-  const user = session.user
-  const [profiles, setProfiles] = useState([])
+export default function Board({ session, demo }) {
+  const user = demo ? { id: demo.me.id } : session.user
+  const [profiles, setProfiles] = useState(demo ? demo.profiles : [])
   const [needSetup, setNeedSetup] = useState(false)
   const [pageUserId, setPageUserId] = useState(null)
-  const [allEntries, setAllEntries] = useState([])
-  const [mentions, setMentions] = useState([])
+  const [allEntries, setAllEntries] = useState(demo ? demo.entries : [])
+  const [mentions, setMentions] = useState(demo ? demo.mentions : [])
   const [lastViewed, setLastViewed] = useState(loadLastViewed)
 
   const me = profiles.find((p) => p.id === user.id) || null
 
   const loadProfiles = useCallback(async () => {
+    if (demo) return
     const { data } = await supabase.from('profiles').select('*').order('handle')
     setProfiles(data || [])
     setNeedSetup(!(data || []).some((p) => p.id === user.id))
-  }, [user.id])
+  }, [user.id, demo])
 
   const loadData = useCallback(async () => {
+    if (demo) return
     const [{ data: es }, { data: ms }] = await Promise.all([
       supabase.from('entries').select('*'),
       supabase
@@ -104,7 +106,7 @@ export default function Board({ session }) {
     ])
     setAllEntries(es || [])
     setMentions(ms || [])
-  }, [user.id])
+  }, [user.id, demo])
 
   useEffect(() => { loadProfiles() }, [loadProfiles])
   useEffect(() => { loadData() }, [loadData])
@@ -112,13 +114,14 @@ export default function Board({ session }) {
 
   // Realtime：库一变就重拉（两三个人的量级，重拉最简单可靠）
   useEffect(() => {
+    if (demo) return
     const ch = supabase
       .channel('nownow')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, loadData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mentions' }, loadData)
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [loadData])
+  }, [loadData, demo])
 
   // 切到某人页面 = 记录"看过的时间"，红点据此熄灭
   const viewPage = useCallback((pid) => {
@@ -150,6 +153,12 @@ export default function Board({ session }) {
 
   return (
     <div className="flex min-h-screen">
+      {demo && (
+        <div className="fixed inset-x-0 top-0 z-50 bg-amber-100 py-1 text-center text-xs text-amber-800">
+          🐰 演示模式 · 数据是假的，点了不保存 ·{' '}
+          <a href="/" className="underline">去登录用真的</a>
+        </div>
+      )}
       {/* 左栏：人员列表（桌面） */}
       <aside className="hidden w-44 shrink-0 flex-col border-r border-stone-100 bg-stone-50/60 px-2.5 py-4 md:flex">
         <div className="mb-3 flex items-center gap-1.5 px-2 text-[13px] font-semibold">
