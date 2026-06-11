@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SendHorizontal } from 'lucide-react'
+import { Pilcrow, SendHorizontal, Square } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { fmtDate } from '../lib/period'
@@ -87,9 +87,10 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
           type="button"
           onClick={() => setIsGoal((v) => !v)}
           title={isGoal ? '目标（带完成框）' : '备忘（一段话）'}
-          className="ml-1 rounded-full px-2 py-0.5 text-xs text-stone-400 hover:bg-stone-100"
+          className="ml-1 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-stone-400 hover:bg-stone-100"
         >
-          {isGoal ? '☐ 目标' : '¶ 备忘'}
+          {isGoal ? <Square size={11} /> : <Pilcrow size={11} />}
+          {isGoal ? '目标' : '备忘'}
         </button>
         <button
           type="button"

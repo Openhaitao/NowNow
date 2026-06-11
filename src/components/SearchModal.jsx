@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Lock, Search } from 'lucide-react'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
@@ -61,7 +61,7 @@ export default function SearchModal({ open, onClose, allEntries, profiles, onJum
                 <span className="mt-0.5 block text-[11.5px] text-stone-400">
                   {owner?.display_name} · {SECTION_LABELS[e.section]}
                   {e.anchor ? ` · ${e.anchor}` : ''}
-                  {e.is_private ? ' · 🔒' : ''}
+                  {e.is_private && <Lock size={10} className="ml-1 inline -translate-y-px" />}
                 </span>
               </button>
             )

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Download, LogOut } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
@@ -84,16 +85,16 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
         </button>
 
         <div className="mt-5 border-t border-stone-100 pt-4">
-          <button onClick={exportData} className="text-[13px] text-stone-500 hover:text-stone-700">
-            ⬇️ 导出我的数据（Markdown）
+          <button onClick={exportData} className="flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700">
+            <Download size={13} /> 导出我的数据（Markdown）
           </button>
         </div>
         <div className="mt-2">
           <button
             onClick={() => supabase.auth.signOut()}
-            className="text-[13px] text-red-500 hover:text-red-700"
+            className="flex items-center gap-1.5 text-[13px] text-red-500 hover:text-red-700"
           >
-            退出登录
+            <LogOut size={13} /> 退出登录
           </button>
         </div>
       </div>

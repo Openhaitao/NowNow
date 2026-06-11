@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Bell, LayoutList, Search, Settings } from 'lucide-react'
+import { Bell, CalendarDays, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
@@ -226,6 +226,13 @@ export default function Board({ session }) {
     if (me) document.title = `${me.display_name} | NowNow`
   }, [me])
 
+  // 桌面端打开即可打字（手机不自动弹键盘）
+  useEffect(() => {
+    if (loaded && me && window.innerWidth >= 768) {
+      document.getElementById('quick-capture')?.focus()
+    }
+  }, [loaded, me?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [view, setView] = useState('paper') // paper | notifications
 
@@ -415,7 +422,7 @@ export default function Board({ session }) {
                     className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[15px] font-semibold text-stone-900 hover:bg-stone-100"
                     title="点击回看任何一天"
                   >
-                    📅 {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
+                    <CalendarDays size={16} /> {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
                     {'日一二三四五六'[(baseDate || new Date()).getDay()]}
                     {isLive ? ' · 今天' : ''}
                   </button>

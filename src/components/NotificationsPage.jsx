@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react'
+import { AlarmClock, ArrowLeft, Bell, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import Inbox from './Inbox'
 
@@ -29,8 +29,8 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
 
       {dueMine.length > 0 && (
         <div className="mt-5 rounded-xl bg-red-50 px-4 py-3">
-          <div className="mb-1.5 text-xs font-medium text-red-700">
-            ⏰ 到期 · {dueMine.length} 条今天到期或已过期
+          <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-red-700">
+            <AlarmClock size={13} /> 到期 · {dueMine.length} 条今天到期或已过期
           </div>
           {dueMine.map((e) => (
             <button
@@ -49,8 +49,8 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
 
       {resolvedMine.length > 0 && (
         <div className="mt-5 rounded-xl bg-amber-50 px-4 py-3">
-          <div className="mb-1.5 text-xs font-medium text-amber-700">
-            ✅ 已解决 · {resolvedMine.length} 条等你验收关闭
+          <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-amber-700">
+            <CheckCircle2 size={13} /> 已解决 · {resolvedMine.length} 条等你验收关闭
           </div>
           {resolvedMine.map((e) => (
             <div key={e.id} className="flex items-center gap-2 py-1 text-[13.5px] text-amber-900">
@@ -71,8 +71,8 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
         </div>
       )}
 
-      <button onClick={onBack} className="mt-6 text-sm text-stone-400 hover:text-stone-600">
-        ← 回到我的纸
+      <button onClick={onBack} className="mt-6 flex items-center gap-1 text-sm text-stone-400 hover:text-stone-600">
+        <ArrowLeft size={14} /> 回到我的纸
       </button>
     </div>
   )

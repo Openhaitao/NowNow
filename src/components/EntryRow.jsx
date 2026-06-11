@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { CalendarArrowUp, Eye, Lock, MoveRight, Pencil, Pilcrow, Square, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { renderEntryContent } from '../lib/render'
@@ -260,7 +261,9 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             setEditing(true)
           }}
         >
-          {entry.is_private && <span title="仅自己可见">🔒 </span>}
+          {entry.is_private && (
+            <Lock size={13} className="mr-1 inline -translate-y-px text-stone-400" title="仅自己可见" />
+          )}
           {rendered}
         </span>
       )}
@@ -343,32 +346,34 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             style={{ left: menu.x, top: menu.y }}
           >
             <button
-              className="block w-full px-3 py-1.5 text-left hover:bg-stone-50"
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-stone-50"
               onClick={() => { setMenu(null); setText(entry.content); setEditing(true) }}
             >
-              ✏️ 编辑
+              <Pencil size={13} /> 编辑
             </button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-stone-50" onClick={togglePrivate}>
-              {entry.is_private ? '👁 设为公开' : '🔒 仅自己可见'}
+            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-stone-50" onClick={togglePrivate}>
+              {entry.is_private ? <Eye size={13} /> : <Lock size={13} />}
+              {entry.is_private ? '设为公开' : '仅自己可见'}
             </button>
-            <button className="block w-full px-3 py-1.5 text-left hover:bg-stone-50" onClick={toggleGoal}>
-              {entry.is_goal ? '¶ 转为备忘' : '☐ 转为目标'}
+            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-stone-50" onClick={toggleGoal}>
+              {entry.is_goal ? <Pilcrow size={13} /> : <Square size={13} />}
+              {entry.is_goal ? '转为备忘' : '转为目标'}
             </button>
             {canMoveToToday && (
-              <button className="block w-full px-3 py-1.5 text-left text-amber-700 hover:bg-amber-50" onClick={moveToToday}>
-                ⏩ 挪到今天
+              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-amber-700 hover:bg-amber-50" onClick={moveToToday}>
+                <CalendarArrowUp size={13} /> 挪到今天
               </button>
             )}
             {Object.keys(SECTION_LABELS)
               .filter((s) => s !== entry.section)
               .map((s) => (
-                <button key={s} className="block w-full px-3 py-1.5 text-left hover:bg-stone-50" onClick={() => moveTo(s)}>
-                  → 移到{SECTION_LABELS[s]}
+                <button key={s} className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-stone-50" onClick={() => moveTo(s)}>
+                  <MoveRight size={13} /> 移到{SECTION_LABELS[s]}
                 </button>
               ))}
             {isCreator && (
-              <button className="block w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50" onClick={remove}>
-                删除
+              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-600 hover:bg-red-50" onClick={remove}>
+                <Trash2 size={13} /> 删除
               </button>
             )}
           </div>

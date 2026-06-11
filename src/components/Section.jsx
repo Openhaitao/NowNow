@@ -9,6 +9,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { ChevronDown, ChevronLeft, ChevronRight, Pilcrow, Square } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { fmtDate, inPeriod, periodRange } from '../lib/period'
@@ -32,7 +33,7 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, ghostId
         title={isGoal ? '目标（Tab 或点击转备忘）' : '备忘（Tab 或点击转目标）'}
         className="mt-[3px] flex h-[17px] w-[15px] shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
       >
-        {isGoal ? '☐' : '¶'}
+        {isGoal ? <Square size={13} /> : <Pilcrow size={13} />}
       </button>
       <MentionInput
         value={val}
@@ -316,18 +317,18 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/head:opacity-100">
             <button
               onClick={() => setOffset((o) => o - 1)}
-              className="rounded px-1 text-xs text-stone-300 hover:bg-stone-100 hover:text-stone-500"
+              className="rounded px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500"
               title="往回看"
             >
-              ◀
+              <ChevronLeft size={13} />
             </button>
             <button
               onClick={() => setOffset((o) => o + 1)}
               disabled={offset >= 0}
-              className="rounded px-1 text-xs text-stone-300 hover:bg-stone-100 hover:text-stone-500 disabled:opacity-30"
+              className="rounded px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500 disabled:opacity-30"
               title="往后翻"
             >
-              ▶
+              <ChevronRight size={13} />
             </button>
           </span>
         )}
@@ -420,9 +421,9 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       {closed.length > 0 && (
         <button
           onClick={() => setShowClosed((v) => !v)}
-          className="mt-0.5 text-xs text-stone-300 hover:text-stone-500"
+          className="mt-0.5 flex items-center gap-0.5 text-xs text-stone-300 hover:text-stone-500"
         >
-          {showClosed ? '▾' : '▸'} 已完成 {closed.length}
+          {showClosed ? <ChevronDown size={12} /> : <ChevronRight size={12} />} 已完成 {closed.length}
         </button>
       )}
       {showClosed &&

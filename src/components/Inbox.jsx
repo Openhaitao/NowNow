@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronDown, ChevronUp, Inbox as InboxIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTIONS = [
@@ -21,8 +22,8 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
 
   return (
     <div className="mt-5 rounded-xl bg-blue-50 px-4 py-3">
-      <div className="mb-1.5 text-xs font-medium text-blue-700">
-        📥 @我的 · {mentions.length} 条待认领
+      <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-blue-700">
+        <InboxIcon size={13} /> @我的 · {mentions.length} 条待认领
       </div>
       {mentions.map((m) => {
         const from = profiles.find((p) => p.id === m.entries?.creator)
@@ -41,7 +42,7 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
                   (expanded ? 'bg-blue-600 text-white' : 'bg-white text-blue-700 hover:bg-blue-600 hover:text-white')
                 }
               >
-                认领 {expanded ? '▴' : '▾'}
+                认领 {expanded ? <ChevronUp size={12} className="inline" /> : <ChevronDown size={12} className="inline" />}
               </button>
             </div>
             {expanded && (
