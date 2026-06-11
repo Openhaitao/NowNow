@@ -62,7 +62,7 @@ function SetupCard({ user, onDone }) {
             className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[15px] text-stone-900 outline-none focus:border-stone-400"
           />
         </label>
-        <button type="submit" className="mt-5 w-full rounded-lg bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700">
+        <button type="submit" className="mt-5 w-full rounded-lg bg-blue-600 py-2.5 text-[15px] text-white hover:bg-blue-700">
           进入
         </button>
         {err && <p className="mt-2 text-sm text-red-600">{err}</p>}

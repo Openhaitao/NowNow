@@ -41,7 +41,7 @@ export default function Login() {
             />
             <button
               type="submit"
-              className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700"
+              className="rounded-lg bg-blue-600 py-2.5 text-[15px] text-white hover:bg-blue-700"
             >
               发送登录链接
             </button>

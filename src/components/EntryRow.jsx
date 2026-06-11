@@ -227,7 +227,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           checked={closed || closing}
           disabled={!isMine || closing}
           onChange={toggleDone}
-          className="mt-[5px] h-[15px] w-[15px] shrink-0 accent-stone-700"
+          className="mt-[5px] h-[15px] w-[15px] shrink-0 accent-blue-600"
           title={entry.source_entry ? '完成（会通知发起人）' : '完成'}
         />
       ) : (
