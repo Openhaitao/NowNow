@@ -253,15 +253,20 @@ export default function Board({ session }) {
 
   const notifCount = mentions.length + resolvedMine.length + dueMine.length
 
-  // flomo 式三格：今日 / 本周 / 本月 当前周期的未完成目标数
+  // 三格：今日未完成 / 本周未完成（今天还要干啥）+ 累计已完成（成就感，flomo 的"863 笔记"对应物）
   const stats = useMemo(() => {
-    if (!me) return { today: 0, week: 0, month: 0 }
-    const mine = allEntries.filter((e) => e.owner === me.id && e.is_goal && e.status !== 'closed')
+    if (!me) return { today: 0, week: 0, done: 0 }
+    const mineGoals = allEntries.filter((e) => e.owner === me.id && e.is_goal)
+    const open = mineGoals.filter((e) => e.status !== 'closed')
     const count = (key) => {
       const range = periodRange(key, 0)
-      return mine.filter((e) => e.section === key && inPeriod(e.anchor ?? null, range)).length
+      return open.filter((e) => e.section === key && inPeriod(e.anchor ?? null, range)).length
     }
-    return { today: count('today'), week: count('week'), month: count('month') }
+    return {
+      today: count('today'),
+      week: count('week'),
+      done: mineGoals.filter((e) => e.status === 'closed').length,
+    }
   }, [me, allEntries])
 
   // 搜索跳转：纸拨回那条所在的日期 + 高亮闪烁定位
@@ -316,16 +321,16 @@ export default function Board({ session }) {
           <img src="/logo.png" alt="" className="h-6 w-6 rounded" />
           <span className="truncate">{me.display_name}</span>
         </div>
-        {/* flomo 式三格统计：各周期未完成目标数（和名字同一条左缘线，flomo 同款左对齐） */}
-        <div className="mb-4 mt-4 grid grid-cols-3 px-2.5" title="未完成的目标数">
+        {/* flomo 式三格统计：每格数字+标签整体居中、等分三列 */}
+        <div className="mb-4 mt-4 grid grid-cols-3">
           {[
             ['today', '今日'],
             ['week', '本周'],
-            ['month', '本月'],
+            ['done', '已完成'],
           ].map(([k, label]) => (
-            <div key={k} className="text-left">
-              <div className="text-[22px] font-bold leading-tight">{stats[k]}</div>
-              <div className="mt-0.5 text-[11px] text-stone-400">{label}</div>
+            <div key={k} className="flex flex-col items-center">
+              <div className="text-[24px] font-bold leading-tight">{stats[k]}</div>
+              <div className="mt-0.5 text-xs text-stone-400">{label}</div>
             </div>
           ))}
         </div>
