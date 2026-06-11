@@ -7,6 +7,22 @@ const SECTIONS = [
   { key: 'month', label: '本月' },
 ]
 
+// @匹配按已知 handle 精确比对（支持中文名，不靠"单词边界"——中文没有空格分词）
+function findMentioned(content, profiles, meId) {
+  const lc = content.toLowerCase()
+  return profiles.filter((p) => p.id !== meId && lc.includes('@' + p.handle))
+}
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function mentionSplitRegex(profiles) {
+  if (!profiles.length) return null
+  const alt = profiles.map((p) => escapeRegExp('@' + p.handle)).join('|')
+  return new RegExp(`(${alt})`, 'gi')
+}
+
 // ---------- 登录 ----------
 
 function Login() {
@@ -58,10 +74,15 @@ function ProfileSetup({ user, onDone }) {
   async function save(e) {
     e.preventDefault()
     setErr('')
+    const clean = handle.trim().replace(/^@/, '')
+    if (!clean || /\s/.test(clean)) {
+      setErr('@名不能为空或带空格')
+      return
+    }
     const { error } = await supabase.from('profiles').insert({
       id: user.id,
-      handle: handle.toLowerCase(),
-      display_name: displayName || handle,
+      handle: clean.toLowerCase(),
+      display_name: displayName || clean,
     })
     if (error) setErr(error.message)
     else onDone()
@@ -72,8 +93,8 @@ function ProfileSetup({ user, onDone }) {
       <h2>第一次来，起个名字</h2>
       <form onSubmit={save}>
         <label>
-          @名（别人这样喊你，英文/拼音）
-          <input value={handle} onChange={(e) => setHandle(e.target.value)} required pattern="[a-zA-Z0-9_]+" />
+          @名（别人这样喊你，中文/英文都行，如 海涛）
+          <input value={handle} onChange={(e) => setHandle(e.target.value)} required />
         </label>
         <label>
           显示名
@@ -97,8 +118,7 @@ function EntryRow({ entry, me, profiles, onChanged }) {
   const resolved = entry.status === 'resolved'
 
   async function syncMentions(entryId, content) {
-    const handles = [...content.matchAll(/@([a-zA-Z0-9_]+)/g)].map((m) => m[1].toLowerCase())
-    const targets = profiles.filter((p) => handles.includes(p.handle) && p.id !== me.id)
+    const targets = findMentioned(content, profiles, me.id)
     for (const t of targets) {
       await supabase.from('mentions').upsert(
         { entry_id: entryId, mentioned: t.id },
@@ -142,9 +162,12 @@ function EntryRow({ entry, me, profiles, onChanged }) {
     onChanged()
   }
 
-  const renderedContent = entry.content.split(/(@[a-zA-Z0-9_]+)/g).map((part, i) =>
-    part.startsWith('@') ? <span key={i} className="mention">{part}</span> : part,
-  )
+  const splitRe = mentionSplitRegex(profiles)
+  const renderedContent = splitRe
+    ? entry.content.split(splitRe).map((part, i) =>
+        part && part.startsWith('@') ? <span key={i} className="mention">{part}</span> : part,
+      )
+    : entry.content
 
   return (
     <div className={`entry ${closed ? 'closed' : ''} ${resolved ? 'resolved' : ''}`}>
@@ -227,8 +250,7 @@ function Section({ sec, entries, me, pageUser, profiles, onChanged }) {
       .select()
       .single()
     if (!error && data) {
-      const handles = [...content.matchAll(/@([a-zA-Z0-9_]+)/g)].map((m) => m[1].toLowerCase())
-      const targets = profiles.filter((p) => handles.includes(p.handle) && p.id !== me.id)
+      const targets = findMentioned(content, profiles, me.id)
       for (const t of targets) {
         await supabase.from('mentions').insert({ entry_id: data.id, mentioned: t.id })
       }
