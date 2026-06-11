@@ -315,14 +315,14 @@ export default function Board({ session }) {
   return (
     <div className="mx-auto flex h-screen max-w-4xl overflow-hidden">
       {/* 左栏：人员列表（固定不随内容滚动） */}
-      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-y-auto px-2 py-5 md:flex">
-        {/* 顶部：当前用户 */}
-        <div className="flex items-center gap-2 px-2.5 text-[15px] font-semibold">
-          <img src="/logo.png" alt="" className="h-6 w-6 rounded" />
+      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-y-auto px-2 pb-5 pt-3 md:flex">
+        {/* 顶部：当前用户（和右侧日期行同一水平线、同级分量） */}
+        <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold">
+          <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg" />
           <span className="truncate">{me.display_name}</span>
         </div>
-        {/* flomo 式三格统计：每格数字+标签整体居中、等分三列 */}
-        <div className="mb-4 mt-4 grid grid-cols-3">
+        {/* flomo 式三格统计：数字行与右侧输入框平齐 */}
+        <div className="mb-4 mt-5 grid grid-cols-3">
           {[
             ['today', '今日'],
             ['week', '本周'],
