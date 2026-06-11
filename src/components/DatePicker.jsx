@@ -49,9 +49,9 @@ export default function DatePicker({ value, onSelect, onClose, onDelete }) {
                 className={
                   'mx-auto flex h-7 w-7 items-center justify-center rounded-full text-[12.5px] ' +
                   (sameDay(d, value || today)
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-stone-900 text-white'
                     : sameDay(d, today)
-                      ? 'border border-blue-600 text-blue-700'
+                      ? 'border border-stone-900 text-stone-900'
                       : 'text-stone-600 hover:bg-stone-100')
                 }
               >

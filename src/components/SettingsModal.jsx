@@ -79,7 +79,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
         {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
         <button
           onClick={save}
-          className="mt-3 w-full rounded-lg bg-blue-600 py-2 text-[14px] text-white hover:bg-blue-700"
+          className="mt-3 w-full rounded-lg bg-stone-900 py-2 text-[14px] text-white hover:bg-stone-700"
         >
           {saved ? '已保存 ✓' : '保存'}
         </button>

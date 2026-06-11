@@ -77,7 +77,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
             onClick={() => setSection(s.key)}
             className={
               'rounded-full px-2.5 py-0.5 text-xs ' +
-              (section === s.key ? 'bg-blue-600 text-white' : 'text-stone-400 hover:bg-stone-100')
+              (section === s.key ? 'bg-stone-900 text-white' : 'text-stone-400 hover:bg-stone-100')
             }
           >
             {s.label}
@@ -97,7 +97,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
           onClick={submit}
           disabled={!draft.trim()}
           title="存（回车，或 ⌘/Ctrl+回车）"
-          className="ml-auto flex h-7 w-10 items-center justify-center rounded-md bg-blue-600 text-white disabled:opacity-30"
+          className="ml-auto flex h-7 w-10 items-center justify-center rounded-md bg-stone-900 text-white disabled:opacity-30"
         >
           <SendHorizontal size={15} />
         </button>
