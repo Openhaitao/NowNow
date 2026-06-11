@@ -388,7 +388,8 @@ export default function Board({ session }) {
             <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
           )}
         </div>
-        <div className="paper-scroll flex-1 overflow-y-auto pb-24 pr-1">
+        {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
+        <div className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-24 pl-6 pr-1">
           {view === 'notifications' ? (
             <NotificationsPage
               mentions={mentions}

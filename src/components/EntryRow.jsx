@@ -103,7 +103,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate }) {
       className={
         'entry-row group flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed ' +
         (closing ? 'closing ' : '') +
-        (closed || closing ? 'text-stone-300' : resolved ? 'rounded-md bg-blue-50/60 -mx-2 px-2' : '')
+        (closed || closing ? 'text-stone-300' : resolved ? 'rounded-md bg-blue-50/60 px-1.5 -ml-1.5' : '')
       }
       onContextMenu={(e) => {
         if (!isMine) return
