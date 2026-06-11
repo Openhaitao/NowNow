@@ -310,7 +310,7 @@ export default function Board({ session }) {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col px-5 md:px-6">
-        <div className="shrink-0 pt-3">
+        <div className="shrink-0 pb-4 pt-3">
           {/* flomo 式顶部搜索条（右侧，点开 ⌘K 弹窗） */}
           <div className="hidden justify-end md:flex">
             <button
