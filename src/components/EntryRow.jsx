@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { renderEntryContent } from '../lib/render'
@@ -6,11 +6,20 @@ import MentionInput from './MentionInput'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
   const [closing, setClosing] = useState(false) // 完成动画：先划线变灰，再沉底
+
+  // Section 让我进入编辑态（退格删条后跳回上一条）
+  useEffect(() => {
+    if (forceEdit) {
+      setText(entry.content)
+      setEditing(true)
+      onEditHandled?.()
+    }
+  }, [forceEdit]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isMine = entry.owner === me.id
   const isCreator = entry.creator === me.id
@@ -131,6 +140,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate }) {
           onSubmit={saveEdit}
           onBlur={saveEdit}
           onEscape={() => { setText(entry.content); setEditing(false) }}
+          onEmptyBackspace={onDeleteEmpty ? () => { setEditing(false); onDeleteEmpty(entry) } : undefined}
           profiles={profiles}
           autoFocus
         />

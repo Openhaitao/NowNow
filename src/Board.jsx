@@ -232,14 +232,14 @@ export default function Board({ session }) {
           <img src="/logo.png" alt="" className="h-6 w-6 rounded" />
           <span className="truncate">{me.display_name}</span>
         </div>
-        {/* flomo 式三格统计：各周期未完成目标数 */}
-        <div className="mb-4 mt-4 grid grid-cols-3 gap-1 px-2.5 text-center" title="未完成的目标数">
+        {/* flomo 式三格统计：各周期未完成目标数（和名字同一条左缘线，flomo 同款左对齐） */}
+        <div className="mb-4 mt-4 grid grid-cols-3 px-2.5" title="未完成的目标数">
           {[
             ['today', '今日'],
             ['week', '本周'],
             ['month', '本月'],
           ].map(([k, label]) => (
-            <div key={k}>
+            <div key={k} className="text-left">
               <div className="text-[22px] font-bold leading-tight">{stats[k]}</div>
               <div className="mt-0.5 text-[11px] text-stone-400">{label}</div>
             </div>

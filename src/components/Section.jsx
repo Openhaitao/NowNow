@@ -49,6 +49,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   const [draft, setDraft] = useState('')
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
+  const [editId, setEditId] = useState(null) // 退格删条后让上一条进入编辑态
 
   const range = periodRange(sec.key, offset, baseDate)
 
@@ -140,6 +141,17 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     )
   }
 
+  // 退格删空一条 → 删掉它，光标跳回上一条末尾（block 编辑器行为）
+  function deleteEmpty(entry) {
+    const idx = active.findIndex((e) => e.id === entry.id)
+    const prev = idx > 0 ? active[idx - 1] : null
+    mutate(
+      (list) => list.filter((e) => e.id !== entry.id),
+      () => supabase.from('entries').delete().eq('id', entry.id),
+    )
+    if (prev) setEditId(prev.id)
+  }
+
   // 上一周期的未完成目标一键挪过来（手动，系统不自动滚动）
   function carryOver() {
     const today = fmtDate(new Date())
@@ -203,7 +215,16 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         <SortableContext items={active.map((e) => e.id)} strategy={verticalListSortingStrategy}>
           {active.map((e) => (
             <SortableRow key={e.id} entry={e} draggable={isMyPage && (allTime || range.isCurrent)}>
-              <EntryRow entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} />
+              <EntryRow
+                entry={e}
+                me={me}
+                profiles={profiles}
+                allEntries={allEntries}
+                mutate={mutate}
+                forceEdit={editId === e.id}
+                onEditHandled={() => setEditId(null)}
+                onDeleteEmpty={isMyPage ? deleteEmpty : undefined}
+              />
             </SortableRow>
           ))}
         </SortableContext>

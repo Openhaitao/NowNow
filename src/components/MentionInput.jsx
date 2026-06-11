@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // 带 @人选择器的输入框：输入 @ 弹出人员列表，选中后以 @handle 嵌入文本
 export default function MentionInput({
@@ -8,6 +8,7 @@ export default function MentionInput({
   onSubmit,
   onBlur,
   onEscape,
+  onEmptyBackspace,
   placeholder,
   profiles,
   autoFocus,
@@ -16,6 +17,15 @@ export default function MentionInput({
   const ref = useRef(null)
   const [picker, setPicker] = useState(null) // {start, query} | null
   const [active, setActive] = useState(0)
+
+  // 自动聚焦时光标放到末尾（block 编辑器的习惯）
+  useEffect(() => {
+    if (autoFocus && ref.current) {
+      const len = ref.current.value.length
+      ref.current.setSelectionRange(len, len)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function detectPicker(text, caret) {
     const at = text.lastIndexOf('@', caret - 1)
@@ -60,6 +70,12 @@ export default function MentionInput({
     }
     if (e.key === 'Escape') {
       onEscape?.()
+      return
+    }
+    // 删空了再按一下退格 = 删掉这条、跳回上一条（block 编辑器行为）
+    if (e.key === 'Backspace' && value === '' && onEmptyBackspace) {
+      e.preventDefault()
+      onEmptyBackspace()
       return
     }
     // 回车 或 ⌘/Ctrl+回车 都是确定（mac/win 通吃）；Shift+回车换行
