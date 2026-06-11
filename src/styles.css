@@ -18,8 +18,10 @@ body {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* 纸的内部滚动：细灰滚动条，贴着内容右缘（横向 padding 在外层，容器本身不带） */
+/* 纸的内部滚动：细灰滚动条，贴着内容右缘（横向 padding 在外层，容器本身不带）
+   scrollbar-gutter: stable —— macOS 悬浮滚动条出现/消失时不让内容晃动 */
 .paper-scroll {
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: #e7e5e4 transparent;
 }

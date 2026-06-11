@@ -315,11 +315,11 @@ export default function Board({ session }) {
           <div className="hidden justify-end md:flex">
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex w-44 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-[12.5px] text-stone-300 hover:border-stone-300"
+              className="flex w-64 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-[13px] text-stone-300 hover:border-stone-300"
             >
-              <Search size={13} />
+              <Search size={14} />
               搜索
-              <kbd className="ml-auto text-[10px]">⌘K</kbd>
+              <kbd className="ml-auto text-[11px]">⌘K</kbd>
             </button>
           </div>
           {view !== 'notifications' && !isMyPage && (
