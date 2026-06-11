@@ -20,7 +20,7 @@ const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到
 const SEC_ORDER = ['today', 'week', 'month']
 
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
-function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, ghostId }) {
+function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, ghostId }) {
   const [val, setVal] = useState(draft.initial || '')
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
@@ -53,6 +53,8 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, ghostId
         onBlur={() => (val.trim() ? onCommit(d, val, false) : onCancel(draft.key))}
         onEmptyBackspace={() => onCancelToPrev(draft)}
         onEscape={() => onCancelToPrev(draft)}
+        onArrowUp={() => onNav(d, val, -1)}
+        onArrowDown={() => onNav(d, val, 1)}
       />
     </div>
   )
@@ -252,6 +254,20 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     if (prev) setEditId(prev.id)
   }
 
+  // 草稿里按 ↑↓ = 这条默认创建完成，光标移到相邻条目
+  function draftNav(dr, val, dir) {
+    if (val.trim()) commitDraft(dr, val, false)
+    else cancelDraft(dr.key)
+    if (dir < 0) {
+      const prev = [...active].reverse().find((e) => e.position < dr.pos)
+      if (prev) setEditId(prev.id)
+    } else {
+      const next = active.find((e) => e.position > dr.pos)
+      if (next) setEditId(next.id)
+      else document.getElementById(`ghost-${sec.key}`)?.focus()
+    }
+  }
+
   // 草稿提交入库；andNext = 回车继续往下写
   function commitDraft(dr, content, andNext) {
     cancelDraft(dr.key)
@@ -384,6 +400,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                   onCommit={commitDraft}
                   onCancel={cancelDraft}
                   onCancelToPrev={cancelDraftToPrev}
+                  onNav={draftNav}
                   ghostId={`ghost-${sec.key}`}
                 />
               ),
