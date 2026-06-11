@@ -294,7 +294,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         )}
         {resolved && (
           <span className="rounded-full bg-blue-100 px-2 py-px text-xs text-blue-700">
-            已解决{isCreator ? ' · 等你关闭' : ''}
+            已解决
           </span>
         )}
         {resolved && isCreator && (
