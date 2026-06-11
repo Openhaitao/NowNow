@@ -13,6 +13,7 @@ export default function MentionInput({
   profiles,
   autoFocus,
   className,
+  rows = 1,
 }) {
   const ref = useRef(null)
   const [picker, setPicker] = useState(null) // {start, query} | null
@@ -90,7 +91,7 @@ export default function MentionInput({
       <textarea
         id={id}
         ref={ref}
-        rows={1}
+        rows={rows}
         value={value}
         autoFocus={autoFocus}
         placeholder={placeholder}

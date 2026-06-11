@@ -65,7 +65,8 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
         onChange={setDraft}
         onSubmit={submit}
         profiles={profiles}
-        placeholder="现在要做什么？@ 可以派人，回车即存（按 / 聚焦）"
+        rows={3}
+        placeholder="现在要做什么？@ 派人，回车存，Shift+回车换行（按 / 聚焦）"
         className="px-1 pt-0.5"
       />
       <div className="mt-2 flex items-center gap-1">
