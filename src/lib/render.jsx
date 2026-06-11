@@ -1,4 +1,31 @@
 import { mentionSplitRegex } from './mentions'
+import { DATE_TOKEN_RE, dateTokenState, resolveDateToken } from './dates'
+
+const DATE_CHIP_CLS = {
+  overdue: 'bg-red-100 text-red-700',
+  today: 'bg-amber-200 text-amber-900',
+  future: 'bg-amber-50 text-amber-700',
+}
+
+// 日期 token → 黄色 chip（过期红 / 今天深黄 / 未来浅黄）
+function renderDates(text, keyBase) {
+  return text.split(DATE_TOKEN_RE).map((part, i) => {
+    const k = `${keyBase}d${i}`
+    if (!part) return null
+    const state = dateTokenState(part) // 整段恰好是日期 token 才命中，普通文字返回 null
+    if (!state) return renderInline(part, k)
+    const d = resolveDateToken(part)
+    return (
+      <span
+        key={k}
+        title={d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : ''}
+        className={'mx-px rounded-full px-1.5 py-px text-[12px] ' + DATE_CHIP_CLS[state]}
+      >
+        {part}
+      </span>
+    )
+  })
+}
 
 // 行内 Markdown：**粗体** __下划线__ ~~删除线~~ `代码` *斜体*（doc M3 的最小集）
 const INLINE = /(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|`[^`]+`|\*[^*\s][^*]*\*)/g
@@ -43,7 +70,7 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe } 
         </span>
       )
     }
-    return renderInline(part, i)
+    return renderDates(part, i)
   })
 
   if (heading === 1) return <span className="text-[17px] font-bold">{nodes}</span>

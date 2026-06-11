@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bell, Settings } from 'lucide-react'
+import { Bell, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import Inbox from './components/Inbox'
 import QuickCapture from './components/QuickCapture'
+import SearchModal from './components/SearchModal'
 import Section from './components/Section'
 
 const SECTIONS = [
@@ -87,9 +88,16 @@ export default function Board({ session }) {
       .then(({ error }) => setHasAnchor(!error))
   }, [])
 
-  // 快捷键：/ 聚焦顶部捕捉框
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  // 快捷键：/ 聚焦捕捉框；⌘K / Ctrl+K 搜索（mac/win 通吃）
   useEffect(() => {
     const h = (e) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setSearchOpen((v) => !v)
+        return
+      }
       if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
         e.preventDefault()
         document.getElementById('quick-capture')?.focus()
@@ -223,8 +231,15 @@ export default function Board({ session }) {
             {hasNews(p) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
           </button>
         ))}
-        {/* 底部：通知（有内容才出现，不常驻）+ 设置 */}
+        {/* 底部：搜索 + 通知（有内容才出现，不常驻）+ 设置 */}
         <div className="mt-auto">
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+          >
+            <Search size={14} /> 搜索
+            <kbd className="ml-auto text-[10px] text-stone-300">⌘K</kbd>
+          </button>
           {notifCount > 0 && (
             <div className="relative">
               <button
@@ -313,6 +328,9 @@ export default function Board({ session }) {
               </button>
             ))}
           </div>
+          <button onClick={() => setSearchOpen(true)} className="text-stone-400">
+            <Search size={16} />
+          </button>
           <button onClick={() => supabase.auth.signOut()} className="text-xs text-stone-400">
             退出
           </button>
@@ -343,6 +361,13 @@ export default function Board({ session }) {
           ))}
         </div>
       </main>
+      <SearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        allEntries={allEntries}
+        profiles={profiles}
+        onJump={(e) => viewPage(e.owner)}
+      />
     </div>
   )
 }

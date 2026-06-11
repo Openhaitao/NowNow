@@ -1,0 +1,17 @@
+{
+  "name": "NowNow",
+  "short_name": "NowNow",
+  "description": "先是笔记，才是系统",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffefb",
+  "theme_color": "#fffefb",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
