@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { renderEntryContent } from '../lib/render'
@@ -34,18 +34,30 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   const patchLocal = (fields) => (list) =>
     list.map((e) => (e.id === entry.id ? { ...e, ...fields } : e))
 
-  // advance=true（回车确认）时跳到下一条继续编辑；blur 保存不跳
+  // 默认就存：打字停顿 600ms 自动落库（无"保存"动作）；回车只负责跳下一条
+  const saveTimer = useRef(null)
+  useEffect(() => () => clearTimeout(saveTimer.current), [])
+
+  function persist(v) {
+    const t = v.trim()
+    if (!t || t === entry.content) return
+    mutate(patchLocal({ content: t }), async () => {
+      await supabase.from('entries').update({ content: t }).eq('id', entry.id)
+      await syncMentions(entry.id, t, profiles, me.id)
+    })
+  }
+
+  function handleEditChange(v) {
+    setText(v)
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => persist(v), 600)
+  }
+
   function saveEdit(advance = false) {
+    clearTimeout(saveTimer.current)
+    persist(text)
     setEditing(false)
-    const t = text.trim()
-    if (t && t !== entry.content) {
-      mutate(patchLocal({ content: t }), async () => {
-        await supabase.from('entries').update({ content: t }).eq('id', entry.id)
-        await syncMentions(entry.id, t, profiles, me.id)
-      })
-    } else {
-      setText(entry.content)
-    }
+    if (!text.trim()) setText(entry.content)
     if (advance) onEditNext?.(entry)
   }
 
@@ -141,7 +153,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
       {editing && isMine ? (
         <MentionInput
           value={text}
-          onChange={setText}
+          onChange={handleEditChange}
           onSubmit={() => saveEdit(true)}
           onBlur={() => saveEdit(false)}
           onEscape={() => { setText(entry.content); setEditing(false) }}
