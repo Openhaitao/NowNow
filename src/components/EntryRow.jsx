@@ -6,11 +6,22 @@ import MentionInput from './MentionInput'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext }) {
+// 点击渲染文本时，算出点击处对应的字符偏移（md 标记符会有少量偏差，忍）
+function caretOffsetIn(container) {
+  const sel = window.getSelection()
+  if (!sel || !sel.anchorNode || !container.contains(sel.anchorNode)) return null
+  const range = sel.getRangeAt(0).cloneRange()
+  range.selectNodeContents(container)
+  range.setEnd(sel.anchorNode, sel.anchorOffset)
+  return range.toString().length
+}
+
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
   const [closing, setClosing] = useState(false) // 完成动画：先划线变灰，再沉底
+  const [clickCaret, setClickCaret] = useState(null)
 
   // Section 让我进入编辑态（退格删条后跳回上一条）
   useEffect(() => {
@@ -157,9 +168,10 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   return (
     <div
       className={
-        'entry-row group flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed ' +
+        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] text-[14.5px] leading-relaxed ' +
         (closing ? 'closing ' : '') +
-        (closed || closing ? 'text-stone-300' : resolved ? 'rounded-md bg-blue-50/60 px-1.5 -ml-1.5' : '')
+        (editing ? '' : 'hover:bg-stone-50 ') +
+        (closed || closing ? 'text-stone-300' : resolved ? 'bg-blue-50/60 px-1.5 -ml-1.5' : '')
       }
       onContextMenu={(e) => {
         if (!isMine) return
@@ -188,13 +200,24 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           onBlur={() => saveEdit(false)}
           onEscape={() => { setText(entry.content); setEditing(false) }}
           onEmptyBackspace={onDeleteEmpty ? () => { setEditing(false); onDeleteEmpty(entry) } : undefined}
+          onTab={() => mutate(patchLocal({ is_goal: !entry.is_goal }), () =>
+            supabase.from('entries').update({ is_goal: !entry.is_goal }).eq('id', entry.id),
+          )}
+          onArrowUp={onNavUp ? () => { saveEdit(false); onNavUp(entry) } : undefined}
+          onArrowDown={onNavDown ? () => { saveEdit(false); onNavDown(entry) } : undefined}
           profiles={profiles}
           autoFocus
+          initialCaret={clickCaret}
         />
       ) : (
         <span
           className={'min-w-0 flex-1 whitespace-pre-wrap ' + (closed || closing ? 'line-through' : '')}
-          onClick={() => isMine && !closed && (setText(entry.content), setEditing(true))}
+          onClick={(e) => {
+            if (!isMine || closed) return
+            setClickCaret(caretOffsetIn(e.currentTarget))
+            setText(entry.content)
+            setEditing(true)
+          }}
         >
           {entry.is_private && <span title="仅自己可见">🔒 </span>}
           {rendered}

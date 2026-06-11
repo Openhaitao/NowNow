@@ -10,21 +10,26 @@ export default function MentionInput({
   onEscape,
   onEmptyBackspace,
   onTab,
+  onArrowUp,
+  onArrowDown,
   placeholder,
   profiles,
   autoFocus,
   className,
   rows = 1,
+  initialCaret = null,
 }) {
   const ref = useRef(null)
   const [picker, setPicker] = useState(null) // {start, query} | null
   const [active, setActive] = useState(0)
 
-  // 自动聚焦时光标放到末尾（block 编辑器的习惯）
+  // 自动聚焦：光标落在点击处（没有就放末尾），并滚进视野
   useEffect(() => {
     if (autoFocus && ref.current) {
       const len = ref.current.value.length
-      ref.current.setSelectionRange(len, len)
+      const pos = initialCaret != null ? Math.min(initialCaret, len) : len
+      ref.current.setSelectionRange(pos, pos)
+      ref.current.scrollIntoView({ block: 'nearest' })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -77,6 +82,17 @@ export default function MentionInput({
     if (e.key === 'Tab' && onTab) {
       e.preventDefault()
       onTab()
+      return
+    }
+    // 第一行按 ↑ / 最后一行按 ↓ = 跳到上/下一条继续编辑
+    if (e.key === 'ArrowUp' && onArrowUp && !value.slice(0, e.target.selectionStart).includes('\n')) {
+      e.preventDefault()
+      onArrowUp()
+      return
+    }
+    if (e.key === 'ArrowDown' && onArrowDown && !value.slice(e.target.selectionEnd).includes('\n')) {
+      e.preventDefault()
+      onArrowDown()
       return
     }
     // 删空了再按一下退格 = 删掉这条、跳回上一条（block 编辑器行为）

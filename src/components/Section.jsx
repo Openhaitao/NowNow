@@ -181,6 +181,18 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     if (prev) setEditId(prev.id)
   }
 
+  // ↑↓ 在相邻条目间移动编辑光标
+  function navUp(entry) {
+    const idx = active.findIndex((e) => e.id === entry.id)
+    if (idx > 0) setEditId(active[idx - 1].id)
+  }
+  function navDown(entry) {
+    const idx = active.findIndex((e) => e.id === entry.id)
+    const next = active[idx + 1]
+    if (next) setEditId(next.id)
+    else document.getElementById(`ghost-${sec.key}`)?.focus()
+  }
+
   // 回车 = 在当前条目下方插一行本地草稿，立刻可打字（写了字才入库——零等待）
   function editNext(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
@@ -309,6 +321,8 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     onEditHandled={() => setEditId(null)}
                     onDeleteEmpty={isMyPage ? deleteEmpty : undefined}
                     onEditNext={isMyPage ? editNext : undefined}
+                    onNavUp={isMyPage ? navUp : undefined}
+                    onNavDown={isMyPage ? navDown : undefined}
                   />
                 </SortableRow>
               ) : (
