@@ -339,7 +339,7 @@ export default function Board({ session }) {
             onClick={() => setView(view === 'all' ? 'paper' : 'all')}
             className={
               'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
-              (view === 'all' ? 'bg-emerald-50 font-medium text-emerald-700' : 'text-stone-600 hover:bg-stone-100')
+              (view === 'all' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
             }
           >
             <LayoutList size={14} /> 全部目标
