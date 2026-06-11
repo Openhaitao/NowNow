@@ -209,9 +209,9 @@ export default function Board({ session }) {
   const isMyPage = pageUser.id === me.id
 
   return (
-    <div className="mx-auto flex h-screen max-w-3xl overflow-hidden">
+    <div className="mx-auto flex h-screen max-w-4xl overflow-hidden">
       {/* 左栏：人员列表（固定不随内容滚动） */}
-      <aside className="hidden h-full w-44 shrink-0 flex-col overflow-y-auto px-2 py-5 md:flex">
+      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-y-auto px-2 py-5 md:flex">
         {/* 顶部：当前用户 */}
         <div className="flex items-center gap-2 px-2.5 text-[15px] font-semibold">
           <img src="/logo.png" alt="" className="h-6 w-6 rounded" />
