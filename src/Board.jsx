@@ -7,7 +7,6 @@ import DatePicker from './components/DatePicker'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import QuickCapture from './components/QuickCapture'
-import SearchModal from './components/SearchModal'
 import Section from './components/Section'
 import SettingsModal from './components/SettingsModal'
 
@@ -92,7 +91,7 @@ export default function Board({ session }) {
       .then(({ error }) => setHasAnchor(!error))
   }, [])
 
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [query, setQuery] = useState('') // 顶部搜索：直接输入、就地过滤 todolist
   const [baseDate, setBaseDate] = useState(null) // null = 真实今天；设了 = 整张纸拨回那天
   const [dateOpen, setDateOpen] = useState(false)
   const [flashId, setFlashId] = useState(null) // 搜索跳转后高亮定位的条目
@@ -152,7 +151,7 @@ export default function Board({ session }) {
       const inText = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        setSearchOpen((v) => !v)
+        document.getElementById('search-input')?.focus()
         return
       }
       if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !inText) {
@@ -407,7 +406,7 @@ export default function Board({ session }) {
               </button>
             ))}
           </div>
-          <button onClick={() => setSearchOpen(true)} className="text-stone-400">
+          <button onClick={() => document.getElementById('search-input')?.focus()} className="text-stone-400">
             <Search size={16} />
           </button>
           <button onClick={() => supabase.auth.signOut()} className="text-xs text-stone-400">
@@ -455,14 +454,25 @@ export default function Board({ session }) {
                 <span />
               )}
             </span>
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="hidden w-64 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-[13px] text-stone-300 hover:border-stone-300 md:flex"
-            >
-              <Search size={14} />
-              搜索
-              <kbd className="ml-auto text-[11px]">⌘K</kbd>
-            </button>
+            <span className="relative flex items-center">
+              <Search size={14} className="pointer-events-none absolute left-3 text-stone-300" />
+              <input
+                id="search-input"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setQuery('')
+                    e.target.blur()
+                  }
+                }}
+                placeholder="搜索"
+                className="w-40 rounded-lg border border-stone-200 bg-white py-1.5 pl-9 pr-2 text-[13px] outline-none placeholder:text-stone-300 focus:border-stone-300 md:w-64"
+              />
+              {!query && (
+                <kbd className="pointer-events-none absolute right-2.5 text-[11px] text-stone-300">⌘K</kbd>
+              )}
+            </span>
           </div>
           {view !== 'notifications' && !isMyPage && (
             <div className="mt-2 text-[13px] text-stone-400">
@@ -493,7 +503,7 @@ export default function Board({ session }) {
                 <Section
                   key={sec.key}
                   sec={sec}
-                  entries={pageEntries}
+                  entries={query.trim() ? allEntries : pageEntries}
                   me={me}
                   isMyPage={isMyPage}
                   profiles={profiles}
@@ -505,6 +515,7 @@ export default function Board({ session }) {
                   mutate={mutateEntries}
                   pushUndo={pushUndo}
                   flashId={flashId}
+                  query={query}
                 />
               ))}
             </>
@@ -512,13 +523,6 @@ export default function Board({ session }) {
         </div>
         </div>
       </main>
-      <SearchModal
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        allEntries={allEntries}
-        profiles={profiles}
-        onJump={jumpToEntry}
-      />
       {settingsOpen && (
         <SettingsModal
           open={settingsOpen}

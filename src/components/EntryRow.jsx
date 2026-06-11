@@ -19,7 +19,7 @@ function caretOffsetIn(container) {
   return range.toString().length
 }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, pushUndo, flash, pastDue }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, pushUndo, flash, pastDue, ownerLabel }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
@@ -261,6 +261,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             setEditing(true)
           }}
         >
+          {ownerLabel && <span className="mr-1.5 text-xs text-stone-300">{ownerLabel}</span>}
           {entry.is_private && (
             <Lock size={13} className="mr-1 inline -translate-y-px text-stone-400" title="仅自己可见" />
           )}

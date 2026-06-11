@@ -88,7 +88,7 @@ function SortableRow({ entry, draggable, children }) {
 
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId }) {
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query }) {
   const [draft, setDraft] = useState('')
   const [ghostGoal, setGhostGoal] = useState(false) // 区底输入行的类型（默认备忘，Tab/点击切换）
   const [showClosed, setShowClosed] = useState(false)
@@ -103,9 +103,18 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   const isPastDue = (e) =>
     e.is_goal && e.status === 'open' && e.anchor && new Date(e.anchor + 'T00:00:00') < nowRange.start
 
+  // 搜索：匹配内容文字或人（名字/handle），无视周期
+  const q = (query || '').trim().toLowerCase()
+  const matchesQuery = (e) => {
+    if (!q) return true
+    if (e.content.toLowerCase().includes(q)) return true
+    const p = profiles.find((x) => x.id === e.owner)
+    return p ? (p.display_name + ' ' + p.handle).toLowerCase().includes(q) : false
+  }
+
   const { active, closed, prevUnfinished } = useMemo(() => {
     const list = entries.filter(
-      (e) => e.section === sec.key && (allTime || inPeriod(e.anchor ?? null, range)),
+      (e) => e.section === sec.key && matchesQuery(e) && (q || allTime || inPeriod(e.anchor ?? null, range)),
     )
     const prevRange = periodRange(sec.key, offset - 1, baseDate)
     return {
@@ -124,7 +133,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             )
           : [],
     }
-  }, [entries, sec.key, offset, range, isMyPage, hasAnchor, allTime, baseDate, isLive])
+  }, [entries, sec.key, offset, range, isMyPage, hasAnchor, allTime, baseDate, isLive, q])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -330,7 +339,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           {sec.label}
           {range.label && <span className="ml-1.5 text-stone-300">· {range.label}</span>}
         </h3>
-        {hasAnchor && !allTime && (
+        {hasAnchor && !allTime && !q && (
           <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/head:opacity-100">
             <button
               onClick={() => setOffset((o) => o - 1)}
@@ -359,7 +368,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         )}
       </div>
 
-      {prevUnfinished.length > 0 && (
+      {prevUnfinished.length > 0 && !q && (
         <button
           onClick={carryOver}
           className="mb-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs text-amber-700 hover:bg-amber-100"
@@ -370,11 +379,11 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={active.map((e) => e.id)} strategy={verticalListSortingStrategy}>
-          {[...active.map((e) => ({ t: 'e', v: e, pos: e.position })), ...drafts.map((d) => ({ t: 'd', v: d, pos: d.pos }))]
+          {[...active.map((e) => ({ t: 'e', v: e, pos: e.position })), ...(q ? [] : drafts).map((d) => ({ t: 'd', v: d, pos: d.pos }))]
             .sort((a, b) => a.pos - b.pos)
             .map((item) =>
               item.t === 'e' ? (
-                <SortableRow key={item.v.id} entry={item.v} draggable={isMyPage && (allTime || range.isCurrent)}>
+                <SortableRow key={item.v.id} entry={item.v} draggable={isMyPage && !q && (allTime || range.isCurrent)}>
                   <EntryRow
                     entry={item.v}
                     me={me}
@@ -391,6 +400,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     pushUndo={pushUndo}
                     flash={flashId === item.v.id}
                     pastDue={isPastDue(item.v)}
+                    ownerLabel={q ? profiles.find((p) => p.id === item.v.owner)?.display_name : null}
                   />
                 </SortableRow>
               ) : (
@@ -409,7 +419,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         </SortableContext>
       </DndContext>
 
-      {isMyPage && (
+      {isMyPage && !q && (
         <div className="flex items-start gap-2.5 py-[5px]">
           <button
             type="button"
@@ -453,7 +463,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           {showClosed ? <ChevronDown size={12} /> : <ChevronRight size={12} />} 已完成 {closed.length}
         </button>
       )}
-      {showClosed &&
+      {(showClosed || q) &&
         closed.map((e) => (
           <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} pushUndo={pushUndo} />
         ))}
