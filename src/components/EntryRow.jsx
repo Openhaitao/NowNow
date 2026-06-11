@@ -18,7 +18,7 @@ function caretOffsetIn(container) {
   return range.toString().length
 }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, pushUndo, flash }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, pushUndo, flash, pastDue }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
@@ -206,7 +206,13 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         (closing ? 'closing ' : '') +
         (editing ? '' : 'hover:bg-stone-50 ') +
         (flash ? 'bg-amber-100 ' : '') +
-        (closed || closing ? 'text-stone-300' : resolved ? 'bg-blue-50/60 px-1.5 -ml-1.5' : '')
+        (closed || closing
+          ? 'text-stone-300'
+          : resolved
+            ? 'bg-blue-50/60 px-1.5 -ml-1.5'
+            : pastDue
+              ? 'bg-red-50/70 px-1.5 -ml-1.5'
+              : '')
       }
       onContextMenu={(e) => {
         if (!isMine) return

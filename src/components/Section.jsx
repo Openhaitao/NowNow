@@ -82,6 +82,11 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   const [drafts, setDrafts] = useState([]) // 回车新建的本地草稿行（写了字才真正入库，零等待）
 
   const range = periodRange(sec.key, offset, baseDate)
+  const nowRange = periodRange(sec.key, 0) // 真实当前周期，用于判断"过期未完成"
+
+  // 锚定在当前周期之前 + 还没完成的目标 = 过期未完成（标红）
+  const isPastDue = (e) =>
+    e.is_goal && e.status === 'open' && e.anchor && new Date(e.anchor + 'T00:00:00') < nowRange.start
 
   const { active, closed, prevUnfinished } = useMemo(() => {
     const list = entries.filter(
@@ -345,6 +350,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     onSplit={isMyPage ? splitEntry : undefined}
                     pushUndo={pushUndo}
                     flash={flashId === item.v.id}
+                    pastDue={isPastDue(item.v)}
                   />
                 </SortableRow>
               ) : (
