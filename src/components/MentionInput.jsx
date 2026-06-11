@@ -1,4 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
+import { mentionSplitRegex } from '../lib/mentions'
+import { DATE_TOKEN_RE, dateTokenState } from '../lib/dates'
+
+// 编辑态着色层：@人蓝、日期黄（纯颜色不带胶囊底，字宽与 textarea 完全一致才能重叠）
+function colorize(text, profiles) {
+  const re = mentionSplitRegex(profiles)
+  const parts = re ? text.split(re) : [text]
+  return parts.map((part, i) => {
+    if (!part) return null
+    if (part.startsWith('@') && profiles.some((p) => '@' + p.handle === part.toLowerCase()))
+      return (
+        // 只改颜色不改字重——加粗会改变字宽，和底下 textarea 错位
+        <span key={i} className="text-blue-600">
+          {part}
+        </span>
+      )
+    return part.split(DATE_TOKEN_RE).map((t, j) =>
+      !t ? null : dateTokenState(t) ? (
+        <span key={`${i}-${j}`} className="text-amber-600">{t}</span>
+      ) : (
+        <span key={`${i}-${j}`}>{t}</span>
+      ),
+    )
+  })
+}
 
 // 带 @人选择器的输入框：输入 @ 弹出人员列表，选中后以 @handle 嵌入文本
 export default function MentionInput({
@@ -133,7 +158,17 @@ export default function MentionInput({
   }
 
   return (
-    <div className="relative flex-1 min-w-0">
+    <div className="relative min-w-0 flex-1">
+      {/* 着色层垫在透明文字的 textarea 下面：编辑时颜色不消失 */}
+      <div
+        aria-hidden
+        className={
+          'pointer-events-none absolute inset-0 select-none whitespace-pre-wrap break-words text-[14.5px] leading-relaxed ' +
+          (className || '')
+        }
+      >
+        {colorize(value, profiles)}
+      </div>
       <textarea
         id={id}
         ref={ref}
@@ -145,7 +180,7 @@ export default function MentionInput({
         onKeyDown={handleKeyDown}
         onBlur={() => { setTimeout(() => setPicker(null), 150); onBlur?.() }}
         className={
-          'block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[14.5px] leading-relaxed outline-none placeholder:text-stone-300 ' +
+          'relative block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[14.5px] leading-relaxed text-transparent caret-stone-800 outline-none placeholder:text-stone-300 ' +
           (className || '')
         }
       />
