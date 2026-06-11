@@ -18,7 +18,7 @@ import MentionInput from './MentionInput'
 const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到本月' }
 
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
-function DraftRow({ draft, profiles, onCommit, onCancel }) {
+function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev }) {
   const [val, setVal] = useState(draft.initial || '')
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
@@ -39,8 +39,8 @@ function DraftRow({ draft, profiles, onCommit, onCancel }) {
         onTab={() => setIsGoal((v) => !v)}
         onSubmit={() => (val.trim() ? onCommit(d, val, true) : onCancel(draft.key))}
         onBlur={() => (val.trim() ? onCommit(d, val, false) : onCancel(draft.key))}
-        onEmptyBackspace={() => onCancel(draft.key)}
-        onEscape={() => onCancel(draft.key)}
+        onEmptyBackspace={() => onCancelToPrev(draft)}
+        onEscape={() => onCancelToPrev(draft)}
       />
     </div>
   )
@@ -229,6 +229,13 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     setDrafts((d) => d.filter((x) => x.key !== key))
   }
 
+  // 草稿删空退格 = 撤掉草稿并跳回上一条（和正式条目的行为一致）
+  function cancelDraftToPrev(dr) {
+    cancelDraft(dr.key)
+    const prev = [...active].reverse().find((e) => e.position < dr.pos)
+    if (prev) setEditId(prev.id)
+  }
+
   // 草稿提交入库；andNext = 回车继续往下写
   function commitDraft(dr, content, andNext) {
     cancelDraft(dr.key)
@@ -354,7 +361,14 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                   />
                 </SortableRow>
               ) : (
-                <DraftRow key={item.v.key} draft={item.v} profiles={profiles} onCommit={commitDraft} onCancel={cancelDraft} />
+                <DraftRow
+                  key={item.v.key}
+                  draft={item.v}
+                  profiles={profiles}
+                  onCommit={commitDraft}
+                  onCancel={cancelDraft}
+                  onCancelToPrev={cancelDraftToPrev}
+                />
               ),
             )}
         </SortableContext>
