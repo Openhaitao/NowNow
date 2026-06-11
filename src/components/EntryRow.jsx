@@ -57,7 +57,17 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     clearTimeout(saveTimer.current)
     persist(text)
     setEditing(false)
-    if (!text.trim()) setText(entry.content)
+    if (!text.trim()) {
+      if (!entry.content) {
+        // 回车新建出来但啥也没写就离开 = 不留空行
+        mutate(
+          (list) => list.filter((e) => e.id !== entry.id),
+          () => supabase.from('entries').delete().eq('id', entry.id),
+        )
+        return
+      }
+      setText(entry.content)
+    }
     if (advance) onEditNext?.(entry)
   }
 
@@ -116,6 +126,20 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     setMenu(null)
     mutate(patchLocal({ section }), () =>
       supabase.from('entries').update({ section }).eq('id', entry.id),
+    )
+  }
+
+  // 回看历史时：把过去的条目挪回当前周期
+  const todayStr = (() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })()
+  const canMoveToToday = entry.anchor && entry.anchor !== todayStr && entry.status !== 'closed'
+
+  function moveToToday() {
+    setMenu(null)
+    mutate(patchLocal({ anchor: todayStr }), () =>
+      supabase.from('entries').update({ anchor: todayStr }).eq('id', entry.id),
     )
   }
 
@@ -228,6 +252,11 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             <button className="block w-full px-3 py-1.5 text-left hover:bg-stone-50" onClick={toggleGoal}>
               {entry.is_goal ? '¶ 转为备忘' : '☐ 转为目标'}
             </button>
+            {canMoveToToday && (
+              <button className="block w-full px-3 py-1.5 text-left text-amber-700 hover:bg-amber-50" onClick={moveToToday}>
+                ⏩ 挪到今天
+              </button>
+            )}
             {Object.keys(SECTION_LABELS)
               .filter((s) => s !== entry.section)
               .map((s) => (

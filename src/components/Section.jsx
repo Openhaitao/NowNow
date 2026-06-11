@@ -152,12 +152,25 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     if (prev) setEditId(prev.id)
   }
 
-  // 回车确认后跳到下一条继续编辑；没有下一条就聚焦区底的幽灵输入行
-  function editNext(entry) {
+  // 回车 = 在当前条目下方新建一条空目标/备忘并直接编辑（Apple Notes 行为）
+  async function editNext(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
     const next = idx >= 0 ? active[idx + 1] : null
-    if (next) setEditId(next.id)
-    else document.getElementById(`ghost-${sec.key}`)?.focus()
+    const pos = next ? (entry.position + next.position) / 2 : entry.position + 1
+    const row = {
+      owner: me.id,
+      creator: me.id,
+      section: sec.key,
+      content: '',
+      is_goal: entry.is_goal,
+      position: pos,
+    }
+    if (hasAnchor) row.anchor = entry.anchor ?? fmtDate(new Date())
+    const { data } = await supabase.from('entries').insert(row).select().single()
+    if (data) {
+      mutate((list) => (list.some((e) => e.id === data.id) ? list : [...list, data]), () => {})
+      setEditId(data.id)
+    }
   }
 
   // 上一周期的未完成目标一键挪过来（手动，系统不自动滚动）
