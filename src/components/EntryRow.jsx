@@ -29,6 +29,8 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   // 认领副本 → 找到原条目（用于：副本勾选回流原件 / 在对方页面给 creator 关闭入口）
   const original = entry.source_entry ? allEntries.find((e) => e.id === entry.source_entry) : null
   const canCloseOriginal = original && original.creator === me.id && original.status === 'resolved'
+  const originalCreator = original ? profiles.find((p) => p.id === original.creator) : null
+  const [notified, setNotified] = useState(false) // 勾选认领副本后的"已通知"轻提示
 
   // 全部走乐观更新：本地立即生效，服务端后台同步
   const patchLocal = (fields) => (list) =>
@@ -75,6 +77,10 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     const next = closed ? 'open' : 'closed'
     if (next === 'closed') {
       setClosing(true)
+      if (entry.source_entry && originalCreator) {
+        setNotified(true)
+        setTimeout(() => setNotified(false), 2500)
+      }
       await new Promise((r) => setTimeout(r, 350)) // 让打勾→划线的爽感停留一拍再沉底
       setClosing(false)
     }
@@ -196,6 +202,16 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
       )}
 
       <span className="flex shrink-0 items-center gap-1.5">
+        {notified && (
+          <span className="rounded-full bg-emerald-100 px-2 py-px text-xs text-emerald-700">
+            已通知 {originalCreator?.display_name}
+          </span>
+        )}
+        {!notified && originalCreator && !closed && !editing && (
+          <span className="text-[11px] text-stone-300" title="认领来的，完成后会通知对方">
+            来自{originalCreator.display_name}
+          </span>
+        )}
         {isMine && !editing && (
           <button
             title="操作"
