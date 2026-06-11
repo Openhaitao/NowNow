@@ -235,7 +235,11 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
       )}
 
       {editing && isMine ? (
-        <MentionInput
+        <>
+          {entry.is_private && (
+            <Lock size={13} className="mt-[6px] shrink-0 text-stone-400" title="仅自己可见" />
+          )}
+          <MentionInput
           value={text}
           onChange={handleEditChange}
           onSubmit={(caret) => saveEdit(true, caret)}
@@ -251,6 +255,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           autoFocus
           initialCaret={clickCaret}
         />
+        </>
       ) : (
         <span
           className={'min-w-0 flex-1 whitespace-pre-wrap ' + (closed || closing ? 'line-through' : '')}
