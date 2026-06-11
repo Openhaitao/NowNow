@@ -152,6 +152,14 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     if (prev) setEditId(prev.id)
   }
 
+  // 回车确认后跳到下一条继续编辑；没有下一条就聚焦区底的幽灵输入行
+  function editNext(entry) {
+    const idx = active.findIndex((e) => e.id === entry.id)
+    const next = idx >= 0 ? active[idx + 1] : null
+    if (next) setEditId(next.id)
+    else document.getElementById(`ghost-${sec.key}`)?.focus()
+  }
+
   // 上一周期的未完成目标一键挪过来（手动，系统不自动滚动）
   function carryOver() {
     const today = fmtDate(new Date())
@@ -224,6 +232,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                 forceEdit={editId === e.id}
                 onEditHandled={() => setEditId(null)}
                 onDeleteEmpty={isMyPage ? deleteEmpty : undefined}
+                onEditNext={isMyPage ? editNext : undefined}
               />
             </SortableRow>
           ))}
@@ -234,6 +243,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         <div className="flex items-start gap-2.5 py-[5px]">
           <span className="w-[15px] shrink-0" />
           <MentionInput
+            id={`ghost-${sec.key}`}
             value={draft}
             onChange={setDraft}
             onSubmit={add}

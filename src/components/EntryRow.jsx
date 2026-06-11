@@ -6,7 +6,7 @@ import MentionInput from './MentionInput'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
@@ -34,14 +34,19 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   const patchLocal = (fields) => (list) =>
     list.map((e) => (e.id === entry.id ? { ...e, ...fields } : e))
 
-  function saveEdit() {
+  // advance=true（回车确认）时跳到下一条继续编辑；blur 保存不跳
+  function saveEdit(advance = false) {
     setEditing(false)
     const t = text.trim()
-    if (!t || t === entry.content) { setText(entry.content); return }
-    mutate(patchLocal({ content: t }), async () => {
-      await supabase.from('entries').update({ content: t }).eq('id', entry.id)
-      await syncMentions(entry.id, t, profiles, me.id)
-    })
+    if (t && t !== entry.content) {
+      mutate(patchLocal({ content: t }), async () => {
+        await supabase.from('entries').update({ content: t }).eq('id', entry.id)
+        await syncMentions(entry.id, t, profiles, me.id)
+      })
+    } else {
+      setText(entry.content)
+    }
+    if (advance) onEditNext?.(entry)
   }
 
   async function toggleDone() {
@@ -137,8 +142,8 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         <MentionInput
           value={text}
           onChange={setText}
-          onSubmit={saveEdit}
-          onBlur={saveEdit}
+          onSubmit={() => saveEdit(true)}
+          onBlur={() => saveEdit(false)}
           onEscape={() => { setText(entry.content); setEditing(false) }}
           onEmptyBackspace={onDeleteEmpty ? () => { setEditing(false); onDeleteEmpty(entry) } : undefined}
           profiles={profiles}
