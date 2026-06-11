@@ -335,14 +335,12 @@ export default function Board({ session }) {
                 <>
                   <button
                     onClick={() => setDateOpen((v) => !v)}
-                    className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] text-stone-500 hover:bg-stone-100"
+                    className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[15px] font-semibold text-stone-900 hover:bg-stone-100"
                     title="点击回看任何一天"
                   >
-                    📅 {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日
-                    <span className="text-stone-300">
-                      周{'日一二三四五六'[(baseDate || new Date()).getDay()]}
-                      {isLive ? ' · 今天' : ''}
-                    </span>
+                    📅 {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
+                    {'日一二三四五六'[(baseDate || new Date()).getDay()]}
+                    {isLive ? ' · 今天' : ''}
                   </button>
                   {dateOpen && (
                     <DatePicker
