@@ -17,6 +17,36 @@ import MentionInput from './MentionInput'
 
 const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到本月' }
 
+// 回车新建的本地草稿行：立刻可打字，有内容才入库。行首符号可点：☐目标 ↔ ¶备忘
+function DraftRow({ draft, profiles, onCommit, onCancel }) {
+  const [val, setVal] = useState('')
+  const [isGoal, setIsGoal] = useState(draft.is_goal)
+  const d = { ...draft, is_goal: isGoal }
+  return (
+    <div className="flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed">
+      <button
+        type="button"
+        tabIndex={-1}
+        onMouseDown={(e) => { e.preventDefault(); setIsGoal((v) => !v) }}
+        title={isGoal ? '目标（点击转备忘）' : '备忘（点击转目标）'}
+        className="mt-[3px] flex h-[17px] w-[15px] shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
+      >
+        {isGoal ? '☐' : '¶'}
+      </button>
+      <MentionInput
+        value={val}
+        onChange={setVal}
+        autoFocus
+        profiles={profiles}
+        onSubmit={() => (val.trim() ? onCommit(d, val, true) : onCancel(draft.key))}
+        onBlur={() => (val.trim() ? onCommit(d, val, false) : onCancel(draft.key))}
+        onEmptyBackspace={() => onCancel(draft.key)}
+        onEscape={() => onCancel(draft.key)}
+      />
+    </div>
+  )
+}
+
 function SortableRow({ entry, draggable, children }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: entry.id,
@@ -50,6 +80,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
   const [editId, setEditId] = useState(null) // 退格删条后让上一条进入编辑态
+  const [drafts, setDrafts] = useState([]) // 回车新建的本地草稿行（写了字才真正入库，零等待）
 
   const range = periodRange(sec.key, offset, baseDate)
 
@@ -152,24 +183,55 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     if (prev) setEditId(prev.id)
   }
 
-  // 回车 = 在当前条目下方新建一条空目标/备忘并直接编辑（Apple Notes 行为）
-  async function editNext(entry) {
+  // 回车 = 在当前条目下方插一行本地草稿，立刻可打字（写了字才入库——零等待）
+  function editNext(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
     const next = idx >= 0 ? active[idx + 1] : null
     const pos = next ? (entry.position + next.position) / 2 : entry.position + 1
+    setDrafts((d) => [...d, { key: `d${Date.now()}`, pos, is_goal: entry.is_goal, anchor: entry.anchor ?? null }])
+  }
+
+  function cancelDraft(key) {
+    setDrafts((d) => d.filter((x) => x.key !== key))
+  }
+
+  // 草稿提交入库；andNext = 回车继续往下写
+  function commitDraft(dr, content, andNext) {
+    cancelDraft(dr.key)
+    let isGoal = dr.is_goal
+    let c = content.trim()
+    if (c.startsWith('[]')) { isGoal = true; c = c.slice(2).trim() }
+    if (!c) return
     const row = {
       owner: me.id,
       creator: me.id,
       section: sec.key,
-      content: '',
-      is_goal: entry.is_goal,
-      position: pos,
+      content: c,
+      is_goal: isGoal,
+      position: dr.pos,
     }
-    if (hasAnchor) row.anchor = entry.anchor ?? fmtDate(new Date())
-    const { data } = await supabase.from('entries').insert(row).select().single()
-    if (data) {
-      mutate((list) => (list.some((e) => e.id === data.id) ? list : [...list, data]), () => {})
-      setEditId(data.id)
+    if (hasAnchor) row.anchor = range.isCurrent ? fmtDate(new Date()) : dr.anchor ?? fmtDate(range.start)
+    const temp = {
+      ...row,
+      id: `tmp-${Date.now()}`,
+      status: 'open',
+      is_private: false,
+      source_entry: null,
+      anchor: row.anchor ?? null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    mutate(
+      (list) => [...list, temp],
+      async () => {
+        const { data, error } = await supabase.from('entries').insert(row).select().single()
+        if (!error && data) await syncMentions(data.id, c, profiles, me.id)
+      },
+    )
+    if (andNext) {
+      const nextEntry = active.find((e) => e.position > dr.pos)
+      const pos2 = nextEntry ? (dr.pos + nextEntry.position) / 2 : dr.pos + 1
+      setDrafts((d) => [...d, { key: `d${Date.now()}-n`, pos: pos2, is_goal: isGoal, anchor: dr.anchor }])
     }
   }
 
@@ -234,21 +296,27 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={active.map((e) => e.id)} strategy={verticalListSortingStrategy}>
-          {active.map((e) => (
-            <SortableRow key={e.id} entry={e} draggable={isMyPage && (allTime || range.isCurrent)}>
-              <EntryRow
-                entry={e}
-                me={me}
-                profiles={profiles}
-                allEntries={allEntries}
-                mutate={mutate}
-                forceEdit={editId === e.id}
-                onEditHandled={() => setEditId(null)}
-                onDeleteEmpty={isMyPage ? deleteEmpty : undefined}
-                onEditNext={isMyPage ? editNext : undefined}
-              />
-            </SortableRow>
-          ))}
+          {[...active.map((e) => ({ t: 'e', v: e, pos: e.position })), ...drafts.map((d) => ({ t: 'd', v: d, pos: d.pos }))]
+            .sort((a, b) => a.pos - b.pos)
+            .map((item) =>
+              item.t === 'e' ? (
+                <SortableRow key={item.v.id} entry={item.v} draggable={isMyPage && (allTime || range.isCurrent)}>
+                  <EntryRow
+                    entry={item.v}
+                    me={me}
+                    profiles={profiles}
+                    allEntries={allEntries}
+                    mutate={mutate}
+                    forceEdit={editId === item.v.id}
+                    onEditHandled={() => setEditId(null)}
+                    onDeleteEmpty={isMyPage ? deleteEmpty : undefined}
+                    onEditNext={isMyPage ? editNext : undefined}
+                  />
+                </SortableRow>
+              ) : (
+                <DraftRow key={item.v.key} draft={item.v} profiles={profiles} onCommit={commitDraft} onCancel={cancelDraft} />
+              ),
+            )}
         </SortableContext>
       </DndContext>
 
