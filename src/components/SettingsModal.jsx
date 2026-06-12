@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, LogOut } from 'lucide-react'
+import { Download, LogOut, UserPlus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
@@ -8,6 +8,25 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
   const [handle, setHandle] = useState(me.display_name || me.handle)
   const [err, setErr] = useState('')
   const [saved, setSaved] = useState(false)
+  const [inviteLink, setInviteLink] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  // 生成一次性邀请链接并复制（对方点链接→输邮箱→起名即进）
+  async function makeInvite() {
+    const { data, error } = await supabase
+      .from('invites')
+      .insert({ created_by: me.id })
+      .select()
+      .single()
+    if (error) { setErr('生成邀请失败：' + error.message); return }
+    const link = `${window.location.origin}/?invite=${data.token}`
+    setInviteLink(link)
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { /* 剪贴板被拒就让用户手动复制 */ }
+  }
 
   if (!open) return null
 
@@ -76,6 +95,17 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
         </button>
 
         <div className="mt-5 border-t border-stone-100 pt-4">
+          <button onClick={makeInvite} className="flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700">
+            <UserPlus size={13} /> 生成邀请链接{copied ? '（已复制 ✓）' : ''}
+          </button>
+          {inviteLink && (
+            <div className="mt-2 select-all break-all rounded-lg bg-stone-50 px-2.5 py-1.5 text-xs text-stone-500">
+              {inviteLink}
+            </div>
+          )}
+          <p className="mt-1 text-[11px] text-stone-300">一条链接进一个人；对方点开→输邮箱收登录链接→起名即加入</p>
+        </div>
+        <div className="mt-3">
           <button onClick={exportData} className="flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700">
             <Download size={13} /> 导出我的数据（Markdown）
           </button>

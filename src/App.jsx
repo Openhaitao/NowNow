@@ -26,8 +26,19 @@ class ErrorBoundary extends Component {
 }
 
 // 整个产品就两个页面：登录页 + 主页面（首次起名是主页面里的一张卡）
+const INVITE_KEY = 'nownow_invite'
+
 export default function App() {
   const [session, setSession] = useState(undefined)
+
+  // 邀请链接：?invite=token 先存起来（magic link 跳转会丢 query），登录后兑换
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('invite')
+    if (t) {
+      localStorage.setItem(INVITE_KEY, t)
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))

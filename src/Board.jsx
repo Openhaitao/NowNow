@@ -19,22 +19,31 @@ const SECTIONS = [
 const LAST_VIEWED_KEY = 'nownow_last_viewed'
 const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) || '{}')
 
-// 首次进入：在主页面中央起名，不单独占一页
+// 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
 function SetupCard({ user, onDone }) {
   const [handle, setHandle] = useState(user.email.split('@')[0].replace(/\W/g, ''))
   const [err, setErr] = useState('')
+  const invite = localStorage.getItem('nownow_invite')
 
   async function save(e) {
     e.preventDefault()
     setErr('')
     const clean = handle.trim().replace(/^@/, '')
-    if (!clean || /\s/.test(clean)) { setErr('@名不能为空或带空格'); return }
+    if (!clean || /\s/.test(clean)) { setErr('名字不能为空或带空格'); return }
+    if (invite) {
+      const { error } = await supabase.rpc('redeem_invite', { p_token: invite, p_name: clean })
+      if (error) { setErr(error.message); return }
+      localStorage.removeItem('nownow_invite')
+      onDone()
+      return
+    }
+    // 兼容旧库（没跑 migration-002 时仍走直插）
     const { error } = await supabase.from('profiles').insert({
       id: user.id,
       handle: clean.toLowerCase(),
       display_name: clean,
     })
-    if (error) setErr(error.message)
+    if (error) setErr('需要邀请链接才能加入，找已在系统里的同事生成一个')
     else onDone()
   }
 
