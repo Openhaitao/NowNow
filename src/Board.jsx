@@ -8,6 +8,7 @@ import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import QuickCapture from './components/QuickCapture'
 import Section from './components/Section'
+import TeamAllView from './components/TeamAllView'
 import SettingsModal from './components/SettingsModal'
 
 const SECTIONS = [
@@ -664,6 +665,10 @@ export default function Board({ session }) {
             />
           ) : (
             <>
+              {view === 'all' ? (
+                <TeamAllView allEntries={allEntries} profiles={profiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} />
+              ) : (
+                <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
               {SECTIONS.map((sec) => (
                 <Section
@@ -686,6 +691,8 @@ export default function Board({ session }) {
                   onEditRequest={setEditRequest}
                 />
               ))}
+                </>
+              )}
             </>
           )}
         </div>
