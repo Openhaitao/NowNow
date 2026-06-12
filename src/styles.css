@@ -31,6 +31,15 @@ body {
 .paper-scroll {
   overscroll-behavior: contain; /* 滚到头不把弹性带给整页 */
 }
+/* 手机：滚动条整个隐藏（滚动不受影响），界面只留内容 */
+@media (max-width: 767px) {
+  .paper-scroll {
+    scrollbar-width: none;
+  }
+  .paper-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
 @media (min-width: 768px) {
   .paper-scroll {
     scrollbar-gutter: stable; /* macOS 悬浮滚动条出现/消失时不让内容晃动 */
