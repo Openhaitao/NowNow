@@ -12,7 +12,8 @@ const SECTIONS = [
 ]
 
 // flomo 式顶部快速捕捉：写任务 → @分配 → 挑放进哪个区 → 回车
-export default function QuickCapture({ me, profiles, allEntries, hasAnchor, mutate }) {
+export default function QuickCapture({ me, profiles, allEntries, hasAnchor, mutate, variant, autoFocus, onDone }) {
+  const sheet = variant === 'sheet' // 手机底部抽屉模式：无边框、更矮、发完即收
   const [draft, setDraft] = useState('')
   const [section, setSection] = useState('today')
   const [isGoal, setIsGoal] = useState(true)
@@ -27,6 +28,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
       if (!content) return
     }
     setDraft('')
+    if (sheet) onDone?.()
     const sectionEntries = allEntries.filter((e) => e.owner === me.id && e.section === section)
     const maxPos = Math.max(0, ...sectionEntries.map((x) => x.position))
     const row = {
@@ -58,15 +60,16 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
   }
 
   return (
-    <div className="mt-5 rounded-xl border border-stone-200 bg-white p-3 shadow-sm focus-within:border-stone-300">
+    <div className={sheet ? 'p-1' : 'mt-5 rounded-xl border border-stone-200 bg-white p-3 shadow-sm focus-within:border-stone-300'}>
       <MentionInput
         id="quick-capture"
         value={draft}
         onChange={setDraft}
         onSubmit={submit}
         profiles={profiles}
-        rows={3}
-        placeholder="现在要做什么？@ 派人，回车存，Shift+回车换行（按 / 聚焦）"
+        rows={sheet ? 2 : 3}
+        autoFocus={autoFocus}
+        placeholder={sheet ? '现在要做什么？@ 派人' : '现在要做什么？@ 派人，回车存，Shift+回车换行（按 / 聚焦）'}
         className="px-1 pt-0.5"
       />
       <div className="mt-2 flex items-center gap-1">

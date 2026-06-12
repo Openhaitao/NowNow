@@ -419,6 +419,19 @@ export default function Board({ session }) {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false) // 手机端左侧抽屉（flomo 式）
+  const [composeOpen, setComposeOpen] = useState(false) // 手机端 ➕ 记录抽屉
+  const [mobileSearch, setMobileSearch] = useState(false) // 手机端搜索页模式
+  const [kbOffset, setKbOffset] = useState(0)
+  useEffect(() => {
+    // iOS 键盘不会推动 fixed 元素：用 visualViewport 实测键盘高度，把记录抽屉顶上去
+    if (!composeOpen || !window.visualViewport) return
+    const vv = window.visualViewport
+    const h = () => setKbOffset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop))
+    vv.addEventListener('resize', h)
+    vv.addEventListener('scroll', h)
+    h()
+    return () => { vv.removeEventListener('resize', h); vv.removeEventListener('scroll', h); setKbOffset(0) }
+  }, [composeOpen])
   const [view, setView] = useState('paper') // paper | notifications | all
 
   // 成员显示顺序：本人默认第一位，拖拽可调，存本地
@@ -650,24 +663,61 @@ export default function Board({ session }) {
 
       {/* 主区：输入框固定，纸内部滚动 */}
       <main className="flex h-full min-w-0 flex-1 flex-col">
-        {/* 移动端顶栏（flomo 式）：☰ 抽屉 + 当前页标题 + 搜索 */}
-        <div className="flex shrink-0 items-center gap-2 border-b border-stone-100 px-3 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] md:hidden">
-          <button onClick={() => setDrawerOpen(true)} className="relative p-1.5 text-stone-600" title="菜单">
-            <Menu size={20} />
-            {notifCount > 0 && <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500" />}
-          </button>
-          <button onClick={() => viewPage(me.id)} className="flex-1 truncate text-center text-[15px] font-semibold">
-            {view === 'all' ? '全部目标' : view === 'notifications' ? '通知' : pageUser.display_name}
-          </button>
-          <button onClick={() => document.getElementById('search-input')?.focus()} className="p-1.5 text-stone-400">
-            <Search size={18} />
-          </button>
+        {/* 移动端顶栏（flomo 式）：☰ 抽屉 + 中间日期锚 + 搜索页入口；搜索模式下整条变搜索框 */}
+        <div className="flex shrink-0 items-center gap-2 border-b border-stone-100 px-3 pb-1.5 pt-[max(0.375rem,env(safe-area-inset-top))] md:hidden">
+          {mobileSearch ? (
+            <>
+              <button onClick={() => { setMobileSearch(false); setQuery('') }} className="p-1.5 text-stone-500">
+                ←
+              </button>
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="搜索内容或人名"
+                className="min-w-0 flex-1 rounded-lg bg-stone-100 px-3 py-1.5 text-[16px] outline-none placeholder:text-stone-400"
+              />
+            </>
+          ) : (
+            <>
+              <button onClick={() => setDrawerOpen(true)} className="relative p-1.5 text-stone-600" title="菜单">
+                <Menu size={20} />
+                {notifCount > 0 && <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500" />}
+              </button>
+              <span className="relative flex min-w-0 flex-1 justify-center">
+                <button
+                  onClick={() => (view === 'paper' && hasAnchor ? setDateOpen((v) => !v) : viewPage(me.id))}
+                  className="truncate text-[15px] font-semibold"
+                >
+                  {view === 'all'
+                    ? '全部目标'
+                    : view === 'notifications'
+                      ? '通知'
+                      : `${(baseDate || new Date()).getMonth() + 1}月${(baseDate || new Date()).getDate()}日 周${'日一二三四五六'[(baseDate || new Date()).getDay()]}${isLive ? '' : ' ·回看'}`}
+                </button>
+                {dateOpen && view === 'paper' && (
+                  <DatePicker
+                    value={baseDate}
+                    onClose={() => setDateOpen(false)}
+                    onSelect={(d) => {
+                      if (!d) return setBaseDate(null)
+                      const t = new Date(); t.setHours(0, 0, 0, 0)
+                      setBaseDate(d.getTime() === t.getTime() ? null : d)
+                    }}
+                  />
+                )}
+              </span>
+              <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
+                <Search size={18} />
+              </button>
+            </>
+          )}
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col px-5 md:px-6">
-        <div className="shrink-0 pb-4 pt-3">
-          {/* 顶栏：左=日期锚（点了整张纸拨回任意一天），右=搜索（flomo 位） */}
-          <div className="flex items-center justify-between gap-2">
+        <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
+          {/* 顶栏：左=日期锚（点了整张纸拨回任意一天），右=搜索（flomo 位）。手机端隐藏：日期在顶栏中间、搜索是独立页 */}
+          <div className="flex items-center justify-between gap-2 max-md:hidden">
             <span className="relative flex items-center gap-1.5">
               {hasAnchor ? (
                 <>
@@ -747,7 +797,9 @@ export default function Board({ session }) {
             </div>
           )}
           {view === 'paper' && isMyPage && (
-            <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
+            <div className="max-md:hidden">
+              <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
+            </div>
           )}
           {(offline || syncSlow) && (
             <div className="mt-2 rounded-lg bg-stone-100 px-3 py-2 text-center text-[13px] text-stone-500">
@@ -813,15 +865,36 @@ export default function Board({ session }) {
         </div>
 
       </main>
-      {/* 手机端浮动记录按钮（flomo 式）：点了聚焦顶部输入框 */}
-      {view === 'paper' && isMyPage && (
+      {/* 手机端浮动记录按钮（flomo 式）：弹出底部记录抽屉 */}
+      {view === 'paper' && isMyPage && !composeOpen && (
         <button
-          onClick={() => document.getElementById('quick-capture')?.focus()}
+          onClick={() => setComposeOpen(true)}
           className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
           title="记一条"
         >
           <Plus size={22} />
         </button>
+      )}
+      {/* 手机端记录抽屉：flomo 同款，紧贴软键盘 */}
+      {composeOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setComposeOpen(false)} />
+          <div
+            className="absolute inset-x-0 rounded-t-2xl bg-white p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl"
+            style={{ bottom: kbOffset }}
+          >
+            <QuickCapture
+              me={me}
+              profiles={profiles}
+              allEntries={allEntries}
+              hasAnchor={hasAnchor}
+              mutate={mutateEntries}
+              variant="sheet"
+              autoFocus
+              onDone={() => setComposeOpen(false)}
+            />
+          </div>
+        </div>
       )}
       {settingsOpen && (
         <SettingsModal
