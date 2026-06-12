@@ -238,11 +238,9 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           className="mt-[5px] h-[15px] w-[15px] shrink-0 accent-stone-700"
           title={entry.source_entry ? '完成（会通知发起人）' : '完成'}
         />
-      ) : editing ? (
-        // 编辑中 Tab 切到备忘时给个 ¶ 反馈（显示态备忘保持无标记的纸感）
-        <Pilcrow size={13} className="mt-[5px] w-[15px] shrink-0 text-stone-400" />
       ) : (
-        <span className="w-[15px] shrink-0" />
+        // 备忘和目标同级：常显 ¶ 标记（浅灰，分量低于勾选框）
+        <Pilcrow size={13} className="mt-[5px] w-[15px] shrink-0 text-stone-300" />
       )}
 
       {editing && isMine ? (
