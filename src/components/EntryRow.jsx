@@ -158,7 +158,6 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
 
   function remove() {
     setMenu(null)
-    if (!window.confirm('删除这条？（⌘Z 可撤销）')) return
     pushUndo?.({ type: 'delete', row: entry })
     mutate(
       (list) => list.filter((e) => e.id !== entry.id),
@@ -360,7 +359,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} onContextMenu={(e) => { e.preventDefault(); setMenu(null) }} />
           <div
-            className="fixed z-50 w-40 rounded-lg border border-stone-200 bg-white py-1 text-sm shadow-xl"
+            className="fixed z-50 w-40 overflow-hidden rounded-lg border border-stone-200 bg-white py-1 text-sm shadow-xl"
             style={{ left: menu.x, top: menu.y }}
           >
             <button
@@ -390,9 +389,12 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
                 </button>
               ))}
             {isCreator && (
-              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-600 hover:bg-red-50" onClick={remove}>
-                <Trash2 size={13} /> 删除
-              </button>
+              <>
+                <div className="my-1 border-t border-stone-100" />
+                <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-600 hover:bg-red-50" onClick={remove}>
+                  <Trash2 size={13} /> 删除
+                </button>
+              </>
             )}
           </div>
         </>
