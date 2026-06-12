@@ -5,6 +5,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState('')
+  const invited = !!localStorage.getItem('nownow_invite')
 
   async function sendLink(e) {
     e.preventDefault()
@@ -13,8 +14,12 @@ export default function Login() {
       email,
       options: { emailRedirectTo: window.location.origin },
     })
-    if (error) setErr(error.message)
-    else setSent(true)
+    if (error) {
+      const m = error.message || ''
+      if (m.includes('Signups not allowed')) setErr('系统暂未开放新成员登录，请联系管理员（后台开启注册开关）')
+      else if (m.includes('rate limit') || m.includes('rate_limit')) setErr('登录邮件发送太频繁，请等几分钟再试')
+      else setErr(m)
+    } else setSent(true)
   }
 
   return (
@@ -23,6 +28,11 @@ export default function Login() {
         <img src="/logo.png" alt="NowNow" className="mx-auto w-16 rounded-2xl" />
         <h1 className="mt-3 text-xl font-bold">NowNow</h1>
         <p className="mt-1 text-sm text-stone-400">先是笔记，才是系统</p>
+        {invited && (
+          <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            你收到了 NowNow 的加入邀请——输入邮箱登录，起个名字就能进
+          </p>
+        )}
         {sent ? (
           <p className="mt-6 text-sm text-stone-600">
             登录链接已发到 <b>{email}</b>

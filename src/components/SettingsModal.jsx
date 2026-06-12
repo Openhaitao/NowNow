@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
-export default function SettingsModal({ open, onClose, me, email, allEntries, onProfileSaved }) {
+export default function SettingsModal({ open, onClose, me, email, allEntries, profiles = [], onProfileSaved }) {
   const [handle, setHandle] = useState(me.display_name || me.handle)
   const [err, setErr] = useState('')
   const [saved, setSaved] = useState(false)
@@ -162,6 +162,21 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
             )
           )}
           <p className="mt-1 text-[11px] text-stone-300">对方点开→输邮箱登录→起名→等你在通知里确认后正式加入</p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {profiles.map((p) => (
+              <span
+                key={p.id}
+                className={
+                  'rounded-full px-2.5 py-0.5 text-xs ' +
+                  (p.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-stone-100 text-stone-600')
+                }
+              >
+                {p.display_name}
+                {p.id === me.id ? '（我）' : ''}
+                {p.status === 'pending' ? ' · 待确认' : ''}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* 数据与账号 */}

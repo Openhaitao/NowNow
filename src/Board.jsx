@@ -646,6 +646,7 @@ export default function Board({ session }) {
           me={me}
           email={user.email}
           allEntries={allEntries}
+          profiles={profiles}
           onProfileSaved={loadProfiles}
         />
       )}
