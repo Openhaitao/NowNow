@@ -904,10 +904,10 @@ export default function Board({ session }) {
       {view === 'paper' && isMyPage && !composeOpen && (
         <button
           onClick={() => setComposeOpen(true)}
-          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
+          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-2xl bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
           title="记一条"
         >
-          <Plus size={22} />
+          <Plus size={26} />
         </button>
       )}
       {/* 手机端记录抽屉：flomo 同款，紧贴软键盘 */}
