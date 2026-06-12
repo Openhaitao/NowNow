@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Bell, CalendarDays, LayoutList, Loader2, Search, Settings } from 'lucide-react'
+import { Bell, CalendarDays, LayoutList, Search, Settings, WifiOff } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
@@ -171,6 +171,9 @@ export default function Board({ session }) {
     }, 400)
   }, [fetchAll, applyLoad])
 
+  // 失败的写操作进重试队列：断网期间的改动恢复网络后自动补存
+  const retryQueue = useRef([])
+
   // 乐观更新（flomo 式先本地后同步）：UI 立即生效，服务端后台跑，全部落完才与库对齐
   const mutateEntries = useCallback(
     (transform, op) => {
@@ -180,7 +183,9 @@ export default function Board({ session }) {
       setSyncing(true)
       Promise.resolve()
         .then(op)
-        .catch(() => {})
+        .catch(() => {
+          retryQueue.current.push({ op, tries: 0 })
+        })
         .finally(() => {
           pendingOps.current--
           if (pendingOps.current === 0) setSyncing(false)
@@ -190,15 +195,35 @@ export default function Board({ session }) {
     [loadData],
   )
 
+  // 恢复网络后按顺序重放失败的操作（最多重试 3 次，防非网络性错误死循环）
+  const replayFailed = useCallback(async () => {
+    const q = retryQueue.current
+    if (!q.length) return
+    retryQueue.current = []
+    mutEpoch.current++
+    pendingOps.current++
+    setSyncing(true)
+    for (const it of q) {
+      try {
+        await it.op()
+      } catch {
+        if (++it.tries < 3) retryQueue.current.push(it)
+      }
+    }
+    pendingOps.current--
+    if (pendingOps.current === 0) setSyncing(false)
+    loadData()
+  }, [loadData])
+
   // 只在"有问题"时提示：离线 / 同步卡了超过 2.5 秒（顺畅时完全安静）
   const [offline, setOffline] = useState(!navigator.onLine)
   useEffect(() => {
-    const on = () => setOffline(false)
+    const on = () => { setOffline(false); replayFailed() }
     const off = () => setOffline(true)
     window.addEventListener('online', on)
     window.addEventListener('offline', off)
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
-  }, [])
+  }, [replayFailed])
   const [syncSlow, setSyncSlow] = useState(false)
   useEffect(() => {
     if (!syncing) { setSyncSlow(false); return }
@@ -588,11 +613,12 @@ export default function Board({ session }) {
             <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
           )}
           {(offline || syncSlow) && (
-            <p className="mt-1.5 text-xs text-stone-400">
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-500">
+              <WifiOff size={13} className="shrink-0 text-stone-400" />
               {offline
-                ? '网络已断开——刚写的内容还没保存，恢复网络前别关页面'
-                : '正在同步，网络有点慢…'}
-            </p>
+                ? '网络已断开 · 刚写的内容已暂存在本页，恢复网络后会自动保存——在此之前请不要关闭或刷新页面'
+                : '正在同步到云端…网络有点慢，内容已暂存在本页'}
+            </div>
           )}
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
