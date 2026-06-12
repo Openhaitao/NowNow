@@ -551,7 +551,7 @@ export default function Board({ session }) {
   return (
     <div className="mx-auto flex h-dvh max-w-4xl overflow-hidden">
       {/* 左栏：人员列表（固定不随内容滚动） */}
-      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-y-auto px-2 pb-5 pt-3 md:flex">
+      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-hidden px-2 pb-5 pt-3 md:flex">
         {/* 顶部：当前用户（和右侧日期行同一水平线、同级分量） */}
         <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold">
           <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg" />
@@ -585,20 +585,23 @@ export default function Board({ session }) {
         <div className="mb-1 mt-3 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300">
           团队
         </div>
-        <DndContext sensors={memberSensors} collisionDetection={closestCenter} onDragEnd={onMemberDragEnd}>
-          <SortableContext items={orderedProfiles.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-            {orderedProfiles.map((p) => (
-              <SortableMemberRow
-                key={p.id}
-                p={p}
-                isMe={p.id === me.id}
-                active={p.id === pageUserId && view === 'paper'}
-                news={hasNews(p)}
-                onClick={() => viewPage(p.id)}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+        {/* 成员多到放不下时这一段自己滚动（细灰滚动条），通知/设置钉在底部不动 */}
+        <div className="paper-scroll min-h-0 flex-1 overflow-y-auto">
+          <DndContext sensors={memberSensors} collisionDetection={closestCenter} onDragEnd={onMemberDragEnd}>
+            <SortableContext items={orderedProfiles.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              {orderedProfiles.map((p) => (
+                <SortableMemberRow
+                  key={p.id}
+                  p={p}
+                  isMe={p.id === me.id}
+                  active={p.id === pageUserId && view === 'paper'}
+                  news={hasNews(p)}
+                  onClick={() => viewPage(p.id)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+        </div>
         {/* 底部：通知（完整页面）+ 设置 */}
         <div className="mt-auto">
           <button
