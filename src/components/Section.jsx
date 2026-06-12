@@ -20,7 +20,7 @@ const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到
 const SEC_ORDER = ['today', 'week', 'month']
 
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
-function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, ghostId }) {
+function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, ghostId, nextGhostId }) {
   const [val, setVal] = useState(draft.initial || '')
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
@@ -49,9 +49,9 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
         onSubmit={() => {
           if (val.trim()) onCommit(d, val, true)
           else {
-            // 空行回车 = 结束插入，回到区底输入行（光标不丢）
+            // 空行回车 = 这个区写完了，跳到下一个区继续（今日→本周→本月）
             onCancel(draft.key)
-            document.getElementById(ghostId)?.focus()
+            requestAnimationFrame(() => document.getElementById(nextGhostId || ghostId)?.focus())
           }
         }}
         onBlur={() => (val.trim() ? onCommit(d, val, false) : onCancel(draft.key))}
@@ -167,7 +167,11 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   // 幽灵输入行：回车即存（乐观插入，行立即出现）。类型由行首标记定（Tab/点击切换）。新条目落区底。
   function add() {
     let content = draft.trim()
-    if (!content) return
+    if (!content) {
+      // 空着按回车 = 这个区写完了，跳到下一个区
+      if (nextSecKey) document.getElementById(`ghost-${nextSecKey}`)?.focus()
+      return
+    }
     let isGoal = ghostGoal
     if (content.startsWith('[]')) {
       isGoal = true
@@ -278,7 +282,8 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     } else {
       const next = active.find((e) => e.position > dr.pos)
       if (next) setEditId(next.id)
-      else document.getElementById(`ghost-${sec.key}`)?.focus()
+      // 幽灵行可能因草稿存在而隐藏，等重渲染完再聚焦
+      else requestAnimationFrame(() => document.getElementById(`ghost-${sec.key}`)?.focus())
     }
   }
 
@@ -418,13 +423,14 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                   onCancelToPrev={cancelDraftToPrev}
                   onNav={draftNav}
                   ghostId={`ghost-${sec.key}`}
+                  nextGhostId={nextSecKey ? `ghost-${nextSecKey}` : null}
                 />
               ),
             )}
         </SortableContext>
       </DndContext>
 
-      {isMyPage && !q && (
+      {isMyPage && !q && drafts.length === 0 && (
         <div className="flex items-start gap-2.5 py-[5px]">
           <button
             type="button"
