@@ -37,6 +37,16 @@ export default function Login() {
     return m
   }
 
+  // 重名预检：在邀请页就拦下，不让用户进门后才发现（函数还没建时跳过，靠进门后的兜底报错）
+  async function nameTaken(n) {
+    try {
+      const { data, error } = await supabase.rpc('handle_taken', { p_name: n })
+      return error ? false : !!data
+    } catch {
+      return false
+    }
+  }
+
   // 一个按钮搞定新老用户：先试登录，账号不存在就自动注册（首次输入的密码即账号密码）
   async function signIn(e) {
     e.preventDefault()
@@ -55,6 +65,12 @@ export default function Login() {
       if (!n) { setErr('先在上面填上你的名字'); return }
       if (/\s/.test(n)) { setErr('名字不能带空格'); return }
       if (password !== password2) { setErr('两次输入的密码不一样'); return }
+      setBusy(true)
+      if (await nameTaken(n)) {
+        setBusy(false)
+        setErr(`@${n} 已经有人用了，换一个名字`)
+        return
+      }
       // 名字带进主页：起名这步在邀请页就完成了，进去自动认领
       localStorage.setItem('nownow_pending_name', n)
     }
@@ -121,7 +137,11 @@ export default function Login() {
             Hi&nbsp;@
             <input
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); setErr('') }}
+              onBlur={async () => {
+                const n = name.trim().replace(/^@/, '')
+                if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
+              }}
               placeholder="你的名字"
               className="w-28 border-b-2 border-stone-200 bg-transparent text-center text-xl font-bold text-stone-900 outline-none transition-colors focus:border-blue-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
             />
