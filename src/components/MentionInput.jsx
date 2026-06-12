@@ -11,8 +11,8 @@ function colorize(text, profiles) {
     if (!part) return null
     if (part.startsWith('@') && profiles.some((p) => '@' + p.handle === part.toLowerCase()))
       return (
-        // 只改颜色不改字重——加粗会改变字宽，和底下 textarea 错位
-        <span key={i} className="text-blue-600">
+        // CJK 加粗不改变字宽，名字是中文的话和 textarea 不会错位
+        <span key={i} className="font-semibold text-blue-600">
           {part}
         </span>
       )

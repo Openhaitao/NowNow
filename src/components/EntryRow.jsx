@@ -296,15 +296,16 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             来自{originalCreator.display_name}
           </span>
         )}
-        {isMine && !editing && (
+        {isMine && (
           <button
             title="操作"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
               e.stopPropagation()
               const r = e.currentTarget.getBoundingClientRect()
               setMenu({ x: Math.min(r.left, window.innerWidth - 170), y: r.bottom + 4 })
             }}
-            className="rounded px-1 text-stone-400 opacity-0 hover:bg-stone-100 hover:text-stone-600 group-hover:opacity-100 max-md:opacity-50"
+            className="flex h-[22px] items-center self-center rounded px-1 text-stone-400 opacity-0 outline-none hover:bg-stone-200 hover:text-stone-700 group-hover:opacity-100 max-md:opacity-60"
           >
             ⋯
           </button>
@@ -363,38 +364,35 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             style={{ left: menu.x, top: menu.y }}
           >
             <button
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-stone-50"
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-left outline-none hover:bg-stone-50"
               onClick={() => { setMenu(null); setText(entry.content); setEditing(true) }}
             >
               <Pencil size={13} /> 编辑
             </button>
-            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-stone-50" onClick={togglePrivate}>
+            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left outline-none hover:bg-stone-50" onClick={togglePrivate}>
               {entry.is_private ? <Eye size={13} /> : <Lock size={13} />}
               {entry.is_private ? '设为公开' : '仅自己可见'}
             </button>
-            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-stone-50" onClick={toggleGoal}>
+            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left outline-none hover:bg-stone-50" onClick={toggleGoal}>
               {entry.is_goal ? <Pilcrow size={13} /> : <Square size={13} />}
               {entry.is_goal ? '转为备忘' : '转为目标'}
             </button>
             {canMoveToToday && (
-              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-amber-700 hover:bg-amber-50" onClick={moveToToday}>
+              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-amber-700 outline-none hover:bg-amber-50" onClick={moveToToday}>
                 <CalendarArrowUp size={13} /> 挪到今天
               </button>
             )}
             {Object.keys(SECTION_LABELS)
               .filter((s) => s !== entry.section)
               .map((s) => (
-                <button key={s} className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-stone-50" onClick={() => moveTo(s)}>
+                <button key={s} className="flex w-full items-center gap-2 px-3 py-1.5 text-left outline-none hover:bg-stone-50" onClick={() => moveTo(s)}>
                   <MoveRight size={13} /> 移到{SECTION_LABELS[s]}
                 </button>
               ))}
             {isCreator && (
-              <>
-                <div className="my-1 border-t border-stone-100" />
-                <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-600 hover:bg-red-50" onClick={remove}>
-                  <Trash2 size={13} /> 删除
-                </button>
-              </>
+              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-600 outline-none hover:bg-red-50" onClick={remove}>
+                <Trash2 size={13} /> 删除
+              </button>
             )}
           </div>
         </>
