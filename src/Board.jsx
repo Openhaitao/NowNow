@@ -634,7 +634,7 @@ export default function Board({ session }) {
               </button>
             </div>
           )}
-          {view !== 'notifications' && isMyPage && (
+          {view === 'paper' && isMyPage && (
             <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
           )}
           {(offline || syncSlow) && (
