@@ -594,7 +594,7 @@ export default function Board({ session }) {
             {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日
           </span>
           {/* 手机：通知/设置收进名字右侧（flomo 式抽屉头），点击进对应整页 */}
-          <span className="ml-auto flex items-center gap-0.5 md:hidden">
+          <span className="-mr-1.5 ml-auto flex items-center gap-0.5 md:hidden">
             <button onClick={() => setView('notifications')} className="relative p-1.5 text-stone-500" title="通知">
               <Bell size={22} />
               {notifCount > 0 && (
