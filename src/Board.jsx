@@ -439,6 +439,20 @@ export default function Board({ session }) {
     setQuery('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, pageUserId])
+  const searchBoxRef = useRef(null)
+  useEffect(() => {
+    // 搜索框：点它以外的任何地方立即收起并清空（用户拍板的交互）
+    if (!mobileSearch) return
+    const h = (e) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target)) {
+        setMobileSearch(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('pointerdown', h)
+    return () => document.removeEventListener('pointerdown', h)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileSearch])
 
   // 成员显示顺序：本人默认第一位，拖拽可调，存本地
   const [memberOrder, setMemberOrder] = useState(() => {
@@ -576,7 +590,7 @@ export default function Board({ session }) {
           <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
           {/* 手机抽屉头=日期，桌面左栏=用户名 */}
           <span className="truncate max-md:hidden">{me.display_name}</span>
-          <span className="truncate md:hidden">
+          <span className="truncate text-[17px] md:hidden">
             {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
             {'日一二三四五六'[(baseDate || new Date()).getDay()]}
           </span>
@@ -693,18 +707,15 @@ export default function Board({ session }) {
         {/* 移动端顶栏（flomo 式）：☰ 抽屉 + 中间日期锚 + 搜索页入口；搜索模式下整条变搜索框 */}
         <div className="flex shrink-0 items-center gap-2 border-b border-stone-100 px-3 pb-1.5 pt-[max(0.375rem,env(safe-area-inset-top))] md:hidden">
           {mobileSearch ? (
-            <>
-              <button onClick={() => { setMobileSearch(false); setQuery('') }} className="p-1.5 text-stone-500">
-                ←
-              </button>
+            <span ref={searchBoxRef} className="min-w-0 flex-1">
               <input
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜索内容或人名"
-                className="min-w-0 flex-1 rounded-lg bg-stone-100 px-3 py-1.5 text-[16px] outline-none placeholder:text-stone-400"
+                className="w-full rounded-xl bg-stone-100 px-4 py-2 text-[17px] outline-none placeholder:text-stone-400"
               />
-            </>
+            </span>
           ) : (
             <>
               <button onClick={() => setDrawerOpen(true)} className="relative p-1.5 text-stone-600" title="菜单">
@@ -723,7 +734,9 @@ export default function Board({ session }) {
                       ? '设置'
                       : pageUser.display_name}
               </button>
-              <span className="w-8" /> {/* 占位让中间标题保持居中（搜索入口已按需求隐藏） */}
+              <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
+                <Search size={20} />
+              </button>
             </>
           )}
         </div>
