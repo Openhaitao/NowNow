@@ -135,17 +135,22 @@ export default function Login() {
         {onboarding ? (
           <h1 className="mt-5 flex items-baseline justify-center text-xl font-bold">
             Hi&nbsp;@
-            <input
-              value={name}
-              onChange={(e) => { setName(e.target.value); setErr('') }}
-              onBlur={async () => {
-                const n = name.trim().replace(/^@/, '')
-                if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
-              }}
-              placeholder="名字"
-              size={4}
-              className="w-20 border-b-2 border-stone-200 bg-transparent text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-blue-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
-            />
+            {/* 隐形同字号文本撑宽度（输入框绝对定位盖在上面，不参与布局）：下划线始终和字一样长 */}
+            <span className="relative">
+              <span aria-hidden="true" className="invisible whitespace-pre px-0.5">
+                {name || '名字'}
+              </span>
+              <input
+                value={name}
+                onChange={(e) => { setName(e.target.value); setErr('') }}
+                onBlur={async () => {
+                  const n = name.trim().replace(/^@/, '')
+                  if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
+                }}
+                placeholder="名字"
+                className="absolute inset-0 w-full border-b-2 border-stone-200 bg-transparent px-0.5 text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-stone-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
+              />
+            </span>
           </h1>
         ) : (
           <h1 className="mt-5 text-xl font-bold">{lastName ? `Hi @${lastName}` : 'NowNow'}</h1>
