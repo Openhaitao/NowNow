@@ -221,7 +221,9 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             ? 'bg-blue-50/60 px-1.5 -ml-1.5'
             : pastDue
               ? 'bg-red-50/70 px-1.5 -ml-1.5'
-              : '')
+              : entry.is_goal
+                ? ''
+                : 'text-stone-500') // 备忘比目标灰一档，扫一眼即可区分
       }
       onContextMenu={(e) => {
         if (!isMine) return
