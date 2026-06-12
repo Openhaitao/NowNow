@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { Download, Loader2, LogOut, UserPlus } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Copy, Download, Loader2, LogOut, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
@@ -13,7 +13,6 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
   const [copied, setCopied] = useState(false)
   const saveTimer = useRef(null)
 
-  if (!open) return null
 
   // 名字默认就存（和正文一个习惯，没有保存按钮）
   function handleNameChange(v) {
@@ -39,24 +38,49 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
     }
   }
 
-  // 生成一次性邀请链接：立即给反馈，成功自动复制
-  async function makeInvite() {
-    setInviteLoading(true)
-    setErr('')
-    const { data, error } = await supabase
-      .from('invites')
-      .insert({ created_by: me.id })
-      .select()
-      .single()
-    setInviteLoading(false)
-    if (error) { setErr('生成邀请失败：' + error.message); return }
-    const link = `${window.location.origin}/?invite=${data.token}`
-    setInviteLink(link)
+  // 固定邀请链接：打开设置时自动取（没有就建一条），常驻显示
+  useEffect(() => {
+    let live = true
+    ;(async () => {
+      setInviteLoading(true)
+      const { data } = await supabase
+        .from('invites')
+        .select('token')
+        .eq('created_by', me.id)
+        .eq('revoked', false)
+        .limit(1)
+        .maybeSingle()
+      let token = data?.token
+      if (!token) {
+        const { data: created } = await supabase
+          .from('invites')
+          .insert({ created_by: me.id })
+          .select()
+          .single()
+        token = created?.token
+      }
+      if (live && token) setInviteLink(`${window.location.origin}/?invite=${token}`)
+      if (live) setInviteLoading(false)
+    })()
+    return () => { live = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function copyInvite() {
     try {
-      await navigator.clipboard.writeText(link)
+      await navigator.clipboard.writeText(inviteLink)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
-    } catch { /* 剪贴板被拒就让用户手动复制 */ }
+      setTimeout(() => setCopied(false), 2000)
+    } catch { /* 手动复制 */ }
+  }
+
+  // 作废旧链接换新（防泄露）
+  async function rotateInvite() {
+    setInviteLoading(true)
+    await supabase.from('invites').update({ revoked: true }).eq('created_by', me.id).eq('revoked', false)
+    const { data } = await supabase.from('invites').insert({ created_by: me.id }).select().single()
+    if (data) setInviteLink(`${window.location.origin}/?invite=${data.token}`)
+    setInviteLoading(false)
   }
 
   // 数据导出：我的全部条目 → Markdown 下载（数据所有权，flomo 同款理念）
@@ -114,24 +138,30 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
         {/* 成员 */}
         <div className="mt-5 border-t border-stone-100 pt-4">
           <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300">成员</div>
-          <button
-            onClick={makeInvite}
-            disabled={inviteLoading}
-            className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700 disabled:opacity-60"
-          >
-            {inviteLoading ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
-            {inviteLoading ? '生成中…' : '生成邀请链接'}
-          </button>
-          {inviteLink && (
-            <div className="mt-2 rounded-lg bg-blue-50 px-2.5 py-2">
-              <div className="flex items-center justify-between text-[11px] text-blue-600">
-                <span>把这条链接发给要邀请的人</span>
-                {copied && <span className="font-medium">已复制到剪贴板 ✓</span>}
-              </div>
-              <div className="mt-1 select-all break-all text-xs text-blue-900">{inviteLink}</div>
+          {inviteLoading && !inviteLink ? (
+            <div className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-400">
+              <Loader2 size={13} className="animate-spin" /> 载入邀请链接…
             </div>
+          ) : (
+            inviteLink && (
+              <div className="mt-2 rounded-lg bg-blue-50 px-2.5 py-2">
+                <div className="flex items-center justify-between text-[11px] text-blue-600">
+                  <span>我的邀请链接（固定，随便转发）</span>
+                  {copied && <span className="font-medium">已复制 ✓</span>}
+                </div>
+                <div className="mt-1 select-all break-all text-xs text-blue-900">{inviteLink}</div>
+                <div className="mt-1.5 flex gap-3">
+                  <button onClick={copyInvite} className="flex items-center gap-1 text-[11px] text-blue-700 hover:underline">
+                    <Copy size={11} /> 复制
+                  </button>
+                  <button onClick={rotateInvite} disabled={inviteLoading} className="flex items-center gap-1 text-[11px] text-stone-400 hover:text-stone-600">
+                    <RefreshCw size={11} /> 作废换新
+                  </button>
+                </div>
+              </div>
+            )
           )}
-          <p className="mt-1 text-[11px] text-stone-300">一条链接进一个人；对方点开→输邮箱收登录链接→起名即加入</p>
+          <p className="mt-1 text-[11px] text-stone-300">对方点开→输邮箱登录→起名→等你在通知里确认后正式加入</p>
         </div>
 
         {/* 数据与账号 */}

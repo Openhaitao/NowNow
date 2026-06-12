@@ -80,6 +80,11 @@ export default function Board({ session }) {
   const [hasAnchor, setHasAnchor] = useState(false)
 
   const me = profiles.find((p) => p.id === user.id) || null
+  const activeProfiles = useMemo(
+    () => profiles.filter((p) => p.status !== 'pending'),
+    [profiles],
+  )
+  const [myInviteTokens, setMyInviteTokens] = useState([])
 
   // 探测时间锚定列是否已迁移（migration-001 跑过后自动启用日历导航）
   useEffect(() => {
@@ -105,8 +110,12 @@ export default function Board({ session }) {
   }, [])
 
   const loadProfiles = useCallback(async () => {
-    const { data } = await supabase.from('profiles').select('*').order('handle')
+    const [{ data }, { data: inv }] = await Promise.all([
+      supabase.from('profiles').select('*').order('handle'),
+      supabase.from('invites').select('token').eq('created_by', user.id),
+    ])
     setProfiles(data || [])
+    setMyInviteTokens((inv || []).map((i) => i.token))
     setNeedSetup(!(data || []).some((p) => p.id === user.id))
   }, [user.id])
 
@@ -209,9 +218,10 @@ export default function Board({ session }) {
       .channel('nownow')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, loadData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mentions' }, loadData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, loadProfiles)
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [loadData])
+  }, [loadData, loadProfiles])
 
   // 切到某人页面 = 记录"看过的时间"，红点据此熄灭
   const viewPage = useCallback((pid) => {
@@ -265,7 +275,12 @@ export default function Board({ session }) {
     })
   }, [me, allEntries])
 
-  const notifCount = mentions.length + resolvedMine.length + dueMine.length
+  const pendingMembers = useMemo(
+    () => profiles.filter((p) => p.status === 'pending' && myInviteTokens.includes(p.invited_with)),
+    [profiles, myInviteTokens],
+  )
+
+  const notifCount = mentions.length + resolvedMine.length + dueMine.length + pendingMembers.length
 
   // 三格：今日未完成 / 本周未完成（今天还要干啥）+ 累计已完成（成就感，flomo 的"863 笔记"对应物）
   const stats = useMemo(() => {
@@ -307,6 +322,17 @@ export default function Board({ session }) {
   }, [loaded])
 
   if (needSetup) return <SetupCard user={user} onDone={loadProfiles} />
+  if (me && me.status === 'pending')
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
+        <img src="/logo.png" alt="" className="w-14 rounded-xl" />
+        <p className="text-stone-700">你好 {me.display_name}，已收到你的加入申请</p>
+        <p className="text-sm text-stone-400">等待邀请人确认后自动进入，这个页面不用刷新</p>
+        <button onClick={() => supabase.auth.signOut()} className="mt-2 text-xs text-stone-300 hover:text-stone-500">
+          退出登录
+        </button>
+      </div>
+    )
   // 首屏骨架：别让用户对着白屏等两个网络往返
   if (!me || !loaded)
     return loadTimeout ? (
@@ -375,7 +401,7 @@ export default function Board({ session }) {
             <LayoutList size={14} /> 全部目标
           </button>
         )}
-        {profiles.map((p) => (
+        {activeProfiles.map((p) => (
           <button
             key={p.id}
             onClick={() => viewPage(p.id)}
@@ -422,7 +448,7 @@ export default function Board({ session }) {
         <div className="flex shrink-0 items-center gap-1.5 border-b border-stone-100 px-4 py-2.5 md:hidden">
           <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
           <div className="flex flex-1 gap-1 overflow-x-auto">
-            {profiles.map((p) => (
+            {activeProfiles.map((p) => (
               <button
                 key={p.id}
                 onClick={() => viewPage(p.id)}
@@ -520,8 +546,10 @@ export default function Board({ session }) {
               mentions={mentions}
               resolvedMine={resolvedMine}
               dueMine={dueMine}
+              pendingMembers={pendingMembers}
               profiles={profiles}
               onChanged={loadData}
+              onMembersChanged={loadProfiles}
               mutate={mutateEntries}
               onBack={() => viewPage(me.id)}
               onJumpHome={() => viewPage(me.id)}
