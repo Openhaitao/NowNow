@@ -19,7 +19,7 @@ function caretOffsetIn(container) {
   return range.toString().length
 }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, pushUndo, flash, pastDue, ownerLabel, searchTerm }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, onInsertAbove, pushUndo, flash, pastDue, ownerLabel, searchTerm }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
@@ -78,6 +78,13 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
 
   function saveEdit(advance = false, caret = null) {
     clearTimeout(saveTimer.current)
+    // 行首回车 = 在上方插入新行（在最上面继续创建的习惯）
+    if (advance && onInsertAbove && caret === 0 && text.trim()) {
+      persist(text)
+      setEditing(false)
+      onInsertAbove(entry)
+      return
+    }
     // 行中回车 = 分裂：前半段留下，后半段带进下一行（光标在行首时不分裂——会把原条掏空）
     if (advance && onSplit && caret != null && caret > 0 && caret < text.length && text.slice(caret).trim() && text.slice(0, caret).trim()) {
       setEditing(false)
@@ -249,7 +256,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           onSubmit={(caret) => saveEdit(true, caret)}
           onBlur={() => saveEdit(false)}
           onEscape={() => { setText(entry.content); setEditing(false) }}
-          onEmptyBackspace={onDeleteEmpty ? () => { setEditing(false); onDeleteEmpty(entry) } : undefined}
+          onEmptyBackspace={onDeleteEmpty ? () => { clearTimeout(saveTimer.current); setEditing(false); onDeleteEmpty(entry) } : undefined}
           onTab={() => mutate(patchLocal({ is_goal: !entry.is_goal }), () =>
             supabase.from('entries').update({ is_goal: !entry.is_goal }).eq('id', entry.id),
           )}

@@ -213,7 +213,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     )
   }
 
-  // 退格删空一条 → 删掉它，光标跳回上一条末尾（block 编辑器行为）
+  // 退格删空一条 → 删掉它，光标跳回上一条末尾（没有上一条就回到输入行，焦点不丢）
   function deleteEmpty(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
     const prev = idx > 0 ? active[idx - 1] : null
@@ -222,6 +222,15 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       () => supabase.from('entries').delete().eq('id', entry.id),
     )
     if (prev) setEditId(prev.id)
+    else requestAnimationFrame(() => document.getElementById(`ghost-${sec.key}`)?.focus())
+  }
+
+  // 行首回车 = 在这条上方插一行草稿（在最上面继续创建）
+  function insertAbove(entry) {
+    const idx = active.findIndex((e) => e.id === entry.id)
+    const prev = idx > 0 ? active[idx - 1] : null
+    const pos = prev ? (prev.position + entry.position) / 2 : entry.position - 1
+    setDrafts((d) => [...d, { key: `d${Date.now()}-a`, pos, is_goal: entry.is_goal, anchor: entry.anchor ?? null }])
   }
 
   // ↑↓ 在相邻条目间移动编辑光标；区与区之间通过幽灵行接力（整张纸连续）
@@ -420,6 +429,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     onNavUp={isMyPage ? navUp : undefined}
                     onNavDown={isMyPage ? navDown : undefined}
                     onSplit={isMyPage ? splitEntry : undefined}
+                    onInsertAbove={isMyPage ? insertAbove : undefined}
                     pushUndo={pushUndo}
                     flash={flashId === item.v.id}
                     pastDue={isPastDue(item.v)}
