@@ -37,6 +37,15 @@ export default function Login() {
   // 一个按钮搞定新老用户：先试登录，账号不存在就自动注册（首次输入的密码即账号密码）
   async function signIn(e) {
     e.preventDefault()
+    try {
+      await doSignIn()
+    } catch (ex) {
+      setBusy(false)
+      setErr('出错了：' + String(ex?.message || ex))
+    }
+  }
+
+  async function doSignIn() {
     setErr('')
     if (onboarding && password !== password2) {
       setErr('两次输入的密码不一样')
