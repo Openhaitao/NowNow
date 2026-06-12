@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, ChevronRight, Copy, Download, Link2, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { friendlyDbError } from '../lib/errors'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
@@ -45,7 +46,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
       .from('profiles')
       .update({ handle: clean.toLowerCase(), display_name: clean })
       .eq('id', me.id)
-    if (error) setErr(error.message)
+    if (error) setErr(friendlyDbError(error.message))
     else {
       setSaved(true)
       setTimeout(() => setSaved(false), 1500)

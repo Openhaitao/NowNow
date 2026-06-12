@@ -4,6 +4,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities'
 import { Bell, CalendarDays, Home, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
 import DatePicker from './components/DatePicker'
@@ -72,7 +73,7 @@ function SetupCard({ user, onDone }) {
         if (!e2) { localStorage.removeItem('nownow_invite'); localStorage.removeItem('nownow_pending_name'); onDone(); return }
       }
       setAuto(false)
-      setErr(error.message)
+      setErr(friendlyDbError(error.message))
       return
     }
     localStorage.removeItem('nownow_invite')
