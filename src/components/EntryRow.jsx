@@ -211,7 +211,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     <div
       ref={rowRef}
       className={
-        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] text-[14.5px] leading-relaxed transition-colors ' +
+        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 text-[14.5px] leading-relaxed transition-colors ' +
         (closing ? 'closing ' : '') +
         (editing ? '' : 'hover:bg-stone-50 ') +
         (flash ? 'bg-amber-100 ' : '') +
@@ -305,7 +305,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
               const r = e.currentTarget.getBoundingClientRect()
               setMenu({ x: Math.min(r.left, window.innerWidth - 170), y: r.bottom + 4 })
             }}
-            className="flex h-[22px] items-center self-center rounded px-1 text-stone-400 opacity-0 outline-none hover:bg-stone-200 hover:text-stone-700 group-hover:opacity-100 max-md:opacity-60"
+            className="flex h-[20px] items-center self-center rounded px-1 text-stone-400 opacity-0 outline-none hover:bg-stone-100 hover:text-stone-600 group-hover:opacity-100 max-md:opacity-50"
           >
             ⋯
           </button>
