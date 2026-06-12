@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, CalendarDays, ChevronDown, ChevronRight, Home, LayoutList, Search, Settings } from 'lucide-react'
+import { Bell, CalendarDays, Home, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -25,38 +25,29 @@ const LAST_VIEWED_KEY = 'nownow_last_viewed'
 const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) || '{}')
 
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
-// 侧栏成员行：可拖拽排序（顺序存本地，纯个人视图偏好，不进数据库）
-// 拖拽交互和目标行保持一致：悬停浮现 ⠿ 把手，拖动时整行半透明、不变底色
+// 侧栏成员行：直接按住名字拖动排序（顺序存本地，纯个人视图偏好，不进数据库）
+// 拖动中的那一行用选中同款的蓝色高亮
 function SortableMemberRow({ p, isMe, active, news, onClick }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
   return (
-    <div
+    <button
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={'group/drag relative ' + (isDragging ? 'z-10 opacity-70' : '')}
+      className={
+        'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
+        (isDragging ? 'z-10 ' : '') +
+        (active || isDragging ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
+      }
     >
-      <span
-        {...attributes}
-        {...listeners}
-        className="absolute -left-2 top-1/2 -translate-y-1/2 cursor-grab touch-none text-[11px] text-stone-300 opacity-0 group-hover/drag:opacity-100"
-        title="拖动排序"
-      >
-        ⠿
+      <span className="truncate">
+        {p.display_name}
+        {isMe ? '（我）' : ''}
       </span>
-      <button
-        onClick={onClick}
-        className={
-          'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
-          (active ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600' + (isDragging ? '' : ' hover:bg-stone-100'))
-        }
-      >
-        <span className="truncate">
-          {p.display_name}
-          {isMe ? '（我）' : ''}
-        </span>
-        {news && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
-      </button>
-    </div>
+      {news && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
+    </button>
   )
 }
 
@@ -441,14 +432,6 @@ export default function Board({ session }) {
     }
     return [...activeProfiles].sort((a, b) => rank(a) - rank(b))
   }, [activeProfiles, memberOrder, user.id])
-  // 折叠线：侧栏和全部目标页共用。默认 5 人，?fold=2 可临时模拟人多的情形（不落存储，刷新即还原）
-  const foldLimit = useMemo(() => {
-    const n = parseInt(new URLSearchParams(window.location.search).get('fold') || '', 10)
-    return Number.isFinite(n) && n > 0 ? n : 5
-  }, [])
-  const memberFolded = orderedProfiles.length > foldLimit
-  const [moreOpen, setMoreOpen] = useState(false)
-  const sidebarMembers = memberFolded && !moreOpen ? orderedProfiles.slice(0, foldLimit) : orderedProfiles
   const memberSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   function onMemberDragEnd({ active, over }) {
     if (!over || active.id === over.id) return
@@ -604,7 +587,7 @@ export default function Board({ session }) {
         </div>
         <DndContext sensors={memberSensors} collisionDetection={closestCenter} onDragEnd={onMemberDragEnd}>
           <SortableContext items={orderedProfiles.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-            {sidebarMembers.map((p) => (
+            {orderedProfiles.map((p) => (
               <SortableMemberRow
                 key={p.id}
                 p={p}
@@ -616,18 +599,6 @@ export default function Board({ session }) {
             ))}
           </SortableContext>
         </DndContext>
-        {memberFolded && (
-          <button
-            onClick={() => setMoreOpen((v) => !v)}
-            className="flex w-full items-center gap-1 rounded-lg px-2.5 py-1 text-left text-xs text-stone-400 hover:bg-stone-100"
-          >
-            {moreOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            {moreOpen ? '收起' : `更多（${orderedProfiles.length - foldLimit} 人）`}
-            {!moreOpen && orderedProfiles.slice(foldLimit).some((p) => hasNews(p)) && (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="折叠的成员有新动态" />
-            )}
-          </button>
-        )}
         {/* 底部：通知（完整页面）+ 设置 */}
         <div className="mt-auto">
           <button
@@ -793,7 +764,7 @@ export default function Board({ session }) {
           ) : (
             <>
               {view === 'all' ? (
-                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={orderedProfiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} foldAt={memberFolded ? foldLimit : Infinity} baseDate={baseDate} />
+                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={orderedProfiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} baseDate={baseDate} />
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
