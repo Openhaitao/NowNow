@@ -26,27 +26,37 @@ const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) ||
 
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
 // 侧栏成员行：可拖拽排序（顺序存本地，纯个人视图偏好，不进数据库）
+// 拖拽交互和目标行保持一致：悬停浮现 ⠿ 把手，拖动时整行半透明、不变底色
 function SortableMemberRow({ p, isMe, active, news, onClick }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
   return (
-    <button
+    <div
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      onClick={onClick}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={
-        'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
-        (isDragging ? 'z-10 bg-white shadow-md ' : '') +
-        (active ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
-      }
+      className={'group/drag relative ' + (isDragging ? 'z-10 opacity-70' : '')}
     >
-      <span className="truncate">
-        {p.display_name}
-        {isMe ? '（我）' : ''}
+      <span
+        {...attributes}
+        {...listeners}
+        className="absolute -left-2 top-1/2 -translate-y-1/2 cursor-grab touch-none text-[11px] text-stone-300 opacity-0 group-hover/drag:opacity-100"
+        title="拖动排序"
+      >
+        ⠿
       </span>
-      {news && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
-    </button>
+      <button
+        onClick={onClick}
+        className={
+          'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
+          (active ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600' + (isDragging ? '' : ' hover:bg-stone-100'))
+        }
+      >
+        <span className="truncate">
+          {p.display_name}
+          {isMe ? '（我）' : ''}
+        </span>
+        {news && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
+      </button>
+    </div>
   )
 }
 
