@@ -590,9 +590,8 @@ export default function Board({ session }) {
           <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
           {/* 手机抽屉头=日期，桌面左栏=用户名 */}
           <span className="truncate max-md:hidden">{me.display_name}</span>
-          <span className="truncate text-[17px] md:hidden">
-            {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
-            {'日一二三四五六'[(baseDate || new Date()).getDay()]}
+          <span className="truncate md:hidden">
+            {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日
           </span>
           {/* 手机：通知/设置收进名字右侧（flomo 式抽屉头），点击进对应整页 */}
           <span className="ml-auto flex items-center gap-0.5 md:hidden">
@@ -693,7 +692,7 @@ export default function Board({ session }) {
         />
         <div
           className={
-            'absolute inset-y-0 left-0 flex w-60 flex-col overflow-hidden bg-[#fffefb] px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-200 ease-out ' +
+            'absolute inset-y-0 left-0 flex w-60 flex-col overflow-hidden bg-[#fffefb] px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(0.375rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-200 ease-out ' +
             (drawerOpen ? 'translate-x-0' : '-translate-x-full')
           }
           onClick={() => setDrawerOpen(false)}
