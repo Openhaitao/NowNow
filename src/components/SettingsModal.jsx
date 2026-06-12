@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Download, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Copy, Download, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
@@ -11,6 +11,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
   const [inviteEmail, setInviteEmail] = useState('')
   const [allowed, setAllowed] = useState([])
   const [inviteMsg, setInviteMsg] = useState('')
+  const [inviteLink, setInviteLink] = useState('')
   const [membersOpen, setMembersOpen] = useState(false)
   const [newPw, setNewPw] = useState('')
   const [pwMsg, setPwMsg] = useState('')
@@ -67,8 +68,12 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
     setAllowed((a) => [...a, { email: em, invited_by: me.id }])
     setInviteEmail('')
     const link = `${window.location.origin}/login?email=${encodeURIComponent(em)}`
-    try { await navigator.clipboard.writeText(link) } catch { /* 手动复制 */ }
-    setInviteMsg(`已放行，专属链接已复制，发给对方即可（点开邮箱已填好，设个密码就进）：${link}`)
+    setInviteLink(link)
+    try {
+      await navigator.clipboard.writeText(link)
+      setInviteMsg('已复制 ✓')
+      setTimeout(() => setInviteMsg(''), 2000)
+    } catch { /* 手动复制 */ }
   }
 
   async function removeEmail(em) {
@@ -175,7 +180,23 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
               <UserPlus size={13} /> 邀请
             </button>
           </div>
-          {inviteMsg && <p className="mt-1.5 text-xs text-blue-600">{inviteMsg}</p>}
+          {inviteLink && (
+            <div className="mt-2 flex items-center gap-2 rounded-lg bg-stone-50 px-2.5 py-2">
+              <span className="min-w-0 flex-1 select-all break-all text-xs text-stone-600">{inviteLink}</span>
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(inviteLink)
+                    setInviteMsg('已复制 ✓')
+                    setTimeout(() => setInviteMsg(''), 2000)
+                  } catch { /* 手动复制 */ }
+                }}
+                className="flex shrink-0 items-center gap-1 text-xs text-stone-400 outline-none hover:text-stone-600"
+              >
+                <Copy size={12} /> {inviteMsg || '复制'}
+              </button>
+            </div>
+          )}
           <p className="mt-1 text-[11px] text-stone-300">
             邀请 = 放行邮箱。对方打开 {window.location.origin} 用这个邮箱设置密码、起名即进
           </p>
