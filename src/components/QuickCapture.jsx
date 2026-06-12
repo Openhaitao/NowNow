@@ -67,7 +67,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
         onChange={setDraft}
         onSubmit={submit}
         profiles={profiles}
-        rows={sheet ? 2 : 3}
+        rows={3}
         autoFocus={autoFocus}
         placeholder={sheet ? '现在要做什么？@ 派人' : '现在要做什么？@ 派人，回车存，Shift+回车换行（按 / 聚焦）'}
         className={'px-1 pt-0.5' + (sheet ? ' text-[16px]' : '')}
@@ -79,7 +79,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
             type="button"
             onClick={() => setSection(s.key)}
             className={
-              'rounded-full px-2.5 py-0.5 text-xs ' +
+              (sheet ? 'rounded-full px-3.5 py-1.5 text-[15px] ' : 'rounded-full px-2.5 py-0.5 text-xs ') +
               (section === s.key ? 'bg-stone-900 text-white' : 'text-stone-400 hover:bg-stone-100')
             }
           >
@@ -90,9 +90,9 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
           type="button"
           onClick={() => setIsGoal((v) => !v)}
           title={isGoal ? '目标（带完成框）' : '备忘（一段话）'}
-          className="ml-1 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-stone-400 hover:bg-stone-100"
+          className={'ml-1 flex items-center gap-1 rounded-full text-stone-400 hover:bg-stone-100 ' + (sheet ? 'px-3 py-1.5 text-[15px]' : 'px-2 py-0.5 text-xs')}
         >
-          {isGoal ? <Square size={11} /> : <Pilcrow size={11} />}
+          {isGoal ? <Square size={sheet ? 14 : 11} /> : <Pilcrow size={sheet ? 14 : 11} />}
           {isGoal ? '目标' : '备忘'}
         </button>
         <button
@@ -100,9 +100,9 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
           onClick={submit}
           disabled={!draft.trim()}
           title="存（回车，或 ⌘/Ctrl+回车）"
-          className="ml-auto flex h-7 w-10 items-center justify-center rounded-md bg-stone-900 text-white disabled:opacity-30"
+          className={'ml-auto flex items-center justify-center rounded-md bg-stone-900 text-white disabled:opacity-30 ' + (sheet ? 'h-10 w-14' : 'h-7 w-10')}
         >
-          <SendHorizontal size={15} />
+          <SendHorizontal size={sheet ? 18 : 15} />
         </button>
       </div>
     </div>
