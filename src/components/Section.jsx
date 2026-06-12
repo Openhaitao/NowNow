@@ -25,7 +25,7 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
   return (
-    <div className="flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed">
+    <div className="flex items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed max-md:text-[16.5px]">
       <button
         type="button"
         tabIndex={-1}
@@ -79,7 +79,7 @@ function SortableRow({ entry, draggable, children }) {
         <span
           {...attributes}
           {...listeners}
-          className="absolute -left-5 top-[7px] cursor-grab touch-none text-stone-300 opacity-0 group-hover/drag:opacity-100 max-md:opacity-40"
+          className="absolute -left-5 top-[7px] cursor-grab touch-none text-stone-300 opacity-0 group-hover/drag:opacity-100 max-md:hidden"
           title="拖动排序"
         >
           ⠿
@@ -333,7 +333,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   return (
     <section className="pt-6">
       <div className="group/head mb-1 flex items-center gap-1.5">
-        <h3 className="text-[13px] font-medium tracking-wide text-stone-400">
+        <h3 className="text-[13px] font-medium tracking-wide text-stone-400 max-md:text-[15px]">
           {sec.label}
           {range.label && <span className="ml-1.5 text-stone-300">· {range.label}</span>}
         </h3>

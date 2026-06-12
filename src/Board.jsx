@@ -566,8 +566,8 @@ export default function Board({ session }) {
   const sidebarContent = (
     <>
         {/* 顶部：当前用户（和右侧日期行同一水平线、同级分量） */}
-        <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold">
-          <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg" />
+        <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[19px]">
+          <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
           <span className="truncate">{me.display_name}</span>
         </div>
         {/* flomo 式三格统计：左中右铺开（首格贴左、末格贴右），数字行与右侧输入框平齐 */}
@@ -648,18 +648,22 @@ export default function Board({ session }) {
         {sidebarContent}
       </aside>
 
-      {/* 手机端：flomo 式左侧抽屉（点任意一项后自动收起） */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setDrawerOpen(false)} />
-          <div
-            className="absolute inset-y-0 left-0 flex w-72 flex-col overflow-hidden bg-[#fffefb] px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl"
-            onClick={() => setDrawerOpen(false)}
-          >
-            {sidebarContent}
-          </div>
+      {/* 手机端：flomo 式左侧抽屉，滑入滑出带过渡（常驻挂载，开关只切 transform/opacity） */}
+      <div className={'fixed inset-0 z-50 md:hidden ' + (drawerOpen ? '' : 'pointer-events-none')}>
+        <div
+          className={'absolute inset-0 bg-black/30 transition-opacity duration-200 ' + (drawerOpen ? 'opacity-100' : 'opacity-0')}
+          onClick={() => setDrawerOpen(false)}
+        />
+        <div
+          className={
+            'absolute inset-y-0 left-0 flex w-72 flex-col overflow-hidden bg-[#fffefb] px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-200 ease-out ' +
+            (drawerOpen ? 'translate-x-0' : '-translate-x-full')
+          }
+          onClick={() => setDrawerOpen(false)}
+        >
+          {sidebarContent}
         </div>
-      )}
+      </div>
 
       {/* 主区：输入框固定，纸内部滚动 */}
       <main className="flex h-full min-w-0 flex-1 flex-col">

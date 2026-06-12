@@ -227,7 +227,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     <div
       ref={rowRef}
       className={
-        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 text-[14.5px] leading-relaxed transition-colors max-md:py-2 ' +
+        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 text-[14.5px] leading-relaxed transition-colors max-md:py-2 max-md:text-[16.5px] ' +
         (closing ? 'closing ' : '') +
         (editing ? '' : 'hover:bg-stone-50 ') +
         (flash ? 'bg-amber-100 ' : '') +
@@ -253,7 +253,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           checked={closed || closing}
           disabled={!isMine || closing}
           onChange={toggleDone}
-          className="mt-[5px] h-[15px] w-[15px] shrink-0 accent-stone-700 max-md:h-[18px] max-md:w-[18px]"
+          className="mt-[5px] h-[15px] w-[15px] shrink-0 accent-stone-700 max-md:mt-[4px] max-md:h-[20px] max-md:w-[20px]"
           title={entry.source_entry ? '完成（会通知发起人）' : '完成'}
         />
       ) : (
