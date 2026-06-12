@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Download, LogOut, UserPlus, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Download, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
@@ -103,7 +103,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
         className="w-full max-w-sm rounded-xl border border-stone-200 bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-[15px] font-semibold">设置</h2>
+        <h2 className="flex items-center gap-1.5 text-[15px] font-semibold"><SettingsIcon size={15} /> 设置</h2>
 
         {/* 个人信息 */}
         <div className="mt-4">
@@ -194,7 +194,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
                 {membersOpen && (
                   <div className="mt-1.5 space-y-1">
                     {joined.map((p) => (
-                      <div key={p.id} className="flex items-center gap-2 rounded-lg bg-stone-50 px-2.5 py-1.5 text-xs">
+                      <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-stone-50 px-2.5 py-1.5 text-xs">
                         <span className="text-stone-700">
                           {p.display_name}
                           {p.id === me.id ? '（我）' : ''}
@@ -203,12 +203,14 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
                       </div>
                     ))}
                     {waiting.map((a) => (
-                      <div key={a.email} className="flex items-center gap-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs">
-                        <span className="text-amber-700">{a.email}</span>
+                      <div key={a.email} className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs">
                         <span className="text-amber-400">已邀请 · 未加入</span>
-                        <button onClick={() => removeEmail(a.email)} title="移出名单" className="ml-auto text-stone-300 hover:text-red-500">
-                          <X size={11} />
-                        </button>
+                        <span className="flex items-center gap-1.5 text-amber-700">
+                          {a.email}
+                          <button onClick={() => removeEmail(a.email)} title="移出名单" className="text-stone-300 hover:text-red-500">
+                            <X size={11} />
+                          </button>
+                        </span>
                       </div>
                     ))}
                   </div>
