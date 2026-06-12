@@ -95,6 +95,7 @@ export default function Board({ session }) {
   const [baseDate, setBaseDate] = useState(null) // null = 真实今天；设了 = 整张纸拨回那天
   const [dateOpen, setDateOpen] = useState(false)
   const [flashId, setFlashId] = useState(null) // 搜索跳转后高亮定位的条目
+  const [editRequest, setEditRequest] = useState(null) // 跨区接力：让某个区的第一条进入编辑
   const isLive = !baseDate
 
   // ⌘Z 撤销栈：完成/关闭/删除 这类非文字操作（文字编辑用 textarea 原生撤销）
@@ -126,21 +127,32 @@ export default function Board({ session }) {
     setLoaded(true)
   }, [user.id])
 
-  // 对齐请求 250ms 合并：自己操作的同步 + Realtime 回声不再各刷一次
+  // 本地优先：还有写操作在路上时绝不刷新（刷早了会把刚删/刚改的内容"复活"）
+  const pendingOps = useRef(0)
   const loadTimer = useRef(null)
   const loadData = useCallback(() => {
     clearTimeout(loadTimer.current)
-    loadTimer.current = setTimeout(doLoad, 250)
+    loadTimer.current = setTimeout(() => {
+      if (pendingOps.current > 0) {
+        loadData() // 写操作没落完，再等一拍
+        return
+      }
+      doLoad()
+    }, 400)
   }, [doLoad])
 
-  // 乐观更新（flomo 式先本地后同步）：UI 立即生效，服务端后台跑，完成后与库对齐
+  // 乐观更新（flomo 式先本地后同步）：UI 立即生效，服务端后台跑，全部落完才与库对齐
   const mutateEntries = useCallback(
     (transform, op) => {
       setAllEntries(transform)
+      pendingOps.current++
       Promise.resolve()
         .then(op)
         .catch(() => {})
-        .finally(() => loadData())
+        .finally(() => {
+          pendingOps.current--
+          loadData()
+        })
     },
     [loadData],
   )
@@ -516,6 +528,8 @@ export default function Board({ session }) {
                   pushUndo={pushUndo}
                   flashId={flashId}
                   query={query}
+                  editRequest={editRequest}
+                  onEditRequest={setEditRequest}
                 />
               ))}
             </>

@@ -20,7 +20,7 @@ const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到
 const SEC_ORDER = ['today', 'week', 'month']
 
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
-function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, ghostId, nextGhostId }) {
+function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, ghostId, onSectionDone }) {
   const [val, setVal] = useState(draft.initial || '')
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
@@ -49,9 +49,9 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
         onSubmit={() => {
           if (val.trim()) onCommit(d, val, true)
           else {
-            // 空行回车 = 这个区写完了，跳到下一个区继续（今日→本周→本月）
+            // 空行回车 = 这个区写完了，跳到下一个区的第一条（今日→本周→本月）
             onCancel(draft.key)
-            requestAnimationFrame(() => document.getElementById(nextGhostId || ghostId)?.focus())
+            onSectionDone()
           }
         }}
         onBlur={() => (val.trim() ? onCommit(d, val, false) : onCancel(draft.key))}
@@ -92,7 +92,7 @@ function SortableRow({ entry, draggable, children }) {
 
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query }) {
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query, editRequest, onEditRequest }) {
   const [draft, setDraft] = useState('')
   const [ghostGoal, setGhostGoal] = useState(false) // 区底输入行的类型（默认备忘，Tab/点击切换）
   const [showClosed, setShowClosed] = useState(false)
@@ -164,12 +164,17 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     )
   }
 
+  // 这个区写完了 → 下一个区的第一条进入编辑
+  function sectionDone() {
+    if (nextSecKey) onEditRequest(nextSecKey)
+  }
+
   // 幽灵输入行：回车即存（乐观插入，行立即出现）。类型由行首标记定（Tab/点击切换）。新条目落区底。
   function add() {
     let content = draft.trim()
     if (!content) {
-      // 空着按回车 = 这个区写完了，跳到下一个区
-      if (nextSecKey) document.getElementById(`ghost-${nextSecKey}`)?.focus()
+      // 空着按回车 = 这个区写完了，跳到下一个区的第一条
+      sectionDone()
       return
     }
     let isGoal = ghostGoal
@@ -222,6 +227,15 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   // ↑↓ 在相邻条目间移动编辑光标；区与区之间通过幽灵行接力（整张纸连续）
   const prevSecKey = SEC_ORDER[SEC_ORDER.indexOf(sec.key) - 1]
   const nextSecKey = SEC_ORDER[SEC_ORDER.indexOf(sec.key) + 1]
+
+  // 跨区接力：上一个区"写完了"，让本区第一条进入编辑（空区就聚焦输入行）
+  useEffect(() => {
+    if (editRequest !== sec.key) return
+    onEditRequest(null)
+    if (active[0]) setEditId(active[0].id)
+    else requestAnimationFrame(() => document.getElementById(`ghost-${sec.key}`)?.focus())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editRequest])
 
   function navUp(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
@@ -423,7 +437,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                   onCancelToPrev={cancelDraftToPrev}
                   onNav={draftNav}
                   ghostId={`ghost-${sec.key}`}
-                  nextGhostId={nextSecKey ? `ghost-${nextSecKey}` : null}
+                  onSectionDone={sectionDone}
                 />
               ),
             )}
