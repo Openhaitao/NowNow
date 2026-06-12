@@ -11,6 +11,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
   const [inviteEmail, setInviteEmail] = useState('')
   const [allowed, setAllowed] = useState([])
   const [inviteMsg, setInviteMsg] = useState('')
+  const [inviteErr, setInviteErr] = useState('')
   const [inviteLink, setInviteLink] = useState('')
   const [membersOpen, setMembersOpen] = useState(false)
   const [newPw, setNewPw] = useState('')
@@ -59,12 +60,13 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
 
   async function addEmail() {
     const em = inviteEmail.trim().toLowerCase()
-    if (!em || !em.includes('@')) { setInviteMsg('填一个有效邮箱'); return }
+    if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { setInviteErr('这不是一个有效邮箱，检查一下拼写'); return }
     const { error } = await supabase.from('allowed_emails').insert({ email: em, invited_by: me.id })
     if (error) {
-      setInviteMsg(error.message.includes('duplicate') ? '这个邮箱已经在名单里了' : error.message)
+      setInviteErr(error.message.includes('duplicate') ? '这个邮箱已经在名单里了' : '没加上：' + error.message)
       return
     }
+    setInviteErr('')
     setAllowed((a) => [...a, { email: em, invited_by: me.id }])
     setInviteEmail('')
     const link = `${window.location.origin}/login?email=${encodeURIComponent(em)}`
@@ -168,7 +170,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
             <input
               type="email"
               value={inviteEmail}
-              onChange={(e) => { setInviteEmail(e.target.value); setInviteMsg('') }}
+              onChange={(e) => { setInviteEmail(e.target.value); setInviteMsg(''); setInviteErr('') }}
               onKeyDown={(e) => e.key === 'Enter' && addEmail()}
               placeholder="对方邮箱"
               className="min-w-0 flex-1 rounded-lg border border-stone-200 px-3 py-1.5 text-[13px] outline-none focus:border-stone-400"
@@ -180,6 +182,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
               <UserPlus size={13} /> 邀请
             </button>
           </div>
+          {inviteErr && <p className="mt-1.5 text-xs text-red-500">{inviteErr}</p>}
           {inviteLink && (
             <div className="mt-2 flex items-center gap-2 rounded-lg bg-stone-50 px-2.5 py-2">
               <span className="min-w-0 flex-1 select-all break-all text-xs text-stone-600">{inviteLink}</span>
