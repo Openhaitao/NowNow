@@ -732,6 +732,9 @@ export default function Board({ session }) {
                     : view === 'settings'
                       ? '设置'
                       : pageUser.display_name}
+                {view === 'paper' && !isMyPage && (
+                  <span className="ml-1.5 align-middle text-[13px] font-normal text-stone-400">只读</span>
+                )}
               </button>
               <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
                 <Search size={20} />
