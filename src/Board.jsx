@@ -574,7 +574,12 @@ export default function Board({ session }) {
         {/* 顶部：当前用户（和右侧日期行同一水平线、同级分量） */}
         <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[21px]">
           <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
-          <span className="truncate">{me.display_name}</span>
+          {/* 手机抽屉头=日期，桌面左栏=用户名 */}
+          <span className="truncate max-md:hidden">{me.display_name}</span>
+          <span className="truncate md:hidden">
+            {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
+            {'日一二三四五六'[(baseDate || new Date()).getDay()]}
+          </span>
           {/* 手机：通知/设置收进名字右侧（flomo 式抽屉头），点击进对应整页 */}
           <span className="ml-auto flex items-center gap-0.5 md:hidden">
             <button onClick={() => setView('notifications')} className="relative p-1.5 text-stone-500" title="通知">
@@ -716,7 +721,7 @@ export default function Board({ session }) {
                     ? '通知'
                     : view === 'settings'
                       ? '设置'
-                      : `${(baseDate || new Date()).getMonth() + 1}月${(baseDate || new Date()).getDate()}日 周${'日一二三四五六'[(baseDate || new Date()).getDay()]}${isLive ? '' : ' ·回看'}`}
+                      : pageUser.display_name}
               </button>
               <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
                 <Search size={18} />
