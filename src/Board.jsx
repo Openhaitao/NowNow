@@ -793,7 +793,7 @@ export default function Board({ session }) {
           ) : (
             <>
               {view === 'all' ? (
-                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={orderedProfiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} foldAt={memberFolded ? foldLimit : Infinity} />
+                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={orderedProfiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} foldAt={memberFolded ? foldLimit : Infinity} baseDate={baseDate} />
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}

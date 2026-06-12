@@ -5,7 +5,7 @@ import EntryRow from './EntryRow'
 
 // 全部目标 = 站会页：每个人「今日进行中 + 过期欠账（红）」常显，
 // 本周/本月/已完成折叠成一行小计；每条活带"谁派的、认领没、办得怎么样"
-export default function TeamAllView({ allEntries, allMentions = [], profiles, orderedPeople, me, mutate, pushUndo, foldAt = Infinity }) {
+export default function TeamAllView({ allEntries, allMentions = [], profiles, orderedPeople, me, mutate, pushUndo, foldAt = Infinity, baseDate = null }) {
   const [expanded, setExpanded] = useState({}) // personId -> bool（本周/本月/已完成小计）
   const [foldOpen, setFoldOpen] = useState({}) // personId -> bool（折叠区成员展开整块）
 
@@ -16,13 +16,14 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
     return [...active.filter((p) => p.id === me.id), ...active.filter((p) => p.id !== me.id)]
   }, [orderedPeople, profiles, me.id])
 
+  // 顶部日期锚同样拨动站会页：回看任何一天，看的是当天/当周/当月的目标
   const ranges = useMemo(
     () => ({
-      today: periodRange('today', 0),
-      week: periodRange('week', 0),
-      month: periodRange('month', 0),
+      today: periodRange('today', 0, baseDate || undefined),
+      week: periodRange('week', 0, baseDate || undefined),
+      month: periodRange('month', 0, baseDate || undefined),
     }),
-    [],
+    [baseDate],
   )
 
   const isPastDue = (e) =>
