@@ -421,12 +421,6 @@ export default function Board({ session }) {
   const [drawerOpen, setDrawerOpen] = useState(false) // 手机端左侧抽屉（flomo 式）
   const [composeOpen, setComposeOpen] = useState(false) // 手机端 ➕ 记录抽屉
   const [mobileSearch, setMobileSearch] = useState(false) // 手机端搜索页模式
-  useEffect(() => {
-    // 去了别的页面就退出搜索模式并清空关键词
-    setMobileSearch(false)
-    setQuery('')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, pageUserId])
   const [kbOffset, setKbOffset] = useState(0)
   useEffect(() => {
     // iOS 键盘不会推动 fixed 元素：用 visualViewport 实测键盘高度，把记录抽屉顶上去
@@ -439,6 +433,12 @@ export default function Board({ session }) {
     return () => { vv.removeEventListener('resize', h); vv.removeEventListener('scroll', h); setKbOffset(0) }
   }, [composeOpen])
   const [view, setView] = useState('paper') // paper | notifications | all
+  useEffect(() => {
+    // 去了别的页面就退出搜索模式并清空关键词（必须放在 view 声明之后：deps 数组在渲染时求值）
+    setMobileSearch(false)
+    setQuery('')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, pageUserId])
 
   // 成员显示顺序：本人默认第一位，拖拽可调，存本地
   const [memberOrder, setMemberOrder] = useState(() => {
