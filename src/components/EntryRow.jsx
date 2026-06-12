@@ -307,10 +307,10 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         )}
         {!notified && originalCreator && !closed && !editing && (
           <span
-            className="rounded bg-blue-50 px-1.5 py-px text-[11px] text-blue-500"
+            className="rounded bg-stone-100 px-1.5 py-px text-[11px] text-stone-500"
             title="认领来的活，完成后会自动通知对方验收"
           >
-            {originalCreator.display_name} 派
+            来自{originalCreator.display_name}
           </span>
         )}
         {isMine && (
