@@ -5,13 +5,15 @@ import EntryRow from './EntryRow'
 
 // 全部目标 = 站会页：每个人「今日进行中 + 过期欠账（红）」常显，
 // 本周/本月/已完成折叠成一行小计；每条活带"谁派的、认领没、办得怎么样"
-export default function TeamAllView({ allEntries, allMentions = [], profiles, me, mutate, pushUndo }) {
+export default function TeamAllView({ allEntries, allMentions = [], profiles, orderedPeople, me, mutate, pushUndo }) {
   const [expanded, setExpanded] = useState({}) // personId -> bool
 
+  // 人的顺序跟侧栏拖拽顺序一致（orderedPeople 由 Board 传入）；兜底用"我在前"
   const people = useMemo(() => {
+    if (orderedPeople?.length) return orderedPeople
     const active = profiles.filter((p) => p.status !== 'pending')
     return [...active.filter((p) => p.id === me.id), ...active.filter((p) => p.id !== me.id)]
-  }, [profiles, me.id])
+  }, [orderedPeople, profiles, me.id])
 
   const ranges = useMemo(
     () => ({

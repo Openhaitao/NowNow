@@ -763,7 +763,7 @@ export default function Board({ session }) {
           ) : (
             <>
               {view === 'all' ? (
-                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} />
+                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={orderedProfiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} />
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
