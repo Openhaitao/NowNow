@@ -360,7 +360,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} onContextMenu={(e) => { e.preventDefault(); setMenu(null) }} />
           <div
-            className="fixed z-50 w-40 overflow-hidden rounded-lg border border-stone-200 bg-white py-1 text-sm shadow-xl"
+            className="fixed z-50 w-40 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 text-sm shadow-xl"
             style={{ left: menu.x, top: menu.y }}
           >
             <button

@@ -207,7 +207,7 @@ export default function MentionInput({
       />
       {picker && candidates.length > 0 && (
         <div
-          className="absolute z-30 w-56 overflow-hidden rounded-lg border border-stone-200 bg-white py-1 shadow-lg"
+          className="absolute z-30 w-56 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-xl"
           style={{ left: pickerPos.x, top: pickerPos.y }}
         >
           {candidates.map((p, i) => (
