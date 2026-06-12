@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
 // 登录：邮箱+密码为主（无邮件往返、不吃邮件限额），邮件链接作备用/找回
@@ -15,6 +16,7 @@ export default function Login() {
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [showRecover, setShowRecover] = useState(false)
+  const [showPw, setShowPw] = useState(false)
 
   function humanize(m) {
     if (!m) return '出错了，再试一次'
@@ -41,7 +43,8 @@ export default function Login() {
       setBusy(false)
       return
     }
-    if (error.message.includes('Invalid login credentials')) {
+    const known = JSON.parse(localStorage.getItem('nownow_known_emails') || '[]')
+    if (error.message.includes('Invalid login credentials') && !known.includes(email)) {
       const { data, error: e2 } = await supabase.auth.signUp({ email, password })
       setBusy(false)
       if (!e2) {
@@ -49,8 +52,11 @@ export default function Login() {
         if (!data.session) setSent(true) // 后台若开着邮箱确认的兜底
         return
       }
-      // 注册说"已存在" = 老账号密码输错了
-      if (e2.message.includes('already registered')) setErr('密码不对。忘了的话用下面的邮件链接找回')
+      // 注册说"已存在" = 老账号密码输错了；记住这个邮箱，以后输错密码不再空打注册请求（防触发频率限制）
+      if (e2.message.includes('already registered')) {
+        localStorage.setItem('nownow_known_emails', JSON.stringify([...known, email]))
+        setErr('密码不对。忘了的话用下面的邮件链接找回')
+      }
       else setErr(humanize(e2.message))
       setShowRecover(true)
       return
@@ -88,19 +94,29 @@ export default function Login() {
         ) : mode === 'password' ? (
           <form onSubmit={signIn} className="mt-6 flex flex-col gap-3">
             <input type="email" name="email" autoComplete="username" required placeholder="邮箱" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
-            <input
-              type="password"
-              name="password"
-              autoComplete={onboarding ? 'new-password' : 'current-password'}
-              required
-              placeholder={onboarding ? '设置密码（至少 6 位）' : '密码'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputCls}
-            />
+            <span className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                name="password"
+                autoComplete={onboarding ? 'new-password' : 'current-password'}
+                required
+                placeholder={onboarding ? '设置密码（至少 6 位）' : '密码'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputCls + ' w-full pr-10'}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300 outline-none hover:text-stone-500"
+              >
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </span>
             {onboarding && (
               <input
-                type="password"
+                type={showPw ? 'text' : 'password'}
                 required
                 placeholder="再输一遍确认"
                 value={password2}
@@ -109,7 +125,7 @@ export default function Login() {
               />
             )}
             <button type="submit" disabled={busy} className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700 disabled:opacity-60">
-              {onboarding ? '设置密码并进入' : '登录'}
+              {busy ? '登录中…' : onboarding ? '设置密码并进入' : '登录'}
             </button>
             {err && <p className="text-sm text-red-600">{err}</p>}
             {showRecover && (
