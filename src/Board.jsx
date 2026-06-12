@@ -128,8 +128,9 @@ export default function Board({ session }) {
         .from('mentions')
         .select('*, entries!mentions_entry_id_fkey(content, creator)')
         .eq('mentioned', user.id)
-        .is('claimed_entry', null),
-      supabase.from('mentions').select('entry_id, mentioned, claimed_entry'),
+        .is('claimed_entry', null)
+        .is('rejected_at', null),
+      supabase.from('mentions').select('entry_id, mentioned, claimed_entry, rejected_at'),
     ])
     return { es: es || [], ms: ms || [], am: am || [] }
   }, [user.id])
@@ -306,6 +307,7 @@ export default function Board({ session }) {
       .select('*, entries!mentions_entry_id_fkey(content, creator)')
       .eq('mentioned', user.id)
       .is('claimed_entry', null)
+      .is('rejected_at', null)
     setMentions(ms || [])
   }, [user.id])
 

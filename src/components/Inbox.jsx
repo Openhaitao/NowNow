@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Inbox as InboxIcon } from 'lucide-react'
+import { ChevronDown, ChevronUp, Inbox as InboxIcon, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTIONS = [
@@ -18,6 +18,12 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
     setExpandedId(null)
     setClaimedIds((ids) => [...ids, m.id])
     supabase.rpc('claim_mention', { p_mention_id: m.id, p_section: section }).then(onChanged)
+  }
+
+  // 拒绝：这活不归我/派错了。派活人会在 @名字 上看到红色删除线
+  function reject(m) {
+    setClaimedIds((ids) => [...ids, m.id])
+    supabase.from('mentions').update({ rejected_at: new Date().toISOString() }).eq('id', m.id).then(onChanged)
   }
 
   return (
@@ -43,6 +49,13 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
                 }
               >
                 认领 {expanded ? <ChevronUp size={12} className="inline" /> : <ChevronDown size={12} className="inline" />}
+              </button>
+              <button
+                onClick={() => reject(m)}
+                title="拒绝这个活"
+                className="shrink-0 rounded-md px-1 py-0.5 text-stone-300 outline-none hover:text-red-600"
+              >
+                <X size={13} />
               </button>
             </div>
             {expanded && (
