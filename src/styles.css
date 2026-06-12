@@ -47,6 +47,19 @@ body {
   background: transparent;
 }
 
+/* 登录页：点阵稿纸背景 + 卡片浮入 */
+.login-paper {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.045) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+@keyframes float-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.float-in {
+  animation: float-in 0.45s ease-out both;
+}
+
 /* 透明文字输入框的选区：用半透明蓝，让垫在下面的着色层文字透出来 */
 .colored-input::selection {
   background: rgba(59, 130, 246, 0.22);

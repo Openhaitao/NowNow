@@ -84,12 +84,13 @@ export default function Login() {
     else setSent(true)
   }
 
-  const inputCls = 'rounded-lg border border-stone-200 px-3.5 py-2.5 text-[15px] outline-none focus:border-stone-400'
+  const inputCls =
+    'rounded-lg border border-stone-200 bg-white px-3.5 py-2.5 text-[15px] outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
 
   return (
-    <div className="relative flex min-h-dvh flex-col items-center justify-center px-4">
-      <div className="w-full max-w-xs text-center">
-        <img src="/logo.png" alt="NowNow" className="mx-auto w-20 md:w-16" />
+    <div className="login-paper relative flex min-h-dvh flex-col items-center justify-center px-4">
+      <div className="float-in w-full max-w-sm rounded-2xl border border-stone-200/80 bg-white px-8 py-10 text-center shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
+        <img src="/logo.png" alt="NowNow" className="mx-auto w-20" />
         <h1 className="mt-3 text-xl font-bold">NowNow</h1>
 
         {sent ? (
@@ -129,7 +130,11 @@ export default function Login() {
                 className={inputCls}
               />
             )}
-            <button type="submit" disabled={busy} className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700 disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white transition-all hover:-translate-y-px hover:bg-stone-700 hover:shadow-md disabled:opacity-60"
+            >
               {busy ? '登录中…' : onboarding ? '设置密码并进入' : '登录'}
             </button>
             {err && <p className="text-sm text-red-600">{err}</p>}
@@ -142,7 +147,11 @@ export default function Login() {
         ) : (
           <form onSubmit={sendLink} className="mt-6 flex flex-col gap-3">
             <input type="email" required placeholder="你的邮箱" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
-            <button type="submit" disabled={busy} className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700 disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white transition-all hover:-translate-y-px hover:bg-stone-700 hover:shadow-md disabled:opacity-60"
+            >
               发送登录链接
             </button>
             {err && <p className="text-sm text-red-600">{err}</p>}
