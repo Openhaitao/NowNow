@@ -1,54 +1,85 @@
-import { useMemo } from 'react'
-import { LayoutList } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ChevronDown, ChevronRight, LayoutList } from 'lucide-react'
 import { inPeriod, periodRange } from '../lib/period'
 import EntryRow from './EntryRow'
 
-const SECTIONS = [
-  { key: 'today', label: '今日' },
-  { key: 'week', label: '本周' },
-  { key: 'month', label: '本月' },
-]
+// 全部目标 = 站会页：每个人「今日进行中 + 过期欠账（红）」常显，
+// 本周/本月/已完成折叠成一行小计；每条活带"谁派的、认领没、办得怎么样"
+export default function TeamAllView({ allEntries, allMentions = [], profiles, me, mutate, pushUndo }) {
+  const [expanded, setExpanded] = useState({}) // personId -> bool
 
-// 全部目标 = 全公司一页看清"每个人现在在干什么"：
-// 按人分组，每人一块（今日/本周/本月 当前周期的目标 + 过期未完成的欠账）
-export default function TeamAllView({ allEntries, profiles, me, mutate, pushUndo }) {
   const people = useMemo(() => {
     const active = profiles.filter((p) => p.status !== 'pending')
-    // 自己排最前，其他人按名字
     return [...active.filter((p) => p.id === me.id), ...active.filter((p) => p.id !== me.id)]
   }, [profiles, me.id])
 
   const ranges = useMemo(
-    () => Object.fromEntries(SECTIONS.map((s) => [s.key, periodRange(s.key, 0)])),
+    () => ({
+      today: periodRange('today', 0),
+      week: periodRange('week', 0),
+      month: periodRange('month', 0),
+    }),
     [],
   )
 
-  // 每人每区：当前周期的条目 + 锚定在过去但还没完成的目标（欠账，行内自带红底）
-  const rowsFor = (pid, key) =>
-    allEntries
-      .filter((e) => e.owner === pid && e.section === key && e.status !== 'closed')
-      .filter(
-        (e) =>
-          inPeriod(e.anchor ?? null, ranges[key]) ||
-          (e.is_goal && e.anchor && new Date(e.anchor + 'T00:00:00') < ranges[key].start),
-      )
-      .sort((a, b) => a.position - b.position)
+  const nameOf = (id) => profiles.find((p) => p.id === id)?.display_name || '?'
 
-  const isPastDue = (e, key) =>
-    e.is_goal && e.status === 'open' && e.anchor && new Date(e.anchor + 'T00:00:00') < ranges[key].start
+  // 派活状态徽标：这条目 @ 了谁 → 认领没/解决没
+  const dispatchInfo = (e) => {
+    const ms = allMentions.filter((m) => m.entry_id === e.id)
+    if (!ms.length) return null
+    return ms
+      .map((m) => `${nameOf(m.mentioned)}${e.status === 'resolved' ? '·已解决' : m.claimed_entry ? '·已认领' : '·未认领'}`)
+      .join('、')
+  }
+
+  const isPastDue = (e) =>
+    e.is_goal && e.status === 'open' && e.anchor &&
+    new Date(e.anchor + 'T00:00:00') < ranges[e.section].start
+
+  const rowsOf = (pid) => {
+    const mine = allEntries.filter((en) => en.owner === pid)
+    const inCur = (en) => inPeriod(en.anchor ?? null, ranges[en.section])
+    return {
+      // 常显：今日进行中 + 全部过期欠账
+      now: mine
+        .filter((en) => en.status !== 'closed' && ((en.section === 'today' && inCur(en)) || isPastDue(en)))
+        .sort((a, b) => a.position - b.position),
+      week: mine.filter((en) => en.status !== 'closed' && en.section === 'week' && inCur(en)),
+      month: mine.filter((en) => en.status !== 'closed' && en.section === 'month' && inCur(en)),
+      done: mine.filter((en) => en.status === 'closed'),
+    }
+  }
+
+  const renderRow = (e) => {
+    const info = dispatchInfo(e)
+    return (
+      <div key={e.id}>
+        <EntryRow
+          entry={e}
+          me={me}
+          profiles={profiles}
+          allEntries={allEntries}
+          mutate={mutate}
+          pushUndo={pushUndo}
+          pastDue={isPastDue(e)}
+        />
+        {info && <div className="-mt-1 mb-1 pl-[25px] text-[11px] text-stone-300">派给 {info}</div>}
+      </div>
+    )
+  }
 
   return (
     <div>
       <div className="mt-4 flex items-center gap-2 text-[15px] font-semibold">
         <LayoutList size={16} /> 全部目标
-        <span className="text-[12px] font-normal text-stone-300">全员 · 每个人现在在干什么</span>
+        <span className="text-[12px] font-normal text-stone-300">每个人今天在干什么 · 谁的活谁派的</span>
       </div>
 
       {people.map((p) => {
-        const blocks = SECTIONS.map((sec) => ({ sec, rows: rowsFor(p.id, sec.key) })).filter(
-          (b) => b.rows.length > 0,
-        )
-        const total = blocks.reduce((n, b) => n + b.rows.length, 0)
+        const r = rowsOf(p.id)
+        const open = !!expanded[p.id]
+        const moreCount = r.week.length + r.month.length
         return (
           <section key={p.id} className="border-b border-stone-100 py-5 last:border-0">
             <div className="flex items-baseline gap-2">
@@ -56,25 +87,51 @@ export default function TeamAllView({ allEntries, profiles, me, mutate, pushUndo
                 {p.display_name}
                 {p.id === me.id ? '（我）' : ''}
               </span>
-              <span className="text-xs text-stone-300">{total ? `${total} 条进行中` : '暂无进行中的目标'}</span>
+              <span className="text-xs text-stone-300">
+                {r.now.length ? `今日 ${r.now.length} 条进行中` : '今日暂无进行中'}
+              </span>
+              {r.now.some(isPastDue) && (
+                <span className="text-xs text-red-400">含过期欠账</span>
+              )}
             </div>
-            {blocks.map(({ sec, rows }) => (
-              <div key={sec.key} className="mt-2">
-                <div className="text-[12px] font-medium tracking-wide text-stone-300">{sec.label}</div>
-                {rows.map((e) => (
-                  <EntryRow
-                    key={e.id}
-                    entry={e}
-                    me={me}
-                    profiles={profiles}
-                    allEntries={allEntries}
-                    mutate={mutate}
-                    pushUndo={pushUndo}
-                    pastDue={isPastDue(e, sec.key)}
-                  />
-                ))}
+
+            {r.now.map(renderRow)}
+
+            {(moreCount > 0 || r.done.length > 0) && (
+              <button
+                onClick={() => setExpanded((x) => ({ ...x, [p.id]: !open }))}
+                className="mt-1.5 flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200"
+              >
+                {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                本周 {r.week.length} · 本月 {r.month.length} · 已完成 {r.done.length}
+              </button>
+            )}
+
+            {open && (
+              <div className="mt-1">
+                {r.week.length > 0 && (
+                  <div className="mt-1.5">
+                    <div className="text-[12px] font-medium text-stone-300">本周</div>
+                    {r.week.map(renderRow)}
+                  </div>
+                )}
+                {r.month.length > 0 && (
+                  <div className="mt-1.5">
+                    <div className="text-[12px] font-medium text-stone-300">本月</div>
+                    {r.month.map(renderRow)}
+                  </div>
+                )}
+                {r.done.length > 0 && (
+                  <div className="mt-1.5">
+                    <div className="text-[12px] font-medium text-stone-300">已完成</div>
+                    {r.done.slice(0, 10).map(renderRow)}
+                    {r.done.length > 10 && (
+                      <div className="pl-[25px] text-[11px] text-stone-300">…还有 {r.done.length - 10} 条，去他的主页看</div>
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
+            )}
           </section>
         )
       })}

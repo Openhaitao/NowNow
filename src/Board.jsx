@@ -74,6 +74,7 @@ export default function Board({ session }) {
   const [pageUserId, setPageUserId] = useState(null)
   const [allEntries, setAllEntries] = useState([])
   const [mentions, setMentions] = useState([])
+  const [allMentions, setAllMentions] = useState([])
   const [lastViewed, setLastViewed] = useState(loadLastViewed)
   const [hasAnchor, setHasAnchor] = useState(false)
 
@@ -121,24 +122,26 @@ export default function Board({ session }) {
 
   // 拉取与应用分离：应用前还要验"拉的期间有没有新写操作"
   const fetchAll = useCallback(async () => {
-    const [{ data: es }, { data: ms }] = await Promise.all([
+    const [{ data: es }, { data: ms }, { data: am }] = await Promise.all([
       supabase.from('entries').select('*'),
       supabase
         .from('mentions')
         .select('*, entries!mentions_entry_id_fkey(content, creator)')
         .eq('mentioned', user.id)
         .is('claimed_entry', null),
+      supabase.from('mentions').select('entry_id, mentioned, claimed_entry'),
     ])
-    return { es: es || [], ms: ms || [] }
+    return { es: es || [], ms: ms || [], am: am || [] }
   }, [user.id])
 
   const applyLoad = useCallback(
-    ({ es, ms }) => {
+    ({ es, ms, am }) => {
       // 自愈：清掉空内容的孤儿条目（正常路径建不出空条，出现=历史 bug 残留）
       const strays = es.filter((e) => e.owner === user.id && !e.content.trim())
       for (const stray of strays) supabase.from('entries').delete().eq('id', stray.id)
       setAllEntries(es.filter((e) => !strays.includes(e)))
       setMentions(ms)
+      setAllMentions(am)
       setLoaded(true)
     },
     [user.id],
@@ -667,7 +670,7 @@ export default function Board({ session }) {
           ) : (
             <>
               {view === 'all' ? (
-                <TeamAllView allEntries={allEntries} profiles={profiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} />
+                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} me={me} mutate={mutateEntries} pushUndo={pushUndo} />
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
