@@ -133,7 +133,7 @@ export default function Login() {
       <div className="float-in w-full max-w-sm rounded-2xl border border-stone-200/80 bg-white px-8 py-10 text-center shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
         <img src="/logo.png" alt="NowNow" className="mx-auto w-20" />
         {onboarding ? (
-          <h1 className="mt-3 flex items-baseline justify-center gap-0.5 text-xl font-bold">
+          <h1 className="mt-5 flex items-baseline justify-center text-xl font-bold">
             Hi&nbsp;@
             <input
               value={name}
@@ -142,12 +142,13 @@ export default function Login() {
                 const n = name.trim().replace(/^@/, '')
                 if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
               }}
-              placeholder="你的名字"
-              className="w-28 border-b-2 border-stone-200 bg-transparent text-center text-xl font-bold text-stone-900 outline-none transition-colors focus:border-blue-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
+              placeholder="名字"
+              size={4}
+              className="w-20 border-b-2 border-stone-200 bg-transparent text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-blue-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
             />
           </h1>
         ) : (
-          <h1 className="mt-3 text-xl font-bold">{lastName ? `Hi @${lastName}` : 'NowNow'}</h1>
+          <h1 className="mt-5 text-xl font-bold">{lastName ? `Hi @${lastName}` : 'NowNow'}</h1>
         )}
 
         {sent ? (
