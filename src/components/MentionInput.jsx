@@ -64,7 +64,7 @@ export default function MentionInput({
     const w = ctx.measureText(text.slice(lineStart, idx)).width
     const lines = text.slice(0, idx).split('\n').length - 1
     const lh = parseFloat(cs.lineHeight) || 24
-    return { x: Math.max(0, Math.min(w, el.clientWidth - 230)), y: (lines + 1) * lh + 4 }
+    return { x: Math.max(0, Math.min(w, el.clientWidth - 150)), y: (lines + 1) * lh + 4 }
   }
 
   // 高度手动跟随内容（textarea 不自己长高会在切换编辑时跳一下；field-sizing Safari 不支持）
@@ -207,7 +207,7 @@ export default function MentionInput({
       />
       {picker && candidates.length > 0 && (
         <div
-          className="absolute z-30 w-56 rounded-xl border border-stone-200 bg-white p-1 shadow-xl"
+          className="absolute z-30 w-36 rounded-xl border border-stone-200 bg-white p-1 shadow-xl"
           style={{ left: pickerPos.x, top: pickerPos.y }}
         >
           {candidates.map((p, i) => (
