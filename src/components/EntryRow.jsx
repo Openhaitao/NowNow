@@ -227,7 +227,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     <div
       ref={rowRef}
       className={
-        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 text-[14.5px] leading-relaxed transition-colors max-md:py-2 max-md:text-[16.5px] ' +
+        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 text-[14.5px] leading-relaxed transition-colors max-md:py-2 max-md:pr-0 max-md:text-[16.5px] ' +
         (closing ? 'closing ' : '') +
         (editing ? '' : 'hover:bg-stone-50 ') +
         (flash ? 'bg-amber-100 ' : '') +

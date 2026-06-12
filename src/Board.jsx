@@ -740,7 +740,7 @@ export default function Board({ session }) {
           )}
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col px-5 md:px-6">
+        <div className="flex min-h-0 flex-1 flex-col pl-5 pr-3 md:px-6">
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
           {/* 顶栏：左=日期锚（点了整张纸拨回任意一天），右=搜索（flomo 位）。手机端隐藏：日期在顶栏中间、搜索是独立页 */}
           <div className="flex items-center justify-between gap-2 max-md:hidden">
