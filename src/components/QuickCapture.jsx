@@ -79,7 +79,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
             type="button"
             onClick={() => setSection(s.key)}
             className={
-              (sheet ? 'rounded-full px-3.5 py-1.5 text-[15px] ' : 'rounded-full px-2.5 py-0.5 text-xs ') +
+              (sheet ? 'rounded-full px-3.5 py-1 text-[15px] ' : 'rounded-full px-2.5 py-0.5 text-xs ') +
               (section === s.key ? 'bg-stone-900 text-white' : 'text-stone-400 hover:bg-stone-100')
             }
           >
@@ -90,7 +90,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
           type="button"
           onClick={() => setIsGoal((v) => !v)}
           title={isGoal ? '目标（带完成框）' : '备忘（一段话）'}
-          className={'ml-1 flex items-center gap-1 rounded-full text-stone-400 hover:bg-stone-100 ' + (sheet ? 'px-3 py-1.5 text-[15px]' : 'px-2 py-0.5 text-xs')}
+          className={'ml-1 flex items-center gap-1 rounded-full text-stone-400 hover:bg-stone-100 ' + (sheet ? 'px-3 py-1 text-[15px]' : 'px-2 py-0.5 text-xs')}
         >
           {isGoal ? <Square size={sheet ? 14 : 11} /> : <Pilcrow size={sheet ? 14 : 11} />}
           {isGoal ? '目标' : '备忘'}
