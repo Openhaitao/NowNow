@@ -94,15 +94,13 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     persist(text)
     setEditing(false)
     if (!text.trim()) {
-      if (!entry.content) {
-        // 回车新建出来但啥也没写就离开 = 不留空行
-        mutate(
-          (list) => list.filter((e) => e.id !== entry.id),
-          () => supabase.from('entries').delete().eq('id', entry.id),
-        )
-        return
-      }
-      setText(entry.content)
+      // 删空了就是要删掉这条（之前会把旧文字弹回来，反直觉）。⌘Z 可恢复。
+      if (entry.content) pushUndo?.({ type: 'delete', row: entry })
+      mutate(
+        (list) => list.filter((e) => e.id !== entry.id),
+        () => supabase.from('entries').delete().eq('id', entry.id),
+      )
+      return
     }
     if (advance) onEditNext?.(entry)
   }
