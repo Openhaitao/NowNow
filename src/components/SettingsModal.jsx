@@ -5,7 +5,7 @@ import { friendlyDbError } from '../lib/errors'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
-export default function SettingsModal({ onClose, me, email, allEntries, profiles = [], onProfileSaved }) {
+export default function SettingsModal({ onClose, me, email, allEntries, profiles = [], onProfileSaved, variant }) {
   const [handle, setHandle] = useState(me.display_name || me.handle)
   const [err, setErr] = useState('')
   const [saved, setSaved] = useState(false)
@@ -120,41 +120,37 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
     URL.revokeObjectURL(a.href)
   }
 
-  // 模态框样式；成员名单长了在框内滚动（max-h + overflow）。手机上改为底部全宽抽屉
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 max-md:items-end" onClick={onClose}>
-      <div
-        className="paper-scroll max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-xl border border-stone-200 bg-white p-6 shadow-2xl max-md:max-h-[90dvh] max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:border-x-0 max-md:border-b-0 max-md:pb-[max(1.5rem,env(safe-area-inset-bottom))]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="flex items-center gap-1.5 text-[15px] font-semibold"><SettingsIcon size={15} /> 设置</h2>
+  // 设置页主体：桌面模态框和手机整页共用
+  const body = (
+    <>
+        <h2 className="flex items-center gap-1.5 text-[15px] font-semibold max-md:text-[17px]"><SettingsIcon size={15} /> 设置</h2>
 
         {/* 个人信息 */}
         <div className="mt-4">
           <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300">个人信息</div>
-          <label className="mt-2 block text-xs text-stone-500">
+          <label className="mt-2 block text-xs text-stone-500 max-md:text-[13px]">
             名字（显示用它，@你 也用它；改完自动保存）
             <span className="relative block">
               <input
                 value={handle}
                 onChange={(e) => handleNameChange(e.target.value)}
                 onBlur={() => { clearTimeout(saveTimer.current); persistName(handle) }}
-                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 outline-none focus:border-stone-400"
+                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 max-md:text-[16px] outline-none focus:border-stone-400"
               />
               {saved && (
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-emerald-600">已保存 ✓</span>
               )}
             </span>
           </label>
-          <label className="mt-3 block text-xs text-stone-500">
+          <label className="mt-3 block text-xs text-stone-500 max-md:text-[13px]">
             登录邮箱（暂不可更改）
             <input
               value={email}
               disabled
-              className="mt-1 w-full cursor-not-allowed rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-[14px] text-stone-400 outline-none"
+              className="mt-1 w-full cursor-not-allowed rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-[14px] text-stone-400 max-md:text-[16px] outline-none"
             />
           </label>
-          <label className="mt-3 block text-xs text-stone-500">
+          <label className="mt-3 block text-xs text-stone-500 max-md:text-[13px]">
             修改密码
             <span className="mt-1 flex gap-1.5">
               <input
@@ -163,12 +159,12 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
                 onChange={(e) => { setNewPw(e.target.value); setPwMsg('') }}
                 onKeyDown={(e) => e.key === 'Enter' && changePassword()}
                 placeholder="输入新密码（至少 6 位）"
-                className="min-w-0 flex-1 rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 outline-none focus:border-stone-400"
+                className="min-w-0 flex-1 rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 max-md:text-[16px] outline-none focus:border-stone-400"
               />
               <button
                 onClick={changePassword}
                 disabled={!newPw}
-                className="shrink-0 rounded-lg bg-stone-900 px-3 py-2 text-[13px] text-white hover:bg-stone-700 disabled:opacity-30"
+                className="shrink-0 rounded-lg bg-stone-900 px-3 py-2 text-[13px] text-white hover:bg-stone-700 max-md:text-[14.5px] disabled:opacity-30"
               >
                 更新
               </button>
@@ -188,11 +184,11 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
               onChange={(e) => { setInviteEmail(e.target.value); setInviteMsg(''); setInviteErr('') }}
               onKeyDown={(e) => e.key === 'Enter' && addEmail()}
               placeholder="对方邮箱"
-              className="min-w-0 flex-1 rounded-lg border border-stone-200 px-3 py-1.5 text-[13px] outline-none focus:border-stone-400"
+              className="min-w-0 flex-1 rounded-lg border border-stone-200 px-3 py-1.5 text-[13px] outline-none focus:border-stone-400 max-md:text-[16px]"
             />
             <button
               onClick={addEmail}
-              className="flex shrink-0 items-center gap-1 rounded-lg bg-stone-900 px-3 py-1.5 text-[13px] text-white hover:bg-stone-700"
+              className="flex shrink-0 items-center gap-1 rounded-lg bg-stone-900 px-3 py-1.5 text-[13px] text-white hover:bg-stone-700 max-md:text-[14.5px]"
             >
               <UserPlus size={13} /> 邀请
             </button>
@@ -274,16 +270,33 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
         {/* 数据与账号 */}
         <div className="mt-5 border-t border-stone-100 pt-4">
           <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300">数据与账号</div>
-          <button onClick={exportData} className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700">
+          <button onClick={exportData} className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700 max-md:text-[15px]">
             <Download size={13} /> 导出我的数据（Markdown）
           </button>
           <button
             onClick={() => supabase.auth.signOut()}
-            className="mt-2 flex items-center gap-1.5 text-[13px] text-red-500 hover:text-red-700"
+            className="mt-2 flex items-center gap-1.5 text-[13px] text-red-500 hover:text-red-700 max-md:text-[15px]"
           >
             <LogOut size={13} /> 退出登录
           </button>
         </div>
+    </>
+  )
+
+  // 桌面=模态框（成员名单长了在框内滚动）；手机=和其他页一致的整页（variant="page"）
+  if (variant === 'page')
+    return (
+      <div className="w-full max-w-sm pt-1">
+        {body}
+      </div>
+    )
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={onClose}>
+      <div
+        className="paper-scroll max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-xl border border-stone-200 bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {body}
       </div>
     </div>
   )

@@ -37,7 +37,7 @@ function SortableMemberRow({ p, isMe, active, news, onClick }) {
       onClick={onClick}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={
-        'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
+        'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[15.5px] ' +
         (isDragging ? 'z-10 ' : '') +
         (active || isDragging ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
       }
@@ -569,6 +569,18 @@ export default function Board({ session }) {
         <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[19px]">
           <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
           <span className="truncate">{me.display_name}</span>
+          {/* 手机：通知/设置收进名字右侧（flomo 式抽屉头），点击进对应整页 */}
+          <span className="ml-auto flex items-center gap-0.5 md:hidden">
+            <button onClick={() => setView('notifications')} className="relative p-1.5 text-stone-500" title="通知">
+              <Bell size={19} />
+              {notifCount > 0 && (
+                <span className="absolute right-0.5 top-0.5 rounded-full bg-red-500 px-1 text-[10px] font-medium leading-[14px] text-white">{notifCount}</span>
+              )}
+            </button>
+            <button onClick={() => setView('settings')} className="p-1.5 text-stone-500" title="设置">
+              <Settings size={19} />
+            </button>
+          </span>
         </div>
         {/* flomo 式三格统计：左中右铺开（首格贴左、末格贴右），数字行与右侧输入框平齐 */}
         <div className="mb-4 mt-5 flex justify-between px-2.5">
@@ -588,14 +600,14 @@ export default function Board({ session }) {
           <button
             onClick={() => setView(view === 'all' ? 'paper' : 'all')}
             className={
-              'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
+              'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[15.5px] ' +
               (view === 'all' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
             }
           >
             <LayoutList size={14} /> 全部目标
           </button>
         )}
-        <div className="mb-1 mt-3 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300">
+        <div className="mb-1 mt-3 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">
           团队
         </div>
         {/* 成员多到放不下时这一段自己滚动（细灰滚动条），通知/设置钉在底部不动 */}
@@ -615,8 +627,8 @@ export default function Board({ session }) {
             </SortableContext>
           </DndContext>
         </div>
-        {/* 底部：通知（完整页面）+ 设置 */}
-        <div className="mt-auto">
+        {/* 底部：通知（完整页面）+ 设置（桌面；手机入口在抽屉头名字右侧） */}
+        <div className="mt-auto max-md:hidden">
           <button
             onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
             className={
@@ -697,7 +709,9 @@ export default function Board({ session }) {
                     ? '全部目标'
                     : view === 'notifications'
                       ? '通知'
-                      : `${(baseDate || new Date()).getMonth() + 1}月${(baseDate || new Date()).getDate()}日 周${'日一二三四五六'[(baseDate || new Date()).getDay()]}${isLive ? '' : ' ·回看'}`}
+                      : view === 'settings'
+                        ? '设置'
+                        : `${(baseDate || new Date()).getMonth() + 1}月${(baseDate || new Date()).getDate()}日 周${'日一二三四五六'[(baseDate || new Date()).getDay()]}${isLive ? '' : ' ·回看'}`}
                 </button>
                 {dateOpen && view === 'paper' && (
                   <DatePicker
@@ -778,7 +792,7 @@ export default function Board({ session }) {
               )}
             </span>
           </div>
-          {view !== 'notifications' && !isMyPage && (
+          {view !== 'notifications' && view !== 'settings' && !isMyPage && (
             <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
               <span>{pageUser.display_name}的主页（只读）</span>
               <button
@@ -789,9 +803,9 @@ export default function Board({ session }) {
               </button>
             </div>
           )}
-          {view === 'notifications' && (
+          {(view === 'notifications' || view === 'settings') && (
             <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
-              <span>通知</span>
+              <span>{view === 'notifications' ? '通知' : '设置'}</span>
               <button
                 onClick={() => viewPage(me.id)}
                 className="text-stone-400 transition-colors hover:text-stone-600"
@@ -819,7 +833,16 @@ export default function Board({ session }) {
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
         <div className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-24 pl-6 pr-1">
-          {view === 'notifications' ? (
+          {view === 'settings' ? (
+            <SettingsModal
+              variant="page"
+              me={me}
+              email={user.email}
+              allEntries={allEntries}
+              profiles={profiles}
+              onProfileSaved={loadProfiles}
+            />
+          ) : view === 'notifications' ? (
             <NotificationsPage
               mentions={mentions}
               resolvedMine={resolvedMine}

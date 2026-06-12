@@ -81,8 +81,8 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
         return (
           <section key={p.id} className="border-b border-stone-100 py-5 last:border-0">
             <div className="flex items-center gap-2">
-              <span className="text-[15px] font-semibold">{p.display_name}</span>
-              <span className="text-xs text-stone-300">
+              <span className="text-[15px] font-semibold max-md:text-[17px]">{p.display_name}</span>
+              <span className="text-xs text-stone-300 max-md:text-[13px]">
                 {r.now.length ? `${dayLabel} ${r.now.length} 条进行中` : `${dayLabel}暂无进行中`}
               </span>
               {r.now.some((e) => isPastDue(e, pr)) && (
@@ -133,19 +133,19 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
               <div className="mt-1">
                 {r.week.length > 0 && (
                   <div className="mt-1.5">
-                    <div className="text-[12px] font-medium text-stone-300">本周</div>
+                    <div className="text-[12px] font-medium text-stone-300 max-md:text-[13.5px]">本周</div>
                     {r.week.map(row)}
                   </div>
                 )}
                 {r.month.length > 0 && (
                   <div className="mt-1.5">
-                    <div className="text-[12px] font-medium text-stone-300">本月</div>
+                    <div className="text-[12px] font-medium text-stone-300 max-md:text-[13.5px]">本月</div>
                     {r.month.map(row)}
                   </div>
                 )}
                 {r.done.length > 0 && (
                   <div className="mt-1.5">
-                    <div className="text-[12px] font-medium text-stone-300">已完成</div>
+                    <div className="text-[12px] font-medium text-stone-300 max-md:text-[13.5px]">已完成</div>
                     {r.done.slice(0, 10).map(row)}
                     {r.done.length > 10 && (
                       <div className="pl-[25px] text-[11px] text-stone-300">…还有 {r.done.length - 10} 条，去他的主页看</div>
@@ -181,8 +181,8 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
                   className="flex w-full items-center gap-2 border-b border-stone-100 py-2.5 text-left last:border-0 hover:bg-stone-50"
                 >
                   {open ? <ChevronDown size={12} className="shrink-0 text-stone-300" /> : <ChevronRight size={12} className="shrink-0 text-stone-300" />}
-                  <span className="text-[14px] font-medium">{p.display_name}</span>
-                  <span className="text-xs text-stone-300">
+                  <span className="text-[14px] font-medium max-md:text-[16px]">{p.display_name}</span>
+                  <span className="text-xs text-stone-300 max-md:text-[13px]">
                     今日 {r.now.length - overdue} · 本周 {r.week.length} · 本月 {r.month.length}
                   </span>
                   {overdue > 0 && <span className="text-xs text-red-400">过期 {overdue}</span>}

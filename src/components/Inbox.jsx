@@ -36,7 +36,7 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
         const expanded = expandedId === m.id
         return (
           <div key={m.id} className="py-1">
-            <div className="flex items-center gap-2 text-[13.5px] text-blue-900">
+            <div className="flex items-center gap-2 text-[13.5px] max-md:text-[15.5px] text-blue-900">
               <span className="min-w-0 flex-1">
                 <b>{from?.display_name || '?'}：</b>
                 {m.entries?.content}

@@ -70,7 +70,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
         rows={sheet ? 2 : 3}
         autoFocus={autoFocus}
         placeholder={sheet ? '现在要做什么？@ 派人' : '现在要做什么？@ 派人，回车存，Shift+回车换行（按 / 聚焦）'}
-        className="px-1 pt-0.5"
+        className={'px-1 pt-0.5' + (sheet ? ' text-[16px]' : '')}
       />
       <div className="mt-2 flex items-center gap-1">
         {SECTIONS.map((s) => (
