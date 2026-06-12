@@ -1,21 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { mentionSplitRegex } from '../lib/mentions'
 import { DATE_TOKEN_RE, dateTokenState } from '../lib/dates'
-import { DATE_CHIP_CLS } from '../lib/render'
+import { DATE_CHIP_CLS, MENTION_STATE } from '../lib/render'
 
 // 编辑态着色层：@人蓝、日期黄（纯颜色不带胶囊底，字宽与 textarea 完全一致才能重叠）
-function colorize(text, profiles) {
+function colorize(text, profiles, mentionStates) {
   const re = mentionSplitRegex(profiles)
   const parts = re ? text.split(re) : [text]
   return parts.map((part, i) => {
     if (!part) return null
-    if (part.startsWith('@') && profiles.some((p) => '@' + p.handle === part.toLowerCase()))
+    if (part.startsWith('@') && profiles.some((p) => '@' + p.handle === part.toLowerCase())) {
+      const st = MENTION_STATE[mentionStates?.[part.slice(1).toLowerCase()]]
       return (
-        // CJK 加粗不改变字宽，名字是中文的话和 textarea 不会错位
-        <span key={i} className="font-semibold text-blue-600">
+        // CJK 加粗/下划线都不改变字宽，和 textarea 不会错位
+        <span key={i} className={'font-semibold text-blue-600 ' + (st?.cls || '')}>
           {part}
         </span>
       )
+    }
     return part.split(DATE_TOKEN_RE).map((t, j) => {
       if (!t) return null
       const st = dateTokenState(t)
@@ -47,6 +49,7 @@ export default function MentionInput({
   className,
   rows = 1,
   initialCaret = null,
+  mentionStates,
 }) {
   const ref = useRef(null)
   const [picker, setPicker] = useState(null) // {start, query} | null
@@ -188,7 +191,7 @@ export default function MentionInput({
           (className || '')
         }
       >
-        {colorize(value, profiles)}
+        {colorize(value, profiles, mentionStates)}
       </div>
       <textarea
         id={id}

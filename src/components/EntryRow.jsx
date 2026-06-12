@@ -196,7 +196,14 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   const mentionStates = {}
   for (const m of allMentions.filter((x) => x.entry_id === entry.id)) {
     const p = profiles.find((x) => x.id === m.mentioned)
-    if (p) mentionStates[p.handle.toLowerCase()] = entry.status === 'resolved' ? 'resolved' : m.claimed_entry ? 'claimed' : 'unclaimed'
+    if (p)
+      mentionStates[p.handle.toLowerCase()] = m.rejected_at
+        ? 'rejected'
+        : entry.status === 'resolved'
+          ? 'resolved'
+          : m.claimed_entry
+            ? 'claimed'
+            : 'unclaimed'
   }
 
   const rendered = renderEntryContent(entry.content, profiles, {
@@ -269,6 +276,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           onArrowUp={onNavUp ? () => { saveEdit(false); onNavUp(entry) } : undefined}
           onArrowDown={onNavDown ? () => { saveEdit(false); onNavDown(entry) } : undefined}
           profiles={profiles}
+          mentionStates={mentionStates}
           autoFocus
           initialCaret={clickCaret}
         />

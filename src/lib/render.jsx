@@ -66,10 +66,13 @@ function renderInline(text, keyBase, q) {
 }
 
 // 完整渲染：标题前缀（#/##）→ 加粗加大；@token 高亮；日期 chip 可点；其余行内 md
-const STATE_MARK = {
-  unclaimed: { ch: '○', cls: 'text-stone-400', tip: '未认领' },
-  claimed: { ch: '●', cls: 'text-blue-500', tip: '已认领' },
-  resolved: { ch: '✓', cls: 'text-emerald-600', tip: '已解决' },
+// 派活状态长在 @名字 的"下划线"里：不加任何字符、不占宽度、编辑态光标也不歪
+// 虚线灰=未认领 实线蓝=已认领 实线绿=已解决 红删除线=已拒绝
+export const MENTION_STATE = {
+  unclaimed: { cls: 'underline decoration-stone-300 decoration-dashed underline-offset-2', tip: '未认领' },
+  claimed: { cls: 'underline decoration-blue-500 decoration-2 underline-offset-2', tip: '已认领' },
+  resolved: { cls: 'underline decoration-emerald-500 decoration-2 underline-offset-2', tip: '已解决' },
+  rejected: { cls: 'line-through decoration-red-400 decoration-2', tip: '已拒绝' },
 }
 
 export function renderEntryContent(content, profiles, { meHandle, highlightMe, onDateClick, searchTerm, mentionStates } = {}) {
@@ -87,16 +90,14 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe, o
     if (!part) return null
     if (part.startsWith('@') && splitRe && profiles.some((p) => '@' + p.handle === part.toLowerCase())) {
       const isMe = meHandle && part.slice(1).toLowerCase() === meHandle
-      const st = mentionStates?.[part.slice(1).toLowerCase()]
-      const mark = st ? STATE_MARK[st] : null
+      const st = MENTION_STATE[mentionStates?.[part.slice(1).toLowerCase()]]
       return (
-        <span key={i} className={isMe && highlightMe ? 'mention-me' : 'mention'}>
+        <span
+          key={i}
+          title={st?.tip}
+          className={(isMe && highlightMe ? 'mention-me ' : 'mention ') + (st?.cls || '')}
+        >
           {part}
-          {mark && (
-            <sup className={'ml-px text-[9px] ' + mark.cls} title={mark.tip}>
-              {mark.ch}
-            </sup>
-          )}
         </span>
       )
     }
