@@ -723,9 +723,7 @@ export default function Board({ session }) {
                       ? '设置'
                       : pageUser.display_name}
               </button>
-              <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
-                <Search size={18} />
-              </button>
+              <span className="w-8" /> {/* 占位让中间标题保持居中（搜索入口已按需求隐藏） */}
             </>
           )}
         </div>
