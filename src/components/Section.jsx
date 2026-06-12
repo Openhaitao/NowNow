@@ -340,7 +340,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         {offset !== 0 && (
           <button
             onClick={() => setOffset(0)}
-            className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+            className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200 max-md:text-[13px]"
           >
             {BACK_LABEL[sec.key]}
           </button>
@@ -426,7 +426,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       {closed.length > 0 && (
         <button
           onClick={() => setShowClosed((v) => !v)}
-          className="mt-1.5 flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 hover:text-stone-700"
+          className="mt-1.5 flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 hover:text-stone-700 max-md:text-[14px]"
         >
           {showClosed ? <ChevronDown size={12} /> : <ChevronRight size={12} />} 已完成 {closed.length}
         </button>

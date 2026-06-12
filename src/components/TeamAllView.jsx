@@ -86,7 +86,7 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
                 {r.now.length ? `${dayLabel} ${r.now.length} 条进行中` : `${dayLabel}暂无进行中`}
               </span>
               {r.now.some((e) => isPastDue(e, pr)) && (
-                <span className="text-xs text-red-400">含过期欠账</span>
+                <span className="text-xs text-red-400 max-md:text-[13px]">含过期欠账</span>
               )}
               {/* 每个人的日拨盘统一钉在行最右：不随名字长短漂移。‹ 看他昨天的目标，› 拨回来 */}
               <span className="ml-auto flex items-center gap-1.5">
@@ -122,7 +122,7 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
             {(moreCount > 0 || r.done.length > 0) && (
               <button
                 onClick={() => setExpanded((x) => ({ ...x, [p.id]: !open }))}
-                className="mt-1.5 flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200"
+                className="mt-1.5 flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 max-md:py-1 max-md:text-[14px]"
               >
                 {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                 本周 {r.week.length} · 本月 {r.month.length} · 已完成 {r.done.length}

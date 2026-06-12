@@ -25,26 +25,31 @@ body {
   transition: opacity 0.3s ease;
 }
 
-/* 纸的内部滚动：细灰滚动条，贴着内容右缘（横向 padding 在外层，容器本身不带）
-   scrollbar-gutter: stable —— macOS 悬浮滚动条出现/消失时不让内容晃动 */
+/* 纸的内部滚动。
+   自定义滚动条只给桌面：iOS 上一旦样式化 ::-webkit-scrollbar 就会退出悬浮模式，
+   变成常驻的宽滚动条占掉横向空间（用户实测"滑块过宽"）；手机用系统原生悬浮条 */
 .paper-scroll {
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: #e7e5e4 transparent;
   overscroll-behavior: contain; /* 滚到头不把弹性带给整页 */
 }
-.paper-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-.paper-scroll::-webkit-scrollbar-thumb {
-  background: #e7e5e4;
-  border-radius: 3px;
-}
-.paper-scroll::-webkit-scrollbar-thumb:hover {
-  background: #d6d3d1;
-}
-.paper-scroll::-webkit-scrollbar-track {
-  background: transparent;
+@media (min-width: 768px) {
+  .paper-scroll {
+    scrollbar-gutter: stable; /* macOS 悬浮滚动条出现/消失时不让内容晃动 */
+    scrollbar-width: thin;
+    scrollbar-color: #e7e5e4 transparent;
+  }
+  .paper-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .paper-scroll::-webkit-scrollbar-thumb {
+    background: #e7e5e4;
+    border-radius: 3px;
+  }
+  .paper-scroll::-webkit-scrollbar-thumb:hover {
+    background: #d6d3d1;
+  }
+  .paper-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 /* 登录页：点阵稿纸背景 + 卡片浮入 */

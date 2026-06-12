@@ -127,7 +127,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
 
         {/* 个人信息 */}
         <div className="mt-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300">个人信息</div>
+          <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">个人信息</div>
           <label className="mt-2 block text-xs text-stone-500 max-md:text-[13px]">
             名字（显示用它，@你 也用它；改完自动保存）
             <span className="relative block">
@@ -176,7 +176,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
 
         {/* 成员 */}
         <div className="mt-5 border-t border-stone-100 pt-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300">成员</div>
+          <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">成员</div>
           <div className="mt-2 flex gap-1.5">
             <input
               type="email"
@@ -211,7 +211,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
               </button>
             </div>
           )}
-          <p className="mt-1 text-[11px] text-stone-300">
+          <p className="mt-1 text-[11px] text-stone-300 max-md:text-[12.5px]">
             邀请 = 放行邮箱。对方打开 {window.location.origin} 用这个邮箱设置密码、起名即进
           </p>
           {(() => {
@@ -223,7 +223,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
               <div className="mt-2">
                 <button
                   onClick={() => setMembersOpen((v) => !v)}
-                  className="flex items-center gap-1 text-xs text-stone-400 outline-none hover:text-stone-600"
+                  className="flex items-center gap-1 text-xs text-stone-400 outline-none hover:text-stone-600 max-md:text-[14px]"
                 >
                   {membersOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                   成员与邀请名单（{total}）
@@ -231,7 +231,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
                 {membersOpen && (
                   <div className="mt-1.5 space-y-1">
                     {joined.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-stone-50 px-2.5 py-1.5 text-xs">
+                      <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-stone-50 px-2.5 py-1.5 text-xs max-md:py-2 max-md:text-[14px]">
                         <span className="text-stone-700">
                           {p.display_name}
                           {p.id === me.id ? '（我）' : ''}
@@ -247,7 +247,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
                       </div>
                     ))}
                     {waiting.map((a) => (
-                      <div key={a.email} className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs">
+                      <div key={a.email} className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs max-md:py-2 max-md:text-[14px]">
                         <span className="text-amber-400">已邀请 · 未加入</span>
                         <span className="flex items-center gap-1.5 text-amber-700">
                           {a.email}
@@ -269,7 +269,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
 
         {/* 数据与账号 */}
         <div className="mt-5 border-t border-stone-100 pt-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300">数据与账号</div>
+          <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">数据与账号</div>
           <button onClick={exportData} className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700 max-md:text-[15px]">
             <Download size={13} /> 导出我的数据（Markdown）
           </button>

@@ -304,13 +304,13 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
 
       <span className="flex shrink-0 items-center gap-1.5">
         {notified && (
-          <span className="rounded-full bg-emerald-100 px-2 py-px text-xs text-emerald-700">
+          <span className="rounded-full bg-emerald-100 px-2 py-px text-xs text-emerald-700 max-md:text-[13px]">
             已通知 {originalCreator?.display_name}
           </span>
         )}
         {!notified && originalCreator && !closed && (
           <span
-            className="rounded bg-stone-100 px-1.5 py-px text-[11px] text-stone-500"
+            className="rounded bg-stone-100 px-1.5 py-px text-[11px] text-stone-500 max-md:text-[13px]"
             title="认领来的活，完成后会自动通知对方验收"
           >
             来自{originalCreator.display_name}
