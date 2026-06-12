@@ -674,7 +674,7 @@ export default function Board({ session }) {
         />
         <div
           className={
-            'absolute inset-y-0 left-0 flex w-72 flex-col overflow-hidden bg-[#fffefb] px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-200 ease-out ' +
+            'absolute inset-y-0 left-0 flex w-60 flex-col overflow-hidden bg-[#fffefb] px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl transition-transform duration-200 ease-out ' +
             (drawerOpen ? 'translate-x-0' : '-translate-x-full')
           }
           onClick={() => setDrawerOpen(false)}
@@ -716,7 +716,7 @@ export default function Board({ session }) {
                     ? '通知'
                     : view === 'settings'
                       ? '设置'
-                      : pageUser.display_name}
+                      : `${(baseDate || new Date()).getMonth() + 1}月${(baseDate || new Date()).getDate()}日 周${'日一二三四五六'[(baseDate || new Date()).getDay()]}${isLive ? '' : ' ·回看'}`}
               </button>
               <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
                 <Search size={18} />
@@ -805,13 +805,6 @@ export default function Board({ session }) {
               >
                 ← 回到我的主页
               </button>
-            </div>
-          )}
-          {view === 'paper' && (
-            <div className="mt-1 hidden text-[13px] text-stone-300 max-md:block">
-              {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
-              {'日一二三四五六'[(baseDate || new Date()).getDay()]}
-              {isLive ? '' : ' · 回看中'}
             </div>
           )}
           {view === 'paper' && isMyPage && (
