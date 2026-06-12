@@ -438,9 +438,10 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       {isMyPage && !q && active.length === 0 && drafts.length === 0 && (
         <div
           onClick={() => setDrafts((d) => [...d, { key: `d${Date.now()}-e`, pos: 1, is_goal: true, anchor: null }])}
-          className="group/empty cursor-text py-2"
+          className="group/empty flex cursor-text items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed"
         >
-          <span className="text-[13px] text-stone-200 opacity-0 transition-opacity group-hover/empty:opacity-100">
+          <span className="w-[15px] shrink-0" />
+          <span className="text-stone-200 opacity-0 transition-opacity group-hover/empty:opacity-100">
             点击添加目标…
           </span>
         </div>

@@ -221,7 +221,6 @@ export default function MentionInput({
               }
             >
               <span>{p.display_name}</span>
-              <span className="ml-auto text-xs text-stone-400">@{p.handle}</span>
             </button>
           ))}
         </div>
