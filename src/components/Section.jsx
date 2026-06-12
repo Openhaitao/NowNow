@@ -434,6 +434,17 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         closed.map((e) => (
           <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} pushUndo={pushUndo} />
         ))}
+      {/* 空区可点：点一下直接给一行新草稿开写 */}
+      {isMyPage && !q && active.length === 0 && drafts.length === 0 && (
+        <div
+          onClick={() => setDrafts((d) => [...d, { key: `d${Date.now()}-e`, pos: 1, is_goal: true, anchor: null }])}
+          className="group/empty cursor-text py-2"
+        >
+          <span className="text-[13px] text-stone-200 opacity-0 transition-opacity group-hover/empty:opacity-100">
+            点击添加目标…
+          </span>
+        </div>
+      )}
       {!isMyPage && active.length === 0 && closed.length === 0 && (
         <p className="py-1 text-stone-200">—</p>
       )}
