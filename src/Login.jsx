@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
@@ -11,6 +11,11 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [password2, setPassword2] = useState('')
   const onboarding = !!inviteEmail
+
+  // 标签页标题：邀请进入 = Invite | NowNow，普通登录 = Login | NowNow
+  useEffect(() => {
+    document.title = onboarding ? 'Invite | NowNow' : 'Login | NowNow'
+  }, [onboarding])
   const [mode, setMode] = useState('password') // password | link
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState('')
