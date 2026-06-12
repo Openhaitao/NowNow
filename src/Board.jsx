@@ -299,10 +299,25 @@ export default function Board({ session }) {
     [viewPage],
   )
 
+  // 加载超过 8 秒还没好 = 网络/服务问题，给出口别让人对着骨架干等
+  const [loadTimeout, setLoadTimeout] = useState(false)
+  useEffect(() => {
+    if (loaded) return
+    const t = setTimeout(() => setLoadTimeout(true), 8000)
+    return () => clearTimeout(t)
+  }, [loaded])
+
   if (needSetup) return <SetupCard user={user} onDone={loadProfiles} />
   // 首屏骨架：别让用户对着白屏等两个网络往返
   if (!me || !loaded)
-    return (
+    return loadTimeout ? (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-stone-600">加载有点慢，可能是网络问题</p>
+        <button onClick={() => window.location.reload()} className="rounded-lg bg-stone-900 px-4 py-2 text-sm text-white">
+          刷新重试
+        </button>
+      </div>
+    ) : (
       <div className="mx-auto flex h-screen max-w-4xl animate-pulse">
         <div className="hidden w-52 shrink-0 px-4 py-6 md:block">
           <div className="h-5 w-24 rounded bg-stone-100" />
