@@ -12,6 +12,17 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
   const [allowed, setAllowed] = useState([])
   const [inviteMsg, setInviteMsg] = useState('')
   const [membersOpen, setMembersOpen] = useState(false)
+  const [newPw, setNewPw] = useState('')
+  const [pwMsg, setPwMsg] = useState('')
+
+  // 修改密码（密码本身是加密存的，没人能"查看"，只能改成新的）
+  async function changePassword() {
+    setPwMsg('')
+    if (newPw.length < 6) { setPwMsg('密码至少 6 位'); return }
+    const { error } = await supabase.auth.updateUser({ password: newPw })
+    if (error) setPwMsg(error.message)
+    else { setPwMsg('密码已更新 ✓'); setNewPw(''); setTimeout(() => setPwMsg(''), 2000) }
+  }
   const saveTimer = useRef(null)
 
 
@@ -118,6 +129,27 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
               disabled
               className="mt-1 w-full cursor-not-allowed rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-[14px] text-stone-400 outline-none"
             />
+          </label>
+          <label className="mt-3 block text-xs text-stone-500">
+            修改密码
+            <span className="mt-1 flex gap-1.5">
+              <input
+                type="password"
+                value={newPw}
+                onChange={(e) => { setNewPw(e.target.value); setPwMsg('') }}
+                onKeyDown={(e) => e.key === 'Enter' && changePassword()}
+                placeholder="输入新密码（至少 6 位）"
+                className="min-w-0 flex-1 rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 outline-none focus:border-stone-400"
+              />
+              <button
+                onClick={changePassword}
+                disabled={!newPw}
+                className="shrink-0 rounded-lg bg-stone-900 px-3 py-2 text-[13px] text-white hover:bg-stone-700 disabled:opacity-30"
+              >
+                更新
+              </button>
+            </span>
+            {pwMsg && <span className={'mt-1 block text-xs ' + (pwMsg.includes('✓') ? 'text-emerald-600' : 'text-red-600')}>{pwMsg}</span>}
           </label>
           {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
         </div>
