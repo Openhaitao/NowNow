@@ -111,7 +111,14 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
               )}
             </span>
           </label>
-          <div className="mt-2 text-xs text-stone-400">登录邮箱：{email}（登录靠邮件链接，无密码可丢）</div>
+          <label className="mt-3 block text-xs text-stone-500">
+            登录邮箱（暂不可更改）
+            <input
+              value={email}
+              disabled
+              className="mt-1 w-full cursor-not-allowed rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-[14px] text-stone-400 outline-none"
+            />
+          </label>
           {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
         </div>
 
