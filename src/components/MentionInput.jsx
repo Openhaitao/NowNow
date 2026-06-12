@@ -51,6 +51,21 @@ export default function MentionInput({
   const ref = useRef(null)
   const [picker, setPicker] = useState(null) // {start, query} | null
   const [active, setActive] = useState(0)
+  const [pickerPos, setPickerPos] = useState({ x: 0, y: 24 })
+
+  // 把选择器定位到 @ 字符的正下方（canvas 量文字宽度，无需镜像 DOM）
+  function caretXY(text, idx) {
+    const el = ref.current
+    if (!el) return { x: 0, y: 24 }
+    const cs = getComputedStyle(el)
+    const ctx = (caretXY._ctx ||= document.createElement('canvas').getContext('2d'))
+    ctx.font = `${cs.fontSize} ${cs.fontFamily}`
+    const lineStart = text.lastIndexOf('\n', idx - 1) + 1
+    const w = ctx.measureText(text.slice(lineStart, idx)).width
+    const lines = text.slice(0, idx).split('\n').length - 1
+    const lh = parseFloat(cs.lineHeight) || 24
+    return { x: Math.max(0, Math.min(w, el.clientWidth - 230)), y: (lines + 1) * lh + 4 }
+  }
 
   // 高度手动跟随内容（textarea 不自己长高会在切换编辑时跳一下；field-sizing Safari 不支持）
   const resize = () => {
@@ -90,7 +105,9 @@ export default function MentionInput({
 
   function handleChange(e) {
     onChange(e.target.value)
-    setPicker(detectPicker(e.target.value, e.target.selectionStart))
+    const pk = detectPicker(e.target.value, e.target.selectionStart)
+    setPicker(pk)
+    if (pk) setPickerPos(caretXY(e.target.value, pk.start))
     setActive(0)
   }
 
@@ -189,7 +206,10 @@ export default function MentionInput({
         }
       />
       {picker && candidates.length > 0 && (
-        <div className="absolute left-0 top-full z-30 mt-1 w-56 rounded-lg border border-stone-200 bg-white py-1 shadow-lg">
+        <div
+          className="absolute z-30 w-56 rounded-lg border border-stone-200 bg-white py-1 shadow-lg"
+          style={{ left: pickerPos.x, top: pickerPos.y }}
+        >
           {candidates.map((p, i) => (
             <button
               key={p.id}
