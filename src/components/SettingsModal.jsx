@@ -120,11 +120,11 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
     URL.revokeObjectURL(a.href)
   }
 
-  // 模态框样式；成员名单长了在框内滚动（max-h + overflow）
+  // 模态框样式；成员名单长了在框内滚动（max-h + overflow）。手机上改为底部全宽抽屉
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 max-md:items-end" onClick={onClose}>
       <div
-        className="paper-scroll max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-xl border border-stone-200 bg-white p-6 shadow-2xl"
+        className="paper-scroll max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-xl border border-stone-200 bg-white p-6 shadow-2xl max-md:max-h-[90dvh] max-md:max-w-none max-md:rounded-b-none max-md:rounded-t-2xl max-md:border-x-0 max-md:border-b-0 max-md:pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="flex items-center gap-1.5 text-[15px] font-semibold"><SettingsIcon size={15} /> 设置</h2>
