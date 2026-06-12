@@ -79,7 +79,7 @@ function SortableRow({ entry, draggable, children }) {
         <span
           {...attributes}
           {...listeners}
-          className="absolute -left-5 top-[7px] cursor-grab touch-none text-stone-300 opacity-0 group-hover/drag:opacity-100"
+          className="absolute -left-5 top-[7px] cursor-grab touch-none text-stone-300 opacity-0 group-hover/drag:opacity-100 max-md:opacity-40"
           title="拖动排序"
         >
           ⠿
@@ -338,7 +338,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           {range.label && <span className="ml-1.5 text-stone-300">· {range.label}</span>}
         </h3>
         {hasAnchor && !allTime && !q && (
-          <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/head:opacity-100">
+          <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/head:opacity-100 max-md:opacity-60">
             <button
               onClick={() => setOffset((o) => o - 1)}
               className="rounded px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500"

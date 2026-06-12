@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Bell, CalendarDays, LayoutList, Search, Settings } from 'lucide-react'
+import { Bell, CalendarDays, Home, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
@@ -545,8 +545,8 @@ export default function Board({ session }) {
 
       {/* 主区：输入框固定，纸内部滚动 */}
       <main className="flex h-full min-w-0 flex-1 flex-col">
-        {/* 移动端：顶部人名横排 */}
-        <div className="flex shrink-0 items-center gap-1.5 border-b border-stone-100 px-4 py-2.5 md:hidden">
+        {/* 移动端：顶部人名横排（适配刘海/状态栏安全区） */}
+        <div className="flex shrink-0 items-center gap-1.5 border-b border-stone-100 px-4 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] md:hidden">
           <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
           <div className="flex flex-1 gap-1 overflow-x-auto">
             {activeProfiles.map((p) => (
@@ -565,9 +565,6 @@ export default function Board({ session }) {
           </div>
           <button onClick={() => document.getElementById('search-input')?.focus()} className="text-stone-400">
             <Search size={16} />
-          </button>
-          <button onClick={() => supabase.auth.signOut()} className="text-xs text-stone-400">
-            退出
           </button>
         </div>
 
@@ -707,6 +704,38 @@ export default function Board({ session }) {
           )}
         </div>
         </div>
+
+        {/* 移动端底部导航：主页 / 全部 / 通知 / 设置（桌面用左栏） */}
+        <nav className="flex shrink-0 items-center justify-around border-t border-stone-100 bg-white pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5 md:hidden">
+          <button
+            onClick={() => viewPage(me.id)}
+            className={'flex flex-col items-center gap-0.5 px-3 text-[10px] ' + (view === 'paper' && isMyPage ? 'text-blue-600' : 'text-stone-400')}
+          >
+            <Home size={18} /> 主页
+          </button>
+          <button
+            onClick={() => setView(view === 'all' ? 'paper' : 'all')}
+            className={'flex flex-col items-center gap-0.5 px-3 text-[10px] ' + (view === 'all' ? 'text-blue-600' : 'text-stone-400')}
+          >
+            <LayoutList size={18} /> 全部
+          </button>
+          <button
+            onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
+            className={'relative flex flex-col items-center gap-0.5 px-3 text-[10px] ' + (view === 'notifications' ? 'text-blue-600' : 'text-stone-400')}
+          >
+            <Bell size={18} />
+            {notifCount > 0 && (
+              <span className="absolute -top-1 right-1 rounded-full bg-red-500 px-1 text-[9px] font-medium text-white">{notifCount}</span>
+            )}
+            通知
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="flex flex-col items-center gap-0.5 px-3 text-[10px] text-stone-400"
+          >
+            <Settings size={18} /> 设置
+          </button>
+        </nav>
       </main>
       {settingsOpen && (
         <SettingsModal
