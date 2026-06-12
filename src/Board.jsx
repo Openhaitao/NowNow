@@ -415,7 +415,8 @@ export default function Board({ session }) {
     }
   }, [loaded, me?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [view, setView] = useState('paper') // paper | notifications | all | settings
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [view, setView] = useState('paper') // paper | notifications | all
 
   // 成员显示顺序：本人默认第一位，拖拽可调，存本地
   const [memberOrder, setMemberOrder] = useState(() => {
@@ -613,11 +614,8 @@ export default function Board({ session }) {
             )}
           </button>
           <button
-            onClick={() => setView(view === 'settings' ? 'paper' : 'settings')}
-            className={
-              'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] hover:bg-stone-100 ' +
-              (view === 'settings' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-500')
-            }
+            onClick={() => setSettingsOpen(true)}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
           >
             <Settings size={14} /> 设置
           </button>
@@ -709,7 +707,7 @@ export default function Board({ session }) {
               )}
             </span>
           </div>
-          {view !== 'notifications' && view !== 'settings' && !isMyPage && (
+          {view !== 'notifications' && !isMyPage && (
             <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
               <span>{pageUser.display_name}的主页（只读）</span>
               <button
@@ -720,9 +718,9 @@ export default function Board({ session }) {
               </button>
             </div>
           )}
-          {(view === 'notifications' || view === 'settings') && (
+          {view === 'notifications' && (
             <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
-              <span>{view === 'notifications' ? '通知' : '设置'}</span>
+              <span>通知</span>
               <button
                 onClick={() => viewPage(me.id)}
                 className="text-stone-400 transition-colors hover:text-stone-600"
@@ -748,15 +746,7 @@ export default function Board({ session }) {
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
         <div className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-24 pl-6 pr-1">
-          {view === 'settings' ? (
-            <SettingsModal
-              me={me}
-              email={user.email}
-              allEntries={allEntries}
-              profiles={profiles}
-              onProfileSaved={loadProfiles}
-            />
-          ) : view === 'notifications' ? (
+          {view === 'notifications' ? (
             <NotificationsPage
               mentions={mentions}
               resolvedMine={resolvedMine}
@@ -830,13 +820,23 @@ export default function Board({ session }) {
             通知
           </button>
           <button
-            onClick={() => setView(view === 'settings' ? 'paper' : 'settings')}
-            className={'flex flex-col items-center gap-0.5 px-3 text-[10px] ' + (view === 'settings' ? 'text-blue-600' : 'text-stone-400')}
+            onClick={() => setSettingsOpen(true)}
+            className="flex flex-col items-center gap-0.5 px-3 text-[10px] text-stone-400"
           >
             <Settings size={18} /> 设置
           </button>
         </nav>
       </main>
+      {settingsOpen && (
+        <SettingsModal
+          onClose={() => setSettingsOpen(false)}
+          me={me}
+          email={user.email}
+          allEntries={allEntries}
+          profiles={profiles}
+          onProfileSaved={loadProfiles}
+        />
+      )}
     </div>
   )
 }

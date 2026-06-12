@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
-export default function SettingsModal({ me, email, allEntries, profiles = [], onProfileSaved }) {
+export default function SettingsModal({ onClose, me, email, allEntries, profiles = [], onProfileSaved }) {
   const [handle, setHandle] = useState(me.display_name || me.handle)
   const [err, setErr] = useState('')
   const [saved, setSaved] = useState(false)
@@ -119,10 +119,13 @@ export default function SettingsModal({ me, email, allEntries, profiles = [], on
     URL.revokeObjectURL(a.href)
   }
 
-  // 独立页面（不再是模态框）：成员名单会越来越长，页面才装得下
+  // 模态框样式；成员名单长了在框内滚动（max-h + overflow）
   return (
-    <div className="mx-auto w-full max-w-sm pt-2 md:mx-0">
-      <div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={onClose}>
+      <div
+        className="paper-scroll max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-xl border border-stone-200 bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="flex items-center gap-1.5 text-[15px] font-semibold"><SettingsIcon size={15} /> 设置</h2>
 
         {/* 个人信息 */}
