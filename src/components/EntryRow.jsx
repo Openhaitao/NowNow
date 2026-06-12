@@ -305,7 +305,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             已通知 {originalCreator?.display_name}
           </span>
         )}
-        {!notified && originalCreator && !closed && !editing && (
+        {!notified && originalCreator && !closed && (
           <span
             className="rounded bg-stone-100 px-1.5 py-px text-[11px] text-stone-500"
             title="认领来的活，完成后会自动通知对方验收"

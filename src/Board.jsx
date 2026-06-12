@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { Bell, CalendarDays, Home, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
@@ -21,29 +24,81 @@ const LAST_VIEWED_KEY = 'nownow_last_viewed'
 const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) || '{}')
 
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
+// 侧栏成员行：可拖拽排序（顺序存本地，纯个人视图偏好，不进数据库）
+function SortableMemberRow({ p, isMe, active, news, onClick }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
+  return (
+    <button
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={
+        'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
+        (isDragging ? 'z-10 bg-white shadow-md ' : '') +
+        (active ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
+      }
+    >
+      <span className="truncate">
+        {p.display_name}
+        {isMe ? '（我）' : ''}
+      </span>
+      {news && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
+    </button>
+  )
+}
+
+const MEMBER_ORDER_KEY = 'nownow_member_order'
+
 function SetupCard({ user, onDone }) {
-  const [handle, setHandle] = useState(user.email.split('@')[0].replace(/\W/g, ''))
+  // 邀请页已经填过名字的话直接自动认领进入，不再问一遍
+  const pendingName = localStorage.getItem('nownow_pending_name') || ''
+  const [handle, setHandle] = useState(pendingName || user.email.split('@')[0].replace(/\W/g, ''))
   const [err, setErr] = useState('')
+  const [auto, setAuto] = useState(!!pendingName)
+  const autoFired = useRef(false)
   const invite = localStorage.getItem('nownow_invite')
 
-  async function save(e) {
-    e.preventDefault()
+  async function claim(raw) {
     setErr('')
-    const clean = handle.trim().replace(/^@/, '')
-    if (!clean || /\s/.test(clean)) { setErr('名字不能为空或带空格'); return }
+    const clean = raw.trim().replace(/^@/, '')
+    if (!clean || /\s/.test(clean)) { setAuto(false); setErr('名字不能为空或带空格'); return }
     const { error } = await supabase.rpc('claim_membership', { p_name: clean })
     if (error) {
       // 兼容旧路径：还留着邀请 token 的话试一下 redeem
       if (invite) {
         const { error: e2 } = await supabase.rpc('redeem_invite', { p_token: invite, p_name: clean })
-        if (!e2) { localStorage.removeItem('nownow_invite'); onDone(); return }
+        if (!e2) { localStorage.removeItem('nownow_invite'); localStorage.removeItem('nownow_pending_name'); onDone(); return }
       }
+      setAuto(false)
       setErr(error.message)
       return
     }
     localStorage.removeItem('nownow_invite')
+    localStorage.removeItem('nownow_pending_name')
     onDone()
   }
+
+  useEffect(() => {
+    if (auto && !autoFired.current) {
+      autoFired.current = true
+      claim(pendingName)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function save(e) {
+    e.preventDefault()
+    claim(handle)
+  }
+
+  if (auto)
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <p className="text-sm text-stone-400">正在进入…</p>
+      </div>
+    )
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -345,7 +400,12 @@ export default function Board({ session }) {
   )
 
   useEffect(() => {
-    if (me) document.title = `${me.display_name} | NowNow`
+    if (me) {
+      document.title = `${me.display_name} | NowNow`
+      // 记住名字给登录页打招呼用；已是成员就清掉邀请页暂存的名字，防止串号
+      localStorage.setItem('nownow_last_name', me.display_name)
+      localStorage.removeItem('nownow_pending_name')
+    }
   }, [me])
 
   // 桌面端打开即可打字（手机不自动弹键盘）
@@ -355,8 +415,28 @@ export default function Board({ session }) {
     }
   }, [loaded, me?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [view, setView] = useState('paper') // paper | notifications
+  const [view, setView] = useState('paper') // paper | notifications | all | settings
+
+  // 成员显示顺序：本人默认第一位，拖拽可调，存本地
+  const [memberOrder, setMemberOrder] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(MEMBER_ORDER_KEY) || '[]') } catch { return [] }
+  })
+  const orderedProfiles = useMemo(() => {
+    const rank = (p) => {
+      const i = memberOrder.indexOf(p.id)
+      if (i !== -1) return i
+      return p.id === user.id ? -1 : memberOrder.length + activeProfiles.indexOf(p)
+    }
+    return [...activeProfiles].sort((a, b) => rank(a) - rank(b))
+  }, [activeProfiles, memberOrder, user.id])
+  const memberSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+  function onMemberDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return
+    const ids = orderedProfiles.map((p) => p.id)
+    const next = arrayMove(ids, ids.indexOf(active.id), ids.indexOf(over.id))
+    setMemberOrder(next)
+    localStorage.setItem(MEMBER_ORDER_KEY, JSON.stringify(next))
+  }
 
   // 通知内容 = 待认领的@ + 我派出去已解决等我关闭的
   const resolvedMine = useMemo(
@@ -502,22 +582,20 @@ export default function Board({ session }) {
         <div className="mb-1 mt-3 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300">
           团队
         </div>
-        {activeProfiles.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => viewPage(p.id)}
-            className={
-              'flex items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] ' +
-              (p.id === pageUserId && view === 'paper' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
-            }
-          >
-            <span className="truncate">
-              {p.display_name}
-              {p.id === me.id ? '（我）' : ''}
-            </span>
-            {hasNews(p) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
-          </button>
-        ))}
+        <DndContext sensors={memberSensors} collisionDetection={closestCenter} onDragEnd={onMemberDragEnd}>
+          <SortableContext items={orderedProfiles.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+            {orderedProfiles.map((p) => (
+              <SortableMemberRow
+                key={p.id}
+                p={p}
+                isMe={p.id === me.id}
+                active={p.id === pageUserId && view === 'paper'}
+                news={hasNews(p)}
+                onClick={() => viewPage(p.id)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
         {/* 底部：通知（完整页面）+ 设置 */}
         <div className="mt-auto">
           <button
@@ -535,8 +613,11 @@ export default function Board({ session }) {
             )}
           </button>
           <button
-            onClick={() => setSettingsOpen(true)}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+            onClick={() => setView(view === 'settings' ? 'paper' : 'settings')}
+            className={
+              'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] hover:bg-stone-100 ' +
+              (view === 'settings' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-500')
+            }
           >
             <Settings size={14} /> 设置
           </button>
@@ -549,7 +630,7 @@ export default function Board({ session }) {
         <div className="flex shrink-0 items-center gap-1.5 border-b border-stone-100 px-4 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] md:hidden">
           <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
           <div className="flex flex-1 gap-1 overflow-x-auto">
-            {activeProfiles.map((p) => (
+            {orderedProfiles.map((p) => (
               <button
                 key={p.id}
                 onClick={() => viewPage(p.id)}
@@ -628,9 +709,20 @@ export default function Board({ session }) {
               )}
             </span>
           </div>
-          {view !== 'notifications' && !isMyPage && (
+          {view !== 'notifications' && view !== 'settings' && !isMyPage && (
             <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
               <span>{pageUser.display_name}的主页（只读）</span>
+              <button
+                onClick={() => viewPage(me.id)}
+                className="text-stone-400 transition-colors hover:text-stone-600"
+              >
+                ← 回到我的主页
+              </button>
+            </div>
+          )}
+          {(view === 'notifications' || view === 'settings') && (
+            <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
+              <span>{view === 'notifications' ? '通知' : '设置'}</span>
               <button
                 onClick={() => viewPage(me.id)}
                 className="text-stone-400 transition-colors hover:text-stone-600"
@@ -656,7 +748,15 @@ export default function Board({ session }) {
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
         <div className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-24 pl-6 pr-1">
-          {view === 'notifications' ? (
+          {view === 'settings' ? (
+            <SettingsModal
+              me={me}
+              email={user.email}
+              allEntries={allEntries}
+              profiles={profiles}
+              onProfileSaved={loadProfiles}
+            />
+          ) : view === 'notifications' ? (
             <NotificationsPage
               mentions={mentions}
               resolvedMine={resolvedMine}
@@ -730,24 +830,13 @@ export default function Board({ session }) {
             通知
           </button>
           <button
-            onClick={() => setSettingsOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 text-[10px] text-stone-400"
+            onClick={() => setView(view === 'settings' ? 'paper' : 'settings')}
+            className={'flex flex-col items-center gap-0.5 px-3 text-[10px] ' + (view === 'settings' ? 'text-blue-600' : 'text-stone-400')}
           >
             <Settings size={18} /> 设置
           </button>
         </nav>
       </main>
-      {settingsOpen && (
-        <SettingsModal
-          open={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
-          me={me}
-          email={user.email}
-          allEntries={allEntries}
-          profiles={profiles}
-          onProfileSaved={loadProfiles}
-        />
-      )}
     </div>
   )
 }

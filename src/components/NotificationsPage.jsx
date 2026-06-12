@@ -1,4 +1,4 @@
-import { AlarmClock, ArrowLeft, Bell, CheckCircle2, UserPlus } from 'lucide-react'
+import { AlarmClock, Bell, CheckCircle2, UserPlus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import Inbox from './Inbox'
 
@@ -103,10 +103,6 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
           ))}
         </div>
       )}
-
-      <button onClick={onBack} className="mt-6 flex items-center gap-1 text-sm text-stone-400 hover:text-stone-600">
-        <ArrowLeft size={14} /> 回到我的纸
-      </button>
     </div>
   )
 }
