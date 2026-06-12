@@ -624,12 +624,13 @@ export default function Board({ session }) {
             </span>
           </div>
           {view !== 'notifications' && !isMyPage && (
-            <div className="mt-2 flex items-center gap-3 text-[13px] text-stone-400">
-              <span>
-                {pageUser.display_name}的主页（只读）{view === 'all' ? ' · 全部' : ''}
-              </span>
-              <button onClick={() => viewPage(me.id)} className="text-blue-600 hover:underline">
-                回到我的主页
+            <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
+              <span>{pageUser.display_name}的主页（只读）</span>
+              <button
+                onClick={() => viewPage(me.id)}
+                className="text-stone-400 transition-colors hover:text-stone-600"
+              >
+                ← 回到我的主页
               </button>
             </div>
           )}
