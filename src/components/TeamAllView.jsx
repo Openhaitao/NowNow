@@ -82,37 +82,39 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
           <section key={p.id} className="border-b border-stone-100 py-5 last:border-0">
             <div className="flex items-center gap-2">
               <span className="text-[15px] font-semibold">{p.display_name}</span>
-              {/* 每个人自己的日拨盘：‹ 看他昨天的目标，› 拨回来 */}
-              <span className="flex items-center text-stone-300">
-                <button
-                  onClick={() => setDayOff((x) => ({ ...x, [p.id]: off - 1 }))}
-                  title="看前一天"
-                  className="rounded p-0.5 hover:bg-stone-100 hover:text-stone-500"
-                >
-                  <ChevronLeft size={13} />
-                </button>
-                <button
-                  onClick={() => setDayOff((x) => ({ ...x, [p.id]: off + 1 }))}
-                  title="看后一天"
-                  className="rounded p-0.5 hover:bg-stone-100 hover:text-stone-500"
-                >
-                  <ChevronRight size={13} />
-                </button>
-              </span>
               <span className="text-xs text-stone-300">
                 {r.now.length ? `${dayLabel} ${r.now.length} 条进行中` : `${dayLabel}暂无进行中`}
               </span>
               {r.now.some((e) => isPastDue(e, pr)) && (
                 <span className="text-xs text-red-400">含过期欠账</span>
               )}
-              {off !== 0 && (
-                <button
-                  onClick={() => setDayOff((x) => ({ ...x, [p.id]: 0 }))}
-                  className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
-                >
-                  回到今天
-                </button>
-              )}
+              {/* 每个人的日拨盘统一钉在行最右：不随名字长短漂移。‹ 看他昨天的目标，› 拨回来 */}
+              <span className="ml-auto flex items-center gap-1.5">
+                {off !== 0 && (
+                  <button
+                    onClick={() => setDayOff((x) => ({ ...x, [p.id]: 0 }))}
+                    className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+                  >
+                    回到今天
+                  </button>
+                )}
+                <span className="flex items-center text-stone-300">
+                  <button
+                    onClick={() => setDayOff((x) => ({ ...x, [p.id]: off - 1 }))}
+                    title="看前一天"
+                    className="rounded p-0.5 hover:bg-stone-100 hover:text-stone-500"
+                  >
+                    <ChevronLeft size={13} />
+                  </button>
+                  <button
+                    onClick={() => setDayOff((x) => ({ ...x, [p.id]: off + 1 }))}
+                    title="看后一天"
+                    className="rounded p-0.5 hover:bg-stone-100 hover:text-stone-500"
+                  >
+                    <ChevronRight size={13} />
+                  </button>
+                </span>
+              </span>
             </div>
 
             {r.now.map(row)}
