@@ -135,9 +135,10 @@ export default function Login() {
         {onboarding ? (
           <h1 className="mt-5 flex items-baseline justify-center text-xl font-bold">
             Hi&nbsp;@
-            {/* 固定宽度的"名字槽"：Hi @ 的位置打字时纹丝不动；槽内隐形文本撑宽度，下划线跟字等长，长名字向右溢出 */}
-            <span className="w-20 text-left">
-              <span className="relative inline-block">
+            {/* 固定宽度的"名字槽"：Hi @ 打字时纹丝不动。下划线有 3.5 字的保底长度（≈槽宽），
+                典型 2-3 字名字输入完正好铺满、整体居中；更长的名字下划线向右生长，左侧依然不动 */}
+            <span className="w-[4.5rem] text-left">
+              <span className="relative inline-block min-w-[4.5rem]">
                 <span aria-hidden="true" className="invisible whitespace-pre px-0.5">
                   {name || '名字'}
                 </span>
