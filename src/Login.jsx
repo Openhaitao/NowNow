@@ -135,7 +135,7 @@ export default function Login() {
         rel="noreferrer"
         className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] text-xs text-stone-300 hover:text-stone-500"
       >
-        made by haitao
+        🧑🏻‍💻 made by haitao
       </a>
     </div>
   )
