@@ -5,8 +5,9 @@ import EntryRow from './EntryRow'
 
 // 全部目标 = 站会页：每个人「今日进行中 + 过期欠账（红）」常显，
 // 本周/本月/已完成折叠成一行小计；每条活带"谁派的、认领没、办得怎么样"
-export default function TeamAllView({ allEntries, allMentions = [], profiles, orderedPeople, me, mutate, pushUndo }) {
-  const [expanded, setExpanded] = useState({}) // personId -> bool
+export default function TeamAllView({ allEntries, allMentions = [], profiles, orderedPeople, me, mutate, pushUndo, foldAt = Infinity }) {
+  const [expanded, setExpanded] = useState({}) // personId -> bool（本周/本月/已完成小计）
+  const [foldOpen, setFoldOpen] = useState({}) // personId -> bool（折叠区成员展开整块）
 
   // 人的顺序跟侧栏拖拽顺序一致（orderedPeople 由 Board 传入）；兜底用"我在前"
   const people = useMemo(() => {
@@ -56,14 +57,11 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
     />
   )
 
-  return (
-    <div>
-      <div className="mt-4 flex items-center gap-2 text-[15px] font-semibold">
-        <LayoutList size={16} /> 全部目标
-        <span className="text-[12px] font-normal text-stone-300">每个人今天在干什么 · 谁的活谁派的</span>
-      </div>
+  // 折叠线和侧栏同一条：线上的人完整展示，线下的人一行摘要、点开才展开
+  const pinned = people.slice(0, foldAt)
+  const rest = people.slice(foldAt)
 
-      {people.map((p) => {
+  const personSection = (p) => {
         const r = rowsOf(p.id)
         const open = !!expanded[p.id]
         const moreCount = r.week.length + r.month.length
@@ -121,7 +119,43 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
             )}
           </section>
         )
-      })}
+  }
+
+  return (
+    <div>
+      <div className="mt-4 flex items-center gap-2 text-[15px] font-semibold">
+        <LayoutList size={16} /> 全部目标
+        <span className="text-[12px] font-normal text-stone-300">每个人今天在干什么 · 谁的活谁派的</span>
+      </div>
+
+      {pinned.map(personSection)}
+
+      {rest.length > 0 && (
+        <div className="mt-4">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300">其他成员</div>
+          {rest.map((p) => {
+            const open = !!foldOpen[p.id]
+            const r = rowsOf(p.id)
+            const overdue = r.now.filter(isPastDue).length
+            return (
+              <div key={p.id}>
+                <button
+                  onClick={() => setFoldOpen((x) => ({ ...x, [p.id]: !open }))}
+                  className="flex w-full items-center gap-2 border-b border-stone-100 py-2.5 text-left last:border-0 hover:bg-stone-50"
+                >
+                  {open ? <ChevronDown size={12} className="shrink-0 text-stone-300" /> : <ChevronRight size={12} className="shrink-0 text-stone-300" />}
+                  <span className="text-[14px] font-medium">{p.display_name}</span>
+                  <span className="text-xs text-stone-300">
+                    今日 {r.now.length - overdue} · 本周 {r.week.length} · 本月 {r.month.length}
+                  </span>
+                  {overdue > 0 && <span className="text-xs text-red-400">过期 {overdue}</span>}
+                </button>
+                {open && <div className="pl-5">{personSection(p)}</div>}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
