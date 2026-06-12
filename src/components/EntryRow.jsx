@@ -78,8 +78,8 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
 
   function saveEdit(advance = false, caret = null) {
     clearTimeout(saveTimer.current)
-    // 行中回车 = 分裂：前半段留下，后半段带进下一行
-    if (advance && onSplit && caret != null && caret < text.length && text.slice(caret).trim()) {
+    // 行中回车 = 分裂：前半段留下，后半段带进下一行（光标在行首时不分裂——会把原条掏空）
+    if (advance && onSplit && caret != null && caret > 0 && caret < text.length && text.slice(caret).trim() && text.slice(0, caret).trim()) {
       setEditing(false)
       onSplit(entry, text.slice(0, caret).trimEnd(), text.slice(caret).trimStart())
       return

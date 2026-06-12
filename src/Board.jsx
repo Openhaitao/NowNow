@@ -122,7 +122,11 @@ export default function Board({ session }) {
         .eq('mentioned', user.id)
         .is('claimed_entry', null),
     ])
-    setAllEntries(es || [])
+    // 自愈：清掉空内容的孤儿条目（正常路径建不出空条，出现=历史 bug 残留）
+    const list = es || []
+    const strays = list.filter((e) => e.owner === user.id && !e.content.trim())
+    for (const stray of strays) supabase.from('entries').delete().eq('id', stray.id)
+    setAllEntries(list.filter((e) => !strays.includes(e)))
     setMentions(ms || [])
     setLoaded(true)
   }, [user.id])
