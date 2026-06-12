@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Download, LogOut, UserPlus, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Download, LogOut, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
@@ -11,6 +11,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
   const [inviteEmail, setInviteEmail] = useState('')
   const [allowed, setAllowed] = useState([])
   const [inviteMsg, setInviteMsg] = useState('')
+  const [membersOpen, setMembersOpen] = useState(false)
   const saveTimer = useRef(null)
 
 
@@ -137,39 +138,45 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
           <p className="mt-1 text-[11px] text-stone-300">
             邀请 = 放行邮箱。对方打开 {window.location.origin} 用这个邮箱设置密码、起名即进
           </p>
-          {allowed.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {allowed.map((a) => {
-                const joined = profiles.find(
-                  (p) => p.id === a.invited_by_user || p.email === a.email,
-                )
-                void joined
-                return (
-                  <span key={a.email} className="group/em flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-600">
-                    {a.email}
-                    <button onClick={() => removeEmail(a.email)} title="移出名单" className="text-stone-300 hover:text-red-500">
-                      <X size={11} />
-                    </button>
-                  </span>
-                )
-              })}
-            </div>
-          )}
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {profiles.map((p) => (
-              <span
-                key={p.id}
-                className={
-                  'rounded-full px-2.5 py-0.5 text-xs ' +
-                  (p.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-stone-100 text-stone-600')
-                }
-              >
-                {p.display_name}
-                {p.id === me.id ? '（我）' : ''}
-                {p.status === 'pending' ? ' · 待确认' : ''}
-              </span>
-            ))}
-          </div>
+          {(() => {
+            const joined = profiles.filter((p) => p.status !== 'pending')
+            const joinedEmails = new Set(joined.map((p) => (p.email || '').toLowerCase()))
+            const waiting = allowed.filter((a) => !joinedEmails.has(a.email.toLowerCase()))
+            const total = joined.length + waiting.length
+            return (
+              <div className="mt-2">
+                <button
+                  onClick={() => setMembersOpen((v) => !v)}
+                  className="flex items-center gap-1 text-xs text-stone-400 outline-none hover:text-stone-600"
+                >
+                  {membersOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                  成员与邀请名单（{total}）
+                </button>
+                {membersOpen && (
+                  <div className="mt-1.5 space-y-1">
+                    {joined.map((p) => (
+                      <div key={p.id} className="flex items-center gap-2 rounded-lg bg-stone-50 px-2.5 py-1.5 text-xs">
+                        <span className="text-stone-700">
+                          {p.display_name}
+                          {p.id === me.id ? '（我）' : ''}
+                        </span>
+                        {p.email && <span className="text-stone-300">{p.email}</span>}
+                      </div>
+                    ))}
+                    {waiting.map((a) => (
+                      <div key={a.email} className="flex items-center gap-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs">
+                        <span className="text-amber-700">{a.email}</span>
+                        <span className="text-amber-400">已邀请 · 未加入</span>
+                        <button onClick={() => removeEmail(a.email)} title="移出名单" className="ml-auto text-stone-300 hover:text-red-500">
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* 数据与账号 */}

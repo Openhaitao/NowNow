@@ -3,6 +3,10 @@
 --   1. Sign In/Up → "Allow new users to sign up" = ON
 --   2. Sign In/Up → Email → "Confirm email" = OFF（内部工具，省掉确认邮件，密码注册即时生效）
 
+-- profile 带邮箱（成员列表展示用）
+alter table profiles add column if not exists email text;
+update profiles p set email = lower(u.email) from auth.users u where u.id = p.id and p.email is null;
+
 create table if not exists allowed_emails (
   email      text primary key,
   invited_by uuid references profiles(id),
@@ -32,8 +36,8 @@ begin
     raise exception '你的邮箱不在邀请名单里，请让团队成员先把你的邮箱加进来';
   end if;
   if p_name is null or trim(p_name) = '' then raise exception '名字不能为空'; end if;
-  insert into profiles (id, handle, display_name, status)
-  values (auth.uid(), lower(trim(p_name)), trim(p_name), 'active');
+  insert into profiles (id, handle, display_name, status, email)
+  values (auth.uid(), lower(trim(p_name)), trim(p_name), 'active', v_email);
 end $$;
 
 -- 把当前已有成员的邮箱补进名单（自洽）
