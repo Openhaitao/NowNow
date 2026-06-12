@@ -14,7 +14,6 @@ export default function Login() {
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [showRecover, setShowRecover] = useState(false)
-  const invited = !!localStorage.getItem('nownow_invite')
 
   function humanize(m) {
     if (!m) return '出错了，再试一次'
@@ -75,11 +74,6 @@ export default function Login() {
       <div className="w-full max-w-xs text-center">
         <img src="/logo.png" alt="NowNow" className="mx-auto w-20 md:w-16" />
         <h1 className="mt-3 text-xl font-bold">NowNow</h1>
-        {(invited || onboarding) && (
-          <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
-            你收到了 NowNow 的加入邀请——设置一个密码即可进入
-          </p>
-        )}
 
         {sent ? (
           <p className="mt-6 text-sm text-stone-600">
