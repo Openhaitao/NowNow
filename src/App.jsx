@@ -47,5 +47,12 @@ export default function App() {
   }, [])
 
   if (session === undefined) return null
+  // /login = 调试入口：不管登没登录都显示登录页（已登录时页内有"进入主页"链接）
+  if (window.location.pathname === '/login')
+    return (
+      <ErrorBoundary>
+        <Login loggedIn={!!session} />
+      </ErrorBoundary>
+    )
   return <ErrorBoundary>{session ? <Board session={session} /> : <Login />}</ErrorBoundary>
 }
