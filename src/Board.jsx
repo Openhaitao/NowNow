@@ -39,7 +39,7 @@ function SortableMemberRow({ p, isMe, active, news, onClick }) {
       className={
         'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
         (isDragging ? 'z-10 ' : '') +
-        (active || isDragging ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
+        (active || isDragging ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
       }
     >
       <span className="truncate">
@@ -626,7 +626,7 @@ export default function Board({ session }) {
             onClick={() => setView(view === 'all' ? 'paper' : 'all')}
             className={
               'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
-              (view === 'all' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
+              (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
             }
           >
             <LayoutList size={14} /> 全部目标
@@ -658,7 +658,7 @@ export default function Board({ session }) {
             onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
             className={
               'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] hover:bg-stone-100 ' +
-              (view === 'notifications' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-500')
+              (view === 'notifications' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-500')
             }
           >
             <Bell size={14} /> 通知
