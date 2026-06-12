@@ -3,8 +3,12 @@ import { supabase } from './lib/supabase'
 
 // 登录：邮箱+密码为主（无邮件往返、不吃邮件限额），邮件链接作备用/找回
 export default function Login({ loggedIn = false }) {
-  const [email, setEmail] = useState('')
+  // 邀请链接 /login?email=xxx：预填邮箱 + 进入"设置密码"模式（带确认密码）
+  const inviteEmail = new URLSearchParams(window.location.search).get('email') || ''
+  const [email, setEmail] = useState(inviteEmail)
   const [password, setPassword] = useState('')
+  const [password2, setPassword2] = useState('')
+  const onboarding = !!inviteEmail
   const [mode, setMode] = useState('password') // password | link
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState('')
@@ -26,6 +30,10 @@ export default function Login({ loggedIn = false }) {
   async function signIn(e) {
     e.preventDefault()
     setErr('')
+    if (onboarding && password !== password2) {
+      setErr('两次输入的密码不一样')
+      return
+    }
     setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (!error) { setBusy(false); return }
@@ -75,9 +83,9 @@ export default function Login({ loggedIn = false }) {
             </a>
           </p>
         )}
-        {invited && (
+        {(invited || onboarding) && (
           <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
-            你收到了 NowNow 的加入邀请——确认邮箱已被加进名单后，设置密码即可进入
+            你收到了 NowNow 的加入邀请——设置一个密码即可进入
           </p>
         )}
 
@@ -88,9 +96,26 @@ export default function Login({ loggedIn = false }) {
         ) : mode === 'password' ? (
           <form onSubmit={signIn} className="mt-6 flex flex-col gap-3">
             <input type="email" required placeholder="邮箱" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
-            <input type="password" required placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
+            <input
+              type="password"
+              required
+              placeholder={onboarding ? '设置密码（至少 6 位）' : '密码'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={inputCls}
+            />
+            {onboarding && (
+              <input
+                type="password"
+                required
+                placeholder="再输一遍确认"
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
+                className={inputCls}
+              />
+            )}
             <button type="submit" disabled={busy} className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700 disabled:opacity-60">
-              登录
+              {onboarding ? '设置密码并进入' : '登录'}
             </button>
             {err && <p className="text-sm text-red-600">{err}</p>}
             {showRecover && (

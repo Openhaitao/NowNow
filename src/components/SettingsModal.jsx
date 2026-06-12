@@ -66,7 +66,9 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
     }
     setAllowed((a) => [...a, { email: em, invited_by: me.id }])
     setInviteEmail('')
-    setInviteMsg(`已放行 ${em}——告诉对方打开 ${window.location.origin} 设置密码即可进入`)
+    const link = `${window.location.origin}/login?email=${encodeURIComponent(em)}`
+    try { await navigator.clipboard.writeText(link) } catch { /* 手动复制 */ }
+    setInviteMsg(`已放行，专属链接已复制，发给对方即可（点开邮箱已填好，设个密码就进）：${link}`)
   }
 
   async function removeEmail(em) {
