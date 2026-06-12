@@ -485,7 +485,7 @@ export default function Board({ session }) {
             </div>
           ))}
         </div>
-        {/* flomo 式「全部目标」：无视周期看全量（时间锚定启用后才有意义，之前不显示） */}
+        {/* 视图入口与人员列表分组：全部目标在上，团队成员单独一组 */}
         {hasAnchor && (
           <button
             onClick={() => setView(view === 'all' ? 'paper' : 'all')}
@@ -497,6 +497,9 @@ export default function Board({ session }) {
             <LayoutList size={14} /> 全部目标
           </button>
         )}
+        <div className="mb-1 mt-3 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300">
+          团队
+        </div>
         {activeProfiles.map((p) => (
           <button
             key={p.id}
