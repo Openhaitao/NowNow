@@ -207,7 +207,7 @@ export default function MentionInput({
       />
       {picker && candidates.length > 0 && (
         <div
-          className="absolute z-30 w-56 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-xl"
+          className="absolute z-30 w-56 rounded-xl border border-stone-200 bg-white p-1 shadow-xl"
           style={{ left: pickerPos.x, top: pickerPos.y }}
         >
           {candidates.map((p, i) => (
@@ -216,7 +216,7 @@ export default function MentionInput({
               type="button"
               onMouseDown={(e) => { e.preventDefault(); pick(p) }}
               className={
-                'flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm ' +
+                'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm ' +
                 (i === active ? 'bg-blue-50 text-blue-700' : 'text-stone-700')
               }
             >

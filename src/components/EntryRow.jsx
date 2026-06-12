@@ -360,37 +360,37 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} onContextMenu={(e) => { e.preventDefault(); setMenu(null) }} />
           <div
-            className="fixed z-50 w-40 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 text-sm shadow-xl"
+            className="fixed z-50 w-40 rounded-xl border border-stone-200 bg-white p-1 text-sm shadow-xl"
             style={{ left: menu.x, top: menu.y }}
           >
             <button
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left outline-none hover:bg-stone-50"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left outline-none hover:bg-stone-100"
               onClick={() => { setMenu(null); setText(entry.content); setEditing(true) }}
             >
               <Pencil size={13} /> 编辑
             </button>
-            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left outline-none hover:bg-stone-50" onClick={togglePrivate}>
+            <button className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left outline-none hover:bg-stone-100" onClick={togglePrivate}>
               {entry.is_private ? <Eye size={13} /> : <Lock size={13} />}
               {entry.is_private ? '设为公开' : '仅自己可见'}
             </button>
-            <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left outline-none hover:bg-stone-50" onClick={toggleGoal}>
+            <button className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left outline-none hover:bg-stone-100" onClick={toggleGoal}>
               {entry.is_goal ? <Pilcrow size={13} /> : <Square size={13} />}
               {entry.is_goal ? '转为备忘' : '转为目标'}
             </button>
             {canMoveToToday && (
-              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-amber-700 outline-none hover:bg-amber-50" onClick={moveToToday}>
+              <button className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-amber-700 outline-none hover:bg-amber-50" onClick={moveToToday}>
                 <CalendarArrowUp size={13} /> 挪到今天
               </button>
             )}
             {Object.keys(SECTION_LABELS)
               .filter((s) => s !== entry.section)
               .map((s) => (
-                <button key={s} className="flex w-full items-center gap-2 px-3 py-1.5 text-left outline-none hover:bg-stone-50" onClick={() => moveTo(s)}>
+                <button key={s} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left outline-none hover:bg-stone-100" onClick={() => moveTo(s)}>
                   <MoveRight size={13} /> 移到{SECTION_LABELS[s]}
                 </button>
               ))}
             {isCreator && (
-              <button className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-red-600 outline-none hover:bg-red-50" onClick={remove}>
+              <button className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-red-600 outline-none hover:bg-red-50" onClick={remove}>
                 <Trash2 size={13} /> 删除
               </button>
             )}
