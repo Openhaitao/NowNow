@@ -5,7 +5,8 @@ import { supabase } from './lib/supabase'
 export default function Login() {
   // 邀请链接 /login?email=xxx：预填邮箱 + 进入"设置密码"模式（带确认密码）
   const inviteEmail = new URLSearchParams(window.location.search).get('email') || ''
-  const [email, setEmail] = useState(inviteEmail)
+  // 登录过的邮箱记住，下次打开直接填好；密码交给浏览器钥匙串自动填
+  const [email, setEmail] = useState(inviteEmail || localStorage.getItem('nownow_last_email') || '')
   const [password, setPassword] = useState('')
   const [password2, setPassword2] = useState('')
   const onboarding = !!inviteEmail
@@ -35,11 +36,16 @@ export default function Login() {
     }
     setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (!error) { setBusy(false); return }
+    if (!error) {
+      localStorage.setItem('nownow_last_email', email)
+      setBusy(false)
+      return
+    }
     if (error.message.includes('Invalid login credentials')) {
       const { data, error: e2 } = await supabase.auth.signUp({ email, password })
       setBusy(false)
       if (!e2) {
+        localStorage.setItem('nownow_last_email', email)
         if (!data.session) setSent(true) // 后台若开着邮箱确认的兜底
         return
       }
@@ -81,9 +87,11 @@ export default function Login() {
           </p>
         ) : mode === 'password' ? (
           <form onSubmit={signIn} className="mt-6 flex flex-col gap-3">
-            <input type="email" required placeholder="邮箱" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
+            <input type="email" name="email" autoComplete="username" required placeholder="邮箱" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
             <input
               type="password"
+              name="password"
+              autoComplete={onboarding ? 'new-password' : 'current-password'}
               required
               placeholder={onboarding ? '设置密码（至少 6 位）' : '密码'}
               value={password}
