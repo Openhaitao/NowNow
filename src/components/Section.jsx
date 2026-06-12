@@ -165,28 +165,26 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   // 这个区写完了 → 下一个区的第一条进入编辑
   function sectionDone() {
     if (nextSecKey) onEditRequest(`${nextSecKey}:first`)
+    else if (active.length) setEditId(active[active.length - 1].id)
   }
 
-  // 退格删空一条 → 删掉它，光标跳回上一条末尾（没有上一条就回到输入行，焦点不丢）
-  function deleteEmpty(entry) {
+  // ★统一的"删除后光标去哪"决策：本区邻居 → 上一区最后一条 → 下一区第一条。
+  // 所有删除路径都走这一个函数，光标永不悬空（跨区目标为空时由 editRequest 处理器自动给草稿）
+  function focusAfterRemoval(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
-    const prev = idx > 0 ? active[idx - 1] : null
+    const neighbor = (idx > 0 ? active[idx - 1] : null) || active[idx + 1]
+    if (neighbor) setEditId(neighbor.id)
+    else if (prevSecKey) onEditRequest(`${prevSecKey}:last`)
+    else if (nextSecKey) onEditRequest(`${nextSecKey}:first`)
+  }
+
+  // 退格删空一条 → 删掉它，光标按统一规则落位
+  function deleteEmpty(entry) {
     mutate(
       (list) => list.filter((e) => e.id !== entry.id),
       () => supabase.from('entries').delete().eq('id', entry.id),
     )
-    if (prev) setEditId(prev.id)
-    else {
-      const next = active[idx + 1]
-      if (next) setEditId(next.id)
-    }
-  }
-
-  // 任何方式删除后：光标落到下一条（没有就上一条），不悬空
-  function focusNeighbor(entry) {
-    const idx = active.findIndex((e) => e.id === entry.id)
-    const neighbor = active[idx + 1] || active[idx - 1]
-    if (neighbor) setEditId(neighbor.id)
+    focusAfterRemoval(entry)
   }
 
   // 行首回车 = 在这条上方插一行草稿（在最上面继续创建）
@@ -261,6 +259,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     cancelDraft(dr.key)
     const prev = [...active].reverse().find((e) => e.position < dr.pos)
     if (prev) setEditId(prev.id)
+    else if (prevSecKey) onEditRequest(`${prevSecKey}:last`)
   }
 
   // 草稿里按 ↑↓ = 这条默认创建完成，光标移到相邻条目
@@ -397,7 +396,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     onNavDown={isMyPage ? navDown : undefined}
                     onSplit={isMyPage ? splitEntry : undefined}
                     onInsertAbove={isMyPage ? insertAbove : undefined}
-                    onDeleted={isMyPage ? focusNeighbor : undefined}
+                    onDeleted={isMyPage ? focusAfterRemoval : undefined}
                     pushUndo={pushUndo}
                     flash={flashId === item.v.id}
                     pastDue={isPastDue(item.v)}
