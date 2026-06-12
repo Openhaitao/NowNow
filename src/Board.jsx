@@ -22,7 +22,6 @@ const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) ||
 // 首次进入：在主页面中央起名，不单独占一页
 function SetupCard({ user, onDone }) {
   const [handle, setHandle] = useState(user.email.split('@')[0].replace(/\W/g, ''))
-  const [displayName, setDisplayName] = useState('')
   const [err, setErr] = useState('')
 
   async function save(e) {
@@ -33,7 +32,7 @@ function SetupCard({ user, onDone }) {
     const { error } = await supabase.from('profiles').insert({
       id: user.id,
       handle: clean.toLowerCase(),
-      display_name: displayName.trim() || clean,
+      display_name: clean,
     })
     if (error) setErr(error.message)
     else onDone()
@@ -44,20 +43,11 @@ function SetupCard({ user, onDone }) {
       <form onSubmit={save} className="w-full max-w-xs rounded-xl border border-stone-200 bg-white p-7">
         <h2 className="text-lg font-semibold">第一次来，起个名字</h2>
         <label className="mt-4 block text-xs text-stone-500">
-          @名（别人这样喊你，中文/英文都行，如 海涛）
+          名字（显示用它，@你 也用它；中英文都行，如 海涛）
           <input
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
             required
-            className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[15px] text-stone-900 outline-none focus:border-stone-400"
-          />
-        </label>
-        <label className="mt-3 block text-xs text-stone-500">
-          显示名（可选）
-          <input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="比如：海涛"
             className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[15px] text-stone-900 outline-none focus:border-stone-400"
           />
         </label>

@@ -5,8 +5,7 @@ import { supabase } from '../lib/supabase'
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
 export default function SettingsModal({ open, onClose, me, email, allEntries, onProfileSaved }) {
-  const [handle, setHandle] = useState(me.handle)
-  const [displayName, setDisplayName] = useState(me.display_name)
+  const [handle, setHandle] = useState(me.display_name || me.handle)
   const [err, setErr] = useState('')
   const [saved, setSaved] = useState(false)
 
@@ -18,7 +17,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
     if (!clean || /\s/.test(clean)) { setErr('@名不能为空或带空格'); return }
     const { error } = await supabase
       .from('profiles')
-      .update({ handle: clean.toLowerCase(), display_name: displayName.trim() || clean })
+      .update({ handle: clean.toLowerCase(), display_name: clean })
       .eq('id', me.id)
     if (error) setErr(error.message)
     else {
@@ -60,18 +59,10 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, on
         <h2 className="text-[15px] font-semibold">设置</h2>
 
         <label className="mt-4 block text-xs text-stone-500">
-          @名（别人这样喊你）
+          名字（显示用它，@你 也用它）
           <input
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 outline-none focus:border-stone-400"
-          />
-        </label>
-        <label className="mt-3 block text-xs text-stone-500">
-          显示名
-          <input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
             className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 outline-none focus:border-stone-400"
           />
         </label>
