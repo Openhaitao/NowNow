@@ -19,7 +19,7 @@ function caretOffsetIn(container) {
   return range.toString().length
 }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, onInsertAbove, pushUndo, flash, pastDue, ownerLabel, searchTerm }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, onInsertAbove, onDeleted, pushUndo, flash, pastDue, ownerLabel, searchTerm }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
@@ -164,6 +164,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
       (list) => list.filter((e) => e.id !== entry.id),
       () => supabase.from('entries').delete().eq('id', entry.id),
     )
+    onDeleted?.(entry)
   }
 
   function moveTo(section) {

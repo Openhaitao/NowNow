@@ -182,6 +182,13 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     }
   }
 
+  // 任何方式删除后：光标落到下一条（没有就上一条），不悬空
+  function focusNeighbor(entry) {
+    const idx = active.findIndex((e) => e.id === entry.id)
+    const neighbor = active[idx + 1] || active[idx - 1]
+    if (neighbor) setEditId(neighbor.id)
+  }
+
   // 行首回车 = 在这条上方插一行草稿（在最上面继续创建）
   function insertAbove(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
@@ -390,6 +397,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     onNavDown={isMyPage ? navDown : undefined}
                     onSplit={isMyPage ? splitEntry : undefined}
                     onInsertAbove={isMyPage ? insertAbove : undefined}
+                    onDeleted={isMyPage ? focusNeighbor : undefined}
                     pushUndo={pushUndo}
                     flash={flashId === item.v.id}
                     pastDue={isPastDue(item.v)}
