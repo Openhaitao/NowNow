@@ -74,7 +74,7 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
         const pr = rangesFor(off)
         const r = rowsOf(p.id, pr)
         const row = renderRow(pr)
-        const open = !!expanded[p.id]
+        const open = expanded[p.id] !== false // 默认展开（用户拍板）
         const moreCount = r.week.length + r.month.length
         const d = baseFor(off)
         const dayLabel = off === 0 ? '今日' : `${d.getMonth() + 1}月${d.getDate()}日`

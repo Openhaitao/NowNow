@@ -93,7 +93,7 @@ function SortableRow({ entry, draggable, children }) {
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
 export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query, editRequest, onEditRequest, allMentions }) {
-  const [showClosed, setShowClosed] = useState(false)
+  const [showClosed, setShowClosed] = useState(true) // 默认展开（用户拍板）
   const [offset, setOffset] = useState(0)
   const [editId, setEditId] = useState(null) // 退格删条后让上一条进入编辑态
   const [drafts, setDrafts] = useState([]) // 回车新建的本地草稿行（写了字才真正入库，零等待）
@@ -426,7 +426,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       {closed.length > 0 && (
         <button
           onClick={() => setShowClosed((v) => !v)}
-          className="mt-1.5 flex items-center gap-1 text-xs text-stone-400 outline-none hover:text-stone-600 max-md:text-[14px]"
+          className="mt-1.5 flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 max-md:py-1 max-md:text-[14px]"
         >
           {showClosed ? <ChevronDown size={12} /> : <ChevronRight size={12} />} 已完成 {closed.length}
         </button>
