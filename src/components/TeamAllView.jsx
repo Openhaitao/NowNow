@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, ChevronRight, LayoutList } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, LayoutList } from 'lucide-react'
 import { inPeriod, periodRange } from '../lib/period'
 import EntryRow from './EntryRow'
 
@@ -8,6 +8,7 @@ import EntryRow from './EntryRow'
 export default function TeamAllView({ allEntries, allMentions = [], profiles, orderedPeople, me, mutate, pushUndo, foldAt = Infinity, baseDate = null }) {
   const [expanded, setExpanded] = useState({}) // personId -> bool（本周/本月/已完成小计）
   const [foldOpen, setFoldOpen] = useState({}) // personId -> bool（折叠区成员展开整块）
+  const [dayOff, setDayOff] = useState({}) // personId -> 天数偏移（负=往回看这个人前几天的目标）
 
   // 人的顺序跟侧栏拖拽顺序一致（orderedPeople 由 Board 传入）；兜底用"我在前"
   const people = useMemo(() => {
@@ -16,27 +17,33 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
     return [...active.filter((p) => p.id === me.id), ...active.filter((p) => p.id !== me.id)]
   }, [orderedPeople, profiles, me.id])
 
-  // 顶部日期锚同样拨动站会页：回看任何一天，看的是当天/当周/当月的目标
-  const ranges = useMemo(
-    () => ({
-      today: periodRange('today', 0, baseDate || undefined),
-      week: periodRange('week', 0, baseDate || undefined),
-      month: periodRange('month', 0, baseDate || undefined),
-    }),
-    [baseDate],
-  )
+  // 顶部日期锚 + 每个人自己的 ‹ › 日偏移：这个人的"当天/当周/当月"按偏移后的日子算
+  const DAY = 86400000
+  const baseFor = (off) => {
+    const b = baseDate ? new Date(baseDate) : new Date()
+    b.setHours(0, 0, 0, 0)
+    return new Date(b.getTime() + off * DAY)
+  }
+  const rangesFor = (off) => {
+    const base = off === 0 ? baseDate || undefined : baseFor(off)
+    return {
+      today: periodRange('today', 0, base),
+      week: periodRange('week', 0, base),
+      month: periodRange('month', 0, base),
+    }
+  }
 
-  const isPastDue = (e) =>
+  const isPastDue = (e, ranges) =>
     e.is_goal && e.status === 'open' && e.anchor &&
     new Date(e.anchor + 'T00:00:00') < ranges[e.section].start
 
-  const rowsOf = (pid) => {
+  const rowsOf = (pid, ranges) => {
     const mine = allEntries.filter((en) => en.owner === pid)
     const inCur = (en) => inPeriod(en.anchor ?? null, ranges[en.section])
     return {
       // 常显：今日进行中 + 全部过期欠账
       now: mine
-        .filter((en) => en.status !== 'closed' && ((en.section === 'today' && inCur(en)) || isPastDue(en)))
+        .filter((en) => en.status !== 'closed' && ((en.section === 'today' && inCur(en)) || isPastDue(en, ranges)))
         .sort((a, b) => a.position - b.position),
       week: mine.filter((en) => en.status !== 'closed' && en.section === 'week' && inCur(en)),
       month: mine.filter((en) => en.status !== 'closed' && en.section === 'month' && inCur(en)),
@@ -44,7 +51,7 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
     }
   }
 
-  const renderRow = (e) => (
+  const renderRow = (r) => (e) => (
     <EntryRow
       key={e.id}
       entry={e}
@@ -54,7 +61,7 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
       allMentions={allMentions}
       mutate={mutate}
       pushUndo={pushUndo}
-      pastDue={isPastDue(e)}
+      pastDue={isPastDue(e, r)}
     />
   )
 
@@ -63,25 +70,52 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
   const rest = people.slice(foldAt)
 
   const personSection = (p) => {
-        const r = rowsOf(p.id)
+        const off = dayOff[p.id] || 0
+        const pr = rangesFor(off)
+        const r = rowsOf(p.id, pr)
+        const row = renderRow(pr)
         const open = !!expanded[p.id]
         const moreCount = r.week.length + r.month.length
+        const d = baseFor(off)
+        const dayLabel = off === 0 ? '今日' : `${d.getMonth() + 1}月${d.getDate()}日`
         return (
           <section key={p.id} className="border-b border-stone-100 py-5 last:border-0">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[15px] font-semibold">
-                {p.display_name}
-                {p.id === me.id ? '（我）' : ''}
+            <div className="flex items-center gap-2">
+              <span className="text-[15px] font-semibold">{p.display_name}</span>
+              {/* 每个人自己的日拨盘：‹ 看他昨天的目标，› 拨回来 */}
+              <span className="flex items-center text-stone-300">
+                <button
+                  onClick={() => setDayOff((x) => ({ ...x, [p.id]: off - 1 }))}
+                  title="看前一天"
+                  className="rounded p-0.5 hover:bg-stone-100 hover:text-stone-500"
+                >
+                  <ChevronLeft size={13} />
+                </button>
+                <button
+                  onClick={() => setDayOff((x) => ({ ...x, [p.id]: off + 1 }))}
+                  title="看后一天"
+                  className="rounded p-0.5 hover:bg-stone-100 hover:text-stone-500"
+                >
+                  <ChevronRight size={13} />
+                </button>
               </span>
               <span className="text-xs text-stone-300">
-                {r.now.length ? `今日 ${r.now.length} 条进行中` : '今日暂无进行中'}
+                {r.now.length ? `${dayLabel} ${r.now.length} 条进行中` : `${dayLabel}暂无进行中`}
               </span>
-              {r.now.some(isPastDue) && (
+              {r.now.some((e) => isPastDue(e, pr)) && (
                 <span className="text-xs text-red-400">含过期欠账</span>
+              )}
+              {off !== 0 && (
+                <button
+                  onClick={() => setDayOff((x) => ({ ...x, [p.id]: 0 }))}
+                  className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+                >
+                  回到今天
+                </button>
               )}
             </div>
 
-            {r.now.map(renderRow)}
+            {r.now.map(row)}
 
             {(moreCount > 0 || r.done.length > 0) && (
               <button
@@ -98,19 +132,19 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
                 {r.week.length > 0 && (
                   <div className="mt-1.5">
                     <div className="text-[12px] font-medium text-stone-300">本周</div>
-                    {r.week.map(renderRow)}
+                    {r.week.map(row)}
                   </div>
                 )}
                 {r.month.length > 0 && (
                   <div className="mt-1.5">
                     <div className="text-[12px] font-medium text-stone-300">本月</div>
-                    {r.month.map(renderRow)}
+                    {r.month.map(row)}
                   </div>
                 )}
                 {r.done.length > 0 && (
                   <div className="mt-1.5">
                     <div className="text-[12px] font-medium text-stone-300">已完成</div>
-                    {r.done.slice(0, 10).map(renderRow)}
+                    {r.done.slice(0, 10).map(row)}
                     {r.done.length > 10 && (
                       <div className="pl-[25px] text-[11px] text-stone-300">…还有 {r.done.length - 10} 条，去他的主页看</div>
                     )}
@@ -136,8 +170,8 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
           <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300">其他成员</div>
           {rest.map((p) => {
             const open = !!foldOpen[p.id]
-            const r = rowsOf(p.id)
-            const overdue = r.now.filter(isPastDue).length
+            const r = rowsOf(p.id, rangesFor(0))
+            const overdue = r.now.filter((e) => isPastDue(e, rangesFor(0))).length
             return (
               <div key={p.id}>
                 <button
