@@ -713,7 +713,7 @@ export default function Board({ session }) {
               </button>
               <button
                 onClick={() => viewPage(me.id)}
-                className="min-w-0 flex-1 truncate text-center text-[16px] font-semibold"
+                className="min-w-0 flex-1 truncate text-center text-[17.5px] font-semibold"
               >
                 {view === 'all'
                   ? '全部目标'
