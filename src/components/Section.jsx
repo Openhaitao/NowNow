@@ -347,7 +347,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         )}
         {/* ‹ › 统一钉在行最右：不随标题/标签长度漂移 */}
         {hasAnchor && !allTime && !q && (
-          <span className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/head:opacity-100 max-md:opacity-60">
+          <span className="ml-auto flex items-center gap-0.5">
             <button
               onClick={() => setOffset((o) => o - 1)}
               className="rounded px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500"
