@@ -10,4 +10,10 @@ if (!url || !anonKey) {
   throw new Error('missing supabase env')
 }
 
-export const supabase = createClient(url, anonKey)
+// 大陆直连 *.supabase.co 慢且不稳：线上走同域名 /sb 代理（Cloudflare 边缘转发），本地开发直连
+const base =
+  typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? window.location.origin + '/sb'
+    : url
+
+export const supabase = createClient(base, anonKey)
