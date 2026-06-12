@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Bell, CalendarDays, LayoutList, Search, Settings } from 'lucide-react'
+import { Bell, CalendarDays, LayoutList, Loader2, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
@@ -121,7 +121,8 @@ export default function Board({ session }) {
 
   const [loaded, setLoaded] = useState(false)
 
-  const doLoad = useCallback(async () => {
+  // 拉取与应用分离：应用前还要验"拉的期间有没有新写操作"
+  const fetchAll = useCallback(async () => {
     const [{ data: es }, { data: ms }] = await Promise.all([
       supabase.from('entries').select('*'),
       supabase
@@ -130,44 +131,89 @@ export default function Board({ session }) {
         .eq('mentioned', user.id)
         .is('claimed_entry', null),
     ])
-    // 自愈：清掉空内容的孤儿条目（正常路径建不出空条，出现=历史 bug 残留）
-    const list = es || []
-    const strays = list.filter((e) => e.owner === user.id && !e.content.trim())
-    for (const stray of strays) supabase.from('entries').delete().eq('id', stray.id)
-    setAllEntries(list.filter((e) => !strays.includes(e)))
-    setMentions(ms || [])
-    setLoaded(true)
+    return { es: es || [], ms: ms || [] }
   }, [user.id])
 
+  const applyLoad = useCallback(
+    ({ es, ms }) => {
+      // 自愈：清掉空内容的孤儿条目（正常路径建不出空条，出现=历史 bug 残留）
+      const strays = es.filter((e) => e.owner === user.id && !e.content.trim())
+      for (const stray of strays) supabase.from('entries').delete().eq('id', stray.id)
+      setAllEntries(es.filter((e) => !strays.includes(e)))
+      setMentions(ms)
+      setLoaded(true)
+    },
+    [user.id],
+  )
+
+  const doLoad = useCallback(async () => applyLoad(await fetchAll()), [fetchAll, applyLoad])
+
   // 本地优先：还有写操作在路上时绝不刷新（刷早了会把刚删/刚改的内容"复活"）
+  // mutEpoch：请求发出后若又有新写操作，这次拉回的快照就是旧的，整个丢弃重拉
   const pendingOps = useRef(0)
+  const mutEpoch = useRef(0)
+  const [syncing, setSyncing] = useState(false)
   const loadTimer = useRef(null)
   const loadData = useCallback(() => {
     clearTimeout(loadTimer.current)
-    loadTimer.current = setTimeout(() => {
+    loadTimer.current = setTimeout(async () => {
       if (pendingOps.current > 0) {
         loadData() // 写操作没落完，再等一拍
         return
       }
-      doLoad()
+      const epoch = mutEpoch.current
+      const fresh = await fetchAll()
+      if (mutEpoch.current !== epoch || pendingOps.current > 0) {
+        loadData() // 拉的过程中又有新操作，这份快照作废
+        return
+      }
+      applyLoad(fresh)
     }, 400)
-  }, [doLoad])
+  }, [fetchAll, applyLoad])
 
   // 乐观更新（flomo 式先本地后同步）：UI 立即生效，服务端后台跑，全部落完才与库对齐
   const mutateEntries = useCallback(
     (transform, op) => {
+      mutEpoch.current++
       setAllEntries(transform)
       pendingOps.current++
+      setSyncing(true)
       Promise.resolve()
         .then(op)
         .catch(() => {})
         .finally(() => {
           pendingOps.current--
+          if (pendingOps.current === 0) setSyncing(false)
           loadData()
         })
     },
     [loadData],
   )
+
+  // "已同步 ✓" 短暂提示（同步完成后闪 1.5 秒）
+  const [justSynced, setJustSynced] = useState(false)
+  const wasSyncing = useRef(false)
+  useEffect(() => {
+    if (wasSyncing.current && !syncing) {
+      setJustSynced(true)
+      const t = setTimeout(() => setJustSynced(false), 1500)
+      return () => clearTimeout(t)
+    }
+    wasSyncing.current = syncing
+  }, [syncing])
+  useEffect(() => { wasSyncing.current = syncing }, [syncing])
+
+  // 同步没落完时阻止关页/刷新（flomo 的"未同步会丢"防护）
+  useEffect(() => {
+    const h = (e) => {
+      if (pendingOps.current > 0) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', h)
+    return () => window.removeEventListener('beforeunload', h)
+  }, [])
 
   // 快捷键：/ 聚焦捕捉框；⌘K 搜索；⌘Z 撤销完成/删除（mac/win 通吃）
   useEffect(() => {
@@ -510,6 +556,14 @@ export default function Board({ session }) {
                 <span />
               )}
             </span>
+            <span className="mr-auto" />
+            {syncing ? (
+              <span className="flex shrink-0 items-center gap-1 text-xs text-stone-300">
+                <Loader2 size={12} className="animate-spin" /> 同步中
+              </span>
+            ) : justSynced ? (
+              <span className="shrink-0 text-xs text-emerald-500">已同步 ✓</span>
+            ) : null}
             <span className="relative flex items-center">
               <Search size={14} className="pointer-events-none absolute left-3 text-stone-300" />
               <input
