@@ -66,7 +66,13 @@ function renderInline(text, keyBase, q) {
 }
 
 // 完整渲染：标题前缀（#/##）→ 加粗加大；@token 高亮；日期 chip 可点；其余行内 md
-export function renderEntryContent(content, profiles, { meHandle, highlightMe, onDateClick, searchTerm } = {}) {
+const STATE_MARK = {
+  unclaimed: { ch: '○', cls: 'text-stone-400', tip: '未认领' },
+  claimed: { ch: '●', cls: 'text-blue-500', tip: '已认领' },
+  resolved: { ch: '✓', cls: 'text-emerald-600', tip: '已解决' },
+}
+
+export function renderEntryContent(content, profiles, { meHandle, highlightMe, onDateClick, searchTerm, mentionStates } = {}) {
   let body = content
   let heading = 0
   const hm = /^(#{1,3})\s+/.exec(body)
@@ -81,9 +87,16 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe, o
     if (!part) return null
     if (part.startsWith('@') && splitRe && profiles.some((p) => '@' + p.handle === part.toLowerCase())) {
       const isMe = meHandle && part.slice(1).toLowerCase() === meHandle
+      const st = mentionStates?.[part.slice(1).toLowerCase()]
+      const mark = st ? STATE_MARK[st] : null
       return (
         <span key={i} className={isMe && highlightMe ? 'mention-me' : 'mention'}>
           {part}
+          {mark && (
+            <sup className={'ml-px text-[9px] ' + mark.cls} title={mark.tip}>
+              {mark.ch}
+            </sup>
+          )}
         </span>
       )
     }

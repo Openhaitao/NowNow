@@ -22,17 +22,6 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, me
     [],
   )
 
-  const nameOf = (id) => profiles.find((p) => p.id === id)?.display_name || '?'
-
-  // 派活状态徽标：这条目 @ 了谁 → 认领没/解决没
-  const dispatchInfo = (e) => {
-    const ms = allMentions.filter((m) => m.entry_id === e.id)
-    if (!ms.length) return null
-    return ms
-      .map((m) => `${nameOf(m.mentioned)}${e.status === 'resolved' ? '·已解决' : m.claimed_entry ? '·已认领' : '·未认领'}`)
-      .join('、')
-  }
-
   const isPastDue = (e) =>
     e.is_goal && e.status === 'open' && e.anchor &&
     new Date(e.anchor + 'T00:00:00') < ranges[e.section].start
@@ -51,23 +40,19 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, me
     }
   }
 
-  const renderRow = (e) => {
-    const info = dispatchInfo(e)
-    return (
-      <div key={e.id}>
-        <EntryRow
-          entry={e}
-          me={me}
-          profiles={profiles}
-          allEntries={allEntries}
-          mutate={mutate}
-          pushUndo={pushUndo}
-          pastDue={isPastDue(e)}
-        />
-        {info && <div className="-mt-1 mb-1 pl-[25px] text-[11px] text-stone-300">派给 {info}</div>}
-      </div>
-    )
-  }
+  const renderRow = (e) => (
+    <EntryRow
+      key={e.id}
+      entry={e}
+      me={me}
+      profiles={profiles}
+      allEntries={allEntries}
+      allMentions={allMentions}
+      mutate={mutate}
+      pushUndo={pushUndo}
+      pastDue={isPastDue(e)}
+    />
+  )
 
   return (
     <div>

@@ -19,7 +19,7 @@ function caretOffsetIn(container) {
   return range.toString().length
 }
 
-export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, onInsertAbove, onDeleted, pushUndo, flash, pastDue, ownerLabel, searchTerm }) {
+export default function EntryRow({ entry, me, profiles, allEntries, mutate, forceEdit, onEditHandled, onDeleteEmpty, onEditNext, onNavUp, onNavDown, onSplit, onInsertAbove, onDeleted, pushUndo, flash, pastDue, ownerLabel, searchTerm, allMentions = [] }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.content)
   const [menu, setMenu] = useState(null) // {x,y} | null
@@ -192,10 +192,18 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     )
   }
 
+  // @token 上的认领状态标：○未认领 ●已认领 ✓已解决
+  const mentionStates = {}
+  for (const m of allMentions.filter((x) => x.entry_id === entry.id)) {
+    const p = profiles.find((x) => x.id === m.mentioned)
+    if (p) mentionStates[p.handle.toLowerCase()] = entry.status === 'resolved' ? 'resolved' : m.claimed_entry ? 'claimed' : 'unclaimed'
+  }
+
   const rendered = renderEntryContent(entry.content, profiles, {
     meHandle: me.handle,
     highlightMe: !isMine,
     searchTerm: searchTerm || null,
+    mentionStates,
     onDateClick: isMine
       ? (token, e) => {
           e.stopPropagation()

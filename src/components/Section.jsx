@@ -92,7 +92,7 @@ function SortableRow({ entry, draggable, children }) {
 
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query, editRequest, onEditRequest }) {
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query, editRequest, onEditRequest, allMentions }) {
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
   const [editId, setEditId] = useState(null) // 退格删条后让上一条进入编辑态
@@ -400,6 +400,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     pushUndo={pushUndo}
                     flash={flashId === item.v.id}
                     pastDue={isPastDue(item.v)}
+                    allMentions={allMentions}
                     ownerLabel={q ? profiles.find((p) => p.id === item.v.owner)?.display_name : null}
                     searchTerm={q || null}
                   />

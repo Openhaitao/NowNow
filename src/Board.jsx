@@ -696,6 +696,7 @@ export default function Board({ session }) {
                   query={query}
                   editRequest={editRequest}
                   onEditRequest={setEditRequest}
+                  allMentions={allMentions}
                 />
               ))}
                 </>
