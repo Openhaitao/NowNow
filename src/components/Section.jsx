@@ -31,9 +31,13 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
         tabIndex={-1}
         onMouseDown={(e) => { e.preventDefault(); setIsGoal((v) => !v) }}
         title={isGoal ? '目标（Tab 或点击转备忘）' : '备忘（Tab 或点击转目标）'}
-        className="mt-[3px] flex h-[17px] w-[15px] shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
+        className="mt-[5px] flex h-[15px] w-[15px] shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
       >
-        {isGoal ? <Square size={13} /> : <Pilcrow size={13} />}
+        {isGoal ? (
+          <input type="checkbox" readOnly checked={false} tabIndex={-1} className="pointer-events-none h-[15px] w-[15px] accent-stone-700" />
+        ) : (
+          <Pilcrow size={13} />
+        )}
       </button>
       <MentionInput
         value={val}
@@ -427,9 +431,13 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             tabIndex={-1}
             onMouseDown={(e) => { e.preventDefault(); setGhostGoal((v) => !v) }}
             title={ghostGoal ? '目标（Tab 或点击转备忘）' : '备忘（Tab 或点击转目标）'}
-            className="mt-[3px] flex h-[17px] w-[15px] shrink-0 items-center justify-center text-stone-300 hover:text-stone-500"
+            className="mt-[5px] flex h-[15px] w-[15px] shrink-0 items-center justify-center text-stone-300 hover:text-stone-500"
           >
-            {ghostGoal ? <Square size={13} /> : <Pilcrow size={13} />}
+            {ghostGoal ? (
+              <input type="checkbox" readOnly checked={false} tabIndex={-1} className="pointer-events-none h-[15px] w-[15px] accent-stone-700" />
+            ) : (
+              <Pilcrow size={13} />
+            )}
           </button>
           <MentionInput
             id={`ghost-${sec.key}`}
