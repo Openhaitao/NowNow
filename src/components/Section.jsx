@@ -20,7 +20,7 @@ const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到
 const SEC_ORDER = ['today', 'week', 'month']
 
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
-function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, ghostId, onSectionDone }) {
+function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, onSectionDone }) {
   const [val, setVal] = useState(draft.initial || '')
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
@@ -93,8 +93,6 @@ function SortableRow({ entry, draggable, children }) {
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
 export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query, editRequest, onEditRequest }) {
-  const [draft, setDraft] = useState('')
-  const [ghostGoal, setGhostGoal] = useState(false) // 区底输入行的类型（默认备忘，Tab/点击切换）
   const [showClosed, setShowClosed] = useState(false)
   const [offset, setOffset] = useState(0)
   const [editId, setEditId] = useState(null) // 退格删条后让上一条进入编辑态
@@ -166,51 +164,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
 
   // 这个区写完了 → 下一个区的第一条进入编辑
   function sectionDone() {
-    if (nextSecKey) onEditRequest(nextSecKey)
-  }
-
-  // 幽灵输入行：回车即存（乐观插入，行立即出现）。类型由行首标记定（Tab/点击切换）。新条目落区底。
-  function add() {
-    let content = draft.trim()
-    if (!content) {
-      // 空着按回车 = 这个区写完了，跳到下一个区的第一条
-      sectionDone()
-      return
-    }
-    let isGoal = ghostGoal
-    if (content.startsWith('[]')) {
-      isGoal = true
-      content = content.slice(2).trim()
-      if (!content) return
-    }
-    setDraft('')
-    const maxPos = Math.max(0, ...active.map((x) => x.position), ...closed.map((x) => x.position))
-    const row = {
-      owner: me.id,
-      creator: me.id,
-      section: sec.key,
-      content,
-      is_goal: isGoal,
-      position: maxPos + 1,
-    }
-    if (hasAnchor) row.anchor = range.isCurrent ? fmtDate(new Date()) : fmtDate(range.start)
-    const temp = {
-      ...row,
-      id: `tmp-${Date.now()}`,
-      status: 'open',
-      is_private: false,
-      source_entry: null,
-      anchor: row.anchor ?? null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-    mutate(
-      (list) => [...list, temp],
-      async () => {
-        const { data, error } = await supabase.from('entries').insert(row).select().single()
-        if (!error && data) await syncMentions(data.id, content, profiles, me.id)
-      },
-    )
+    if (nextSecKey) onEditRequest(`${nextSecKey}:first`)
   }
 
   // 退格删空一条 → 删掉它，光标跳回上一条末尾（没有上一条就回到输入行，焦点不丢）
@@ -222,7 +176,10 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       () => supabase.from('entries').delete().eq('id', entry.id),
     )
     if (prev) setEditId(prev.id)
-    else requestAnimationFrame(() => document.getElementById(`ghost-${sec.key}`)?.focus())
+    else {
+      const next = active[idx + 1]
+      if (next) setEditId(next.id)
+    }
   }
 
   // 行首回车 = 在这条上方插一行草稿（在最上面继续创建）
@@ -237,25 +194,29 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   const prevSecKey = SEC_ORDER[SEC_ORDER.indexOf(sec.key) - 1]
   const nextSecKey = SEC_ORDER[SEC_ORDER.indexOf(sec.key) + 1]
 
-  // 跨区接力：上一个区"写完了"，让本区第一条进入编辑（空区就聚焦输入行）
+  // 跨区接力："week:first" = 本周第一条进入编辑；空区直接给一行新草稿
   useEffect(() => {
-    if (editRequest !== sec.key) return
+    if (!editRequest || !editRequest.startsWith(sec.key + ':')) return
     onEditRequest(null)
-    if (active[0]) setEditId(active[0].id)
-    else requestAnimationFrame(() => document.getElementById(`ghost-${sec.key}`)?.focus())
+    const pos = editRequest.split(':')[1]
+    if (active.length) {
+      setEditId(pos === 'last' ? active[active.length - 1].id : active[0].id)
+    } else {
+      setDrafts((d) => [...d, { key: `d${Date.now()}-x`, pos: 1, is_goal: true, anchor: null }])
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editRequest])
 
   function navUp(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
     if (idx > 0) setEditId(active[idx - 1].id)
-    else if (prevSecKey) document.getElementById(`ghost-${prevSecKey}`)?.focus()
+    else if (prevSecKey) onEditRequest(`${prevSecKey}:last`)
   }
   function navDown(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
     const next = active[idx + 1]
     if (next) setEditId(next.id)
-    else document.getElementById(`ghost-${sec.key}`)?.focus()
+    else if (nextSecKey) onEditRequest(`${nextSecKey}:first`)
   }
 
   // 回车 = 在当前条目下方插一行本地草稿，立刻可打字（写了字才入库——零等待）
@@ -305,8 +266,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     } else {
       const next = active.find((e) => e.position > dr.pos)
       if (next) setEditId(next.id)
-      // 幽灵行可能因草稿存在而隐藏，等重渲染完再聚焦
-      else requestAnimationFrame(() => document.getElementById(`ghost-${sec.key}`)?.focus())
+      else sectionDone()
     }
   }
 
@@ -446,52 +406,12 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                   onCancel={cancelDraft}
                   onCancelToPrev={cancelDraftToPrev}
                   onNav={draftNav}
-                  ghostId={`ghost-${sec.key}`}
                   onSectionDone={sectionDone}
                 />
               ),
             )}
         </SortableContext>
       </DndContext>
-
-      {isMyPage && !q && drafts.length === 0 && (
-        <div className="flex items-start gap-2.5 py-[5px]">
-          <button
-            type="button"
-            tabIndex={-1}
-            onMouseDown={(e) => { e.preventDefault(); setGhostGoal((v) => !v) }}
-            title={ghostGoal ? '目标（Tab 或点击转备忘）' : '备忘（Tab 或点击转目标）'}
-            className="mt-[5px] flex h-[15px] w-[15px] shrink-0 items-center justify-center text-stone-300 hover:text-stone-500"
-          >
-            {ghostGoal ? (
-              <input type="checkbox" readOnly checked={false} tabIndex={-1} className="pointer-events-none h-[15px] w-[15px] accent-stone-700" />
-            ) : (
-              <Pilcrow size={13} />
-            )}
-          </button>
-          <MentionInput
-            id={`ghost-${sec.key}`}
-            value={draft}
-            onChange={setDraft}
-            onSubmit={add}
-            onTab={() => setGhostGoal((v) => !v)}
-            profiles={profiles}
-            onEmptyBackspace={() => {
-              const last = active[active.length - 1]
-              if (last) setEditId(last.id)
-            }}
-            onArrowUp={() => {
-              const last = active[active.length - 1]
-              if (last) setEditId(last.id)
-              else if (prevSecKey) document.getElementById(`ghost-${prevSecKey}`)?.focus()
-            }}
-            onArrowDown={
-              nextSecKey ? () => document.getElementById(`ghost-${nextSecKey}`)?.focus() : undefined
-            }
-            placeholder="随便写点什么，回车即存…（Tab 或点行首切换目标/备忘，@ 派人）"
-          />
-        </div>
-      )}
 
       {/* 已完成折叠：不让灰色尸体堆满整页 */}
       {closed.length > 0 && (
