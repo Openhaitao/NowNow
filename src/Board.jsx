@@ -37,7 +37,7 @@ function SortableMemberRow({ p, isMe, active, news, onClick }) {
       onClick={onClick}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={
-        'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[15.5px] ' +
+        'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
         (isDragging ? 'z-10 ' : '') +
         (active || isDragging ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
       }
@@ -421,6 +421,12 @@ export default function Board({ session }) {
   const [drawerOpen, setDrawerOpen] = useState(false) // 手机端左侧抽屉（flomo 式）
   const [composeOpen, setComposeOpen] = useState(false) // 手机端 ➕ 记录抽屉
   const [mobileSearch, setMobileSearch] = useState(false) // 手机端搜索页模式
+  useEffect(() => {
+    // 去了别的页面就退出搜索模式并清空关键词
+    setMobileSearch(false)
+    setQuery('')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, pageUserId])
   const [kbOffset, setKbOffset] = useState(0)
   useEffect(() => {
     // iOS 键盘不会推动 fixed 元素：用 visualViewport 实测键盘高度，把记录抽屉顶上去
@@ -566,19 +572,19 @@ export default function Board({ session }) {
   const sidebarContent = (
     <>
         {/* 顶部：当前用户（和右侧日期行同一水平线、同级分量） */}
-        <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[19px]">
+        <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[21px]">
           <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
           <span className="truncate">{me.display_name}</span>
           {/* 手机：通知/设置收进名字右侧（flomo 式抽屉头），点击进对应整页 */}
           <span className="ml-auto flex items-center gap-0.5 md:hidden">
             <button onClick={() => setView('notifications')} className="relative p-1.5 text-stone-500" title="通知">
-              <Bell size={19} />
+              <Bell size={22} />
               {notifCount > 0 && (
                 <span className="absolute right-0.5 top-0.5 rounded-full bg-red-500 px-1 text-[10px] font-medium leading-[14px] text-white">{notifCount}</span>
               )}
             </button>
             <button onClick={() => setView('settings')} className="p-1.5 text-stone-500" title="设置">
-              <Settings size={19} />
+              <Settings size={22} />
             </button>
           </span>
         </div>
@@ -600,7 +606,7 @@ export default function Board({ session }) {
           <button
             onClick={() => setView(view === 'all' ? 'paper' : 'all')}
             className={
-              'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[15.5px] ' +
+              'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
               (view === 'all' ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-600 hover:bg-stone-100')
             }
           >
@@ -700,31 +706,18 @@ export default function Board({ session }) {
                 <Menu size={20} />
                 {notifCount > 0 && <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500" />}
               </button>
-              <span className="relative flex min-w-0 flex-1 justify-center">
-                <button
-                  onClick={() => (view === 'paper' && hasAnchor ? setDateOpen((v) => !v) : viewPage(me.id))}
-                  className="truncate text-[15px] font-semibold"
-                >
-                  {view === 'all'
-                    ? '全部目标'
-                    : view === 'notifications'
-                      ? '通知'
-                      : view === 'settings'
-                        ? '设置'
-                        : `${(baseDate || new Date()).getMonth() + 1}月${(baseDate || new Date()).getDate()}日 周${'日一二三四五六'[(baseDate || new Date()).getDay()]}${isLive ? '' : ' ·回看'}`}
-                </button>
-                {dateOpen && view === 'paper' && (
-                  <DatePicker
-                    value={baseDate}
-                    onClose={() => setDateOpen(false)}
-                    onSelect={(d) => {
-                      if (!d) return setBaseDate(null)
-                      const t = new Date(); t.setHours(0, 0, 0, 0)
-                      setBaseDate(d.getTime() === t.getTime() ? null : d)
-                    }}
-                  />
-                )}
-              </span>
+              <button
+                onClick={() => viewPage(me.id)}
+                className="min-w-0 flex-1 truncate text-center text-[16px] font-semibold"
+              >
+                {view === 'all'
+                  ? '全部目标'
+                  : view === 'notifications'
+                    ? '通知'
+                    : view === 'settings'
+                      ? '设置'
+                      : pageUser.display_name}
+              </button>
               <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
                 <Search size={18} />
               </button>
@@ -793,7 +786,7 @@ export default function Board({ session }) {
             </span>
           </div>
           {view !== 'notifications' && view !== 'settings' && !isMyPage && (
-            <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
+            <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400 max-md:hidden">
               <span>{pageUser.display_name}的主页（只读）</span>
               <button
                 onClick={() => viewPage(me.id)}
@@ -804,7 +797,7 @@ export default function Board({ session }) {
             </div>
           )}
           {(view === 'notifications' || view === 'settings') && (
-            <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400">
+            <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400 max-md:hidden">
               <span>{view === 'notifications' ? '通知' : '设置'}</span>
               <button
                 onClick={() => viewPage(me.id)}
@@ -812,6 +805,13 @@ export default function Board({ session }) {
               >
                 ← 回到我的主页
               </button>
+            </div>
+          )}
+          {view === 'paper' && (
+            <div className="mt-1 hidden text-[13px] text-stone-300 max-md:block">
+              {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
+              {'日一二三四五六'[(baseDate || new Date()).getDay()]}
+              {isLive ? '' : ' · 回看中'}
             </div>
           )}
           {view === 'paper' && isMyPage && (
