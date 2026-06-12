@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Bell, CalendarDays, LayoutList, Search, Settings, WifiOff } from 'lucide-react'
+import { Bell, CalendarDays, LayoutList, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { inPeriod, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
@@ -30,21 +30,18 @@ function SetupCard({ user, onDone }) {
     setErr('')
     const clean = handle.trim().replace(/^@/, '')
     if (!clean || /\s/.test(clean)) { setErr('名字不能为空或带空格'); return }
-    if (invite) {
-      const { error } = await supabase.rpc('redeem_invite', { p_token: invite, p_name: clean })
-      if (error) { setErr(error.message); return }
-      localStorage.removeItem('nownow_invite')
-      onDone()
+    const { error } = await supabase.rpc('claim_membership', { p_name: clean })
+    if (error) {
+      // 兼容旧路径：还留着邀请 token 的话试一下 redeem
+      if (invite) {
+        const { error: e2 } = await supabase.rpc('redeem_invite', { p_token: invite, p_name: clean })
+        if (!e2) { localStorage.removeItem('nownow_invite'); onDone(); return }
+      }
+      setErr(error.message)
       return
     }
-    // 兼容旧库（没跑 migration-002 时仍走直插）
-    const { error } = await supabase.from('profiles').insert({
-      id: user.id,
-      handle: clean.toLowerCase(),
-      display_name: clean,
-    })
-    if (error) setErr('需要邀请链接才能加入，找已在系统里的同事生成一个')
-    else onDone()
+    localStorage.removeItem('nownow_invite')
+    onDone()
   }
 
   return (
@@ -286,16 +283,37 @@ export default function Board({ session }) {
   useEffect(() => { doLoad() }, [doLoad])
   useEffect(() => { if (me && !pageUserId) setPageUserId(me.id) }, [me, pageUserId])
 
-  // Realtime：库一变就重拉（两三个人的量级，重拉最简单可靠）
+  // Realtime 增量应用：别人的改动按行打补丁，不整表重拉（30 人规模的流量关键）
+  // 自己有写操作在路上时不动本地（防旧事件盖新状态），靠落定后的对账兜底
+  const applyEntryEvent = useCallback((payload) => {
+    if (pendingOps.current > 0) return
+    const { eventType, new: n, old: o } = payload
+    setAllEntries((list) => {
+      if (eventType === 'INSERT') return list.some((e) => e.id === n.id) ? list : [...list, n]
+      if (eventType === 'UPDATE') return list.map((e) => (e.id === n.id ? n : e))
+      if (eventType === 'DELETE') return list.filter((e) => e.id !== (o?.id ?? n?.id))
+      return list
+    })
+  }, [])
+
+  const reloadMentions = useCallback(async () => {
+    const { data: ms } = await supabase
+      .from('mentions')
+      .select('*, entries!mentions_entry_id_fkey(content, creator)')
+      .eq('mentioned', user.id)
+      .is('claimed_entry', null)
+    setMentions(ms || [])
+  }, [user.id])
+
   useEffect(() => {
     const ch = supabase
       .channel('nownow')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, loadData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mentions' }, loadData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, applyEntryEvent)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mentions' }, reloadMentions)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, loadProfiles)
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [loadData, loadProfiles])
+  }, [applyEntryEvent, reloadMentions, loadProfiles])
 
   // 切到某人页面 = 记录"看过的时间"，红点据此熄灭
   const viewPage = useCallback((pid) => {
@@ -613,11 +631,14 @@ export default function Board({ session }) {
             <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
           )}
           {(offline || syncSlow) && (
-            <div className="mt-2 flex items-center gap-2 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-500">
-              <WifiOff size={13} className="shrink-0 text-stone-400" />
-              {offline
-                ? '网络已断开 · 刚写的内容已暂存在本页，恢复网络后会自动保存——在此之前请不要关闭或刷新页面'
-                : '正在同步到云端…网络有点慢，内容已暂存在本页'}
+            <div className="mt-2 rounded-lg bg-stone-100 px-3 py-2 text-center text-[13px] text-stone-500">
+              {offline ? '离线状态，内容已暂存本页，恢复网络后自动保存，' : '正在同步，网络有点慢，'}
+              <button
+                onClick={() => { replayFailed(); loadData() }}
+                className="text-blue-600 hover:underline"
+              >
+                点此重试
+              </button>
             </div>
           )}
         </div>
