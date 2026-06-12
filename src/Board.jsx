@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, CalendarDays, Home, LayoutList, Search, Settings } from 'lucide-react'
+import { Bell, CalendarDays, LayoutList, Menu, Plus, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -418,6 +418,7 @@ export default function Board({ session }) {
   }, [loaded, me?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false) // 手机端左侧抽屉（flomo 式）
   const [view, setView] = useState('paper') // paper | notifications | all
 
   // 成员显示顺序：本人默认第一位，拖拽可调，存本地
@@ -548,10 +549,9 @@ export default function Board({ session }) {
   const pageUser = profiles.find((p) => p.id === pageUserId) || me
   const isMyPage = pageUser.id === me.id
 
-  return (
-    <div className="mx-auto flex h-dvh max-w-4xl overflow-hidden">
-      {/* 左栏：人员列表（固定不随内容滚动） */}
-      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-hidden px-2 pb-5 pt-3 md:flex">
+  // 侧栏内容：桌面常驻左栏 + 手机左侧抽屉（flomo 式）共用一份
+  const sidebarContent = (
+    <>
         {/* 顶部：当前用户（和右侧日期行同一水平线、同级分量） */}
         <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold">
           <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg" />
@@ -625,30 +625,42 @@ export default function Board({ session }) {
             <Settings size={14} /> 设置
           </button>
         </div>
+    </>
+  )
+
+  return (
+    <div className="mx-auto flex h-dvh max-w-4xl overflow-hidden">
+      {/* 左栏：人员列表（固定不随内容滚动） */}
+      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-hidden px-2 pb-5 pt-3 md:flex">
+        {sidebarContent}
       </aside>
+
+      {/* 手机端：flomo 式左侧抽屉（点任意一项后自动收起） */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDrawerOpen(false)} />
+          <div
+            className="absolute inset-y-0 left-0 flex w-72 flex-col overflow-hidden bg-[#fffefb] px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] shadow-2xl"
+            onClick={() => setDrawerOpen(false)}
+          >
+            {sidebarContent}
+          </div>
+        </div>
+      )}
 
       {/* 主区：输入框固定，纸内部滚动 */}
       <main className="flex h-full min-w-0 flex-1 flex-col">
-        {/* 移动端：顶部人名横排（适配刘海/状态栏安全区） */}
-        <div className="flex shrink-0 items-center gap-1.5 border-b border-stone-100 px-4 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] md:hidden">
-          <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
-          <div className="flex flex-1 gap-1 overflow-x-auto">
-            {orderedProfiles.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => viewPage(p.id)}
-                className={
-                  'relative shrink-0 rounded-full px-2.5 py-0.5 text-[13px] ' +
-                  (p.id === pageUserId ? 'bg-blue-50 font-medium text-blue-700' : 'text-stone-500')
-                }
-              >
-                {p.display_name}
-                {hasNews(p) && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500" />}
-              </button>
-            ))}
-          </div>
-          <button onClick={() => document.getElementById('search-input')?.focus()} className="text-stone-400">
-            <Search size={16} />
+        {/* 移动端顶栏（flomo 式）：☰ 抽屉 + 当前页标题 + 搜索 */}
+        <div className="flex shrink-0 items-center gap-2 border-b border-stone-100 px-3 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] md:hidden">
+          <button onClick={() => setDrawerOpen(true)} className="relative p-1.5 text-stone-600" title="菜单">
+            <Menu size={20} />
+            {notifCount > 0 && <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500" />}
+          </button>
+          <button onClick={() => viewPage(me.id)} className="flex-1 truncate text-center text-[15px] font-semibold">
+            {view === 'all' ? '全部目标' : view === 'notifications' ? '通知' : pageUser.display_name}
+          </button>
+          <button onClick={() => document.getElementById('search-input')?.focus()} className="p-1.5 text-stone-400">
+            <Search size={18} />
           </button>
         </div>
 
@@ -800,38 +812,17 @@ export default function Board({ session }) {
         </div>
         </div>
 
-        {/* 移动端底部导航：主页 / 全部 / 通知 / 设置（桌面用左栏） */}
-        <nav className="flex shrink-0 items-center justify-around border-t border-stone-100 bg-white pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5 md:hidden">
-          <button
-            onClick={() => viewPage(me.id)}
-            className={'flex flex-col items-center gap-0.5 px-3 text-[10px] ' + (view === 'paper' && isMyPage ? 'text-blue-600' : 'text-stone-400')}
-          >
-            <Home size={18} /> 主页
-          </button>
-          <button
-            onClick={() => setView(view === 'all' ? 'paper' : 'all')}
-            className={'flex flex-col items-center gap-0.5 px-3 text-[10px] ' + (view === 'all' ? 'text-blue-600' : 'text-stone-400')}
-          >
-            <LayoutList size={18} /> 全部
-          </button>
-          <button
-            onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
-            className={'relative flex flex-col items-center gap-0.5 px-3 text-[10px] ' + (view === 'notifications' ? 'text-blue-600' : 'text-stone-400')}
-          >
-            <Bell size={18} />
-            {notifCount > 0 && (
-              <span className="absolute -top-1 right-1 rounded-full bg-red-500 px-1 text-[9px] font-medium text-white">{notifCount}</span>
-            )}
-            通知
-          </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 text-[10px] text-stone-400"
-          >
-            <Settings size={18} /> 设置
-          </button>
-        </nav>
       </main>
+      {/* 手机端浮动记录按钮（flomo 式）：点了聚焦顶部输入框 */}
+      {view === 'paper' && isMyPage && (
+        <button
+          onClick={() => document.getElementById('quick-capture')?.focus()}
+          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
+          title="记一条"
+        >
+          <Plus size={22} />
+        </button>
+      )}
       {settingsOpen && (
         <SettingsModal
           onClose={() => setSettingsOpen(false)}
