@@ -26,6 +26,7 @@ export default function Login() {
   function humanize(m) {
     if (!m) return '出错了，再试一次'
     if (m.includes('Invalid login credentials')) return '邮箱或密码不对。第一次来？点下面"首次使用"'
+    if (m.includes('Email not confirmed')) return '这个账号注册时邮箱确认还开着，需要管理员在后台确认一次（Authentication → Users → 该用户 → Confirm email）'
     if (m.includes('Signups not allowed')) return '系统暂未开放登录，请联系管理员'
     if (m.includes('User already registered')) return '这个邮箱已设过密码，直接登录即可'
     if (m.includes('rate limit') || m.includes('rate_limit')) return '操作太频繁，请等几分钟再试'
