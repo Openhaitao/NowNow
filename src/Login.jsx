@@ -9,6 +9,7 @@ export default function Login({ loggedIn = false }) {
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showRecover, setShowRecover] = useState(false)
   const invited = !!localStorage.getItem('nownow_invite')
 
   function humanize(m) {
@@ -21,24 +22,29 @@ export default function Login({ loggedIn = false }) {
     return m
   }
 
+  // 一个按钮搞定新老用户：先试登录，账号不存在就自动注册（首次输入的密码即账号密码）
   async function signIn(e) {
     e.preventDefault()
     setErr('')
     setBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (!error) { setBusy(false); return }
+    if (error.message.includes('Invalid login credentials')) {
+      const { data, error: e2 } = await supabase.auth.signUp({ email, password })
+      setBusy(false)
+      if (!e2) {
+        if (!data.session) setSent(true) // 后台若开着邮箱确认的兜底
+        return
+      }
+      // 注册说"已存在" = 老账号密码输错了
+      if (e2.message.includes('already registered')) setErr('密码不对。忘了的话用下面的邮件链接找回')
+      else setErr(humanize(e2.message))
+      setShowRecover(true)
+      return
+    }
     setBusy(false)
-    if (error) setErr(humanize(error.message))
-  }
-
-  // 被邀请的新用户：第一次来直接设密码（邮箱是否在邀请名单，由数据层校验）
-  async function signUp() {
-    setErr('')
-    if (!email || !password) { setErr('填好邮箱和密码再点'); return }
-    setBusy(true)
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    setBusy(false)
-    if (error) { setErr(humanize(error.message)); return }
-    if (!data.session) setSent(true) // 后台若开着邮箱确认，则提示去点邮件
+    setErr(humanize(error.message))
+    setShowRecover(true)
   }
 
   async function sendLink(e) {
@@ -86,13 +92,12 @@ export default function Login({ loggedIn = false }) {
             <button type="submit" disabled={busy} className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700 disabled:opacity-60">
               登录
             </button>
-            <button type="button" onClick={signUp} disabled={busy} className="rounded-lg border border-stone-200 py-2.5 text-[15px] text-stone-700 hover:border-stone-400 disabled:opacity-60">
-              首次使用？设置密码并进入
-            </button>
             {err && <p className="text-sm text-red-600">{err}</p>}
-            <button type="button" onClick={() => { setMode('link'); setErr('') }} className="text-xs text-stone-400 hover:text-stone-600">
-              忘了密码？用邮件链接登录
-            </button>
+            {showRecover && (
+              <button type="button" onClick={() => { setMode('link'); setErr('') }} className="text-xs text-stone-400 hover:text-stone-600">
+                忘了密码？用邮件链接登录
+              </button>
+            )}
           </form>
         ) : (
           <form onSubmit={sendLink} className="mt-6 flex flex-col gap-3">
