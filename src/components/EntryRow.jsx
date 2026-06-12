@@ -306,8 +306,11 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           </span>
         )}
         {!notified && originalCreator && !closed && !editing && (
-          <span className="text-[11px] text-stone-300" title="认领来的，完成后会通知对方">
-            来自{originalCreator.display_name}
+          <span
+            className="rounded bg-blue-50 px-1.5 py-px text-[11px] text-blue-500"
+            title="认领来的活，完成后会自动通知对方验收"
+          >
+            {originalCreator.display_name} 派
           </span>
         )}
         {isMine && (
