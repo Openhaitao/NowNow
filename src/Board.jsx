@@ -466,7 +466,7 @@ export default function Board({ session }) {
   const isMyPage = pageUser.id === me.id
 
   return (
-    <div className="mx-auto flex h-screen max-w-4xl overflow-hidden">
+    <div className="mx-auto flex h-dvh max-w-4xl overflow-hidden">
       {/* 左栏：人员列表（固定不随内容滚动） */}
       <aside className="hidden h-full w-52 shrink-0 flex-col overflow-y-auto px-2 pb-5 pt-3 md:flex">
         {/* 顶部：当前用户（和右侧日期行同一水平线、同级分量） */}

@@ -6,6 +6,13 @@
   --ink: #1d1d1f;
 }
 
+html,
+body {
+  /* 手机上整页固定，滚动只发生在纸的内部（iOS 地址栏伸缩用 dvh 适配） */
+  height: 100%;
+  overscroll-behavior: none;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   background: var(--paper);

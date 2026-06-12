@@ -57,11 +57,10 @@ export default function Login() {
   const inputCls = 'rounded-lg border border-stone-200 px-3.5 py-2.5 text-[15px] outline-none focus:border-stone-400'
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="w-full max-w-xs text-center">
-        <img src="/logo.png" alt="NowNow" className="mx-auto w-16 rounded-2xl" />
+        <img src="/logo.png" alt="NowNow" className="mx-auto w-20 rounded-2xl md:w-16" />
         <h1 className="mt-3 text-xl font-bold">NowNow</h1>
-        <p className="mt-1 text-sm text-stone-400">先是笔记，才是系统</p>
         {invited && (
           <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
             你收到了 NowNow 的加入邀请——确认邮箱已被加进名单后，设置密码即可进入
@@ -100,6 +99,14 @@ export default function Login() {
           </form>
         )}
       </div>
+      <a
+        href="https://github.com/Openhaitao"
+        target="_blank"
+        rel="noreferrer"
+        className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] text-xs text-stone-300 hover:text-stone-500"
+      >
+        made by haitao
+      </a>
     </div>
   )
 }
