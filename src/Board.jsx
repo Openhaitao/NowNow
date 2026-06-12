@@ -723,7 +723,7 @@ export default function Board({ session }) {
               </button>
               <button
                 onClick={() => viewPage(me.id)}
-                className="min-w-0 flex-1 truncate text-center text-[17.5px] font-semibold"
+                className={'min-w-0 flex-1 truncate text-center text-[17.5px] font-semibold ' + (view === 'paper' && !isMyPage ? 'text-stone-400' : '')}
               >
                 {view === 'all'
                   ? '全部目标'
@@ -732,9 +732,6 @@ export default function Board({ session }) {
                     : view === 'settings'
                       ? '设置'
                       : pageUser.display_name}
-                {view === 'paper' && !isMyPage && (
-                  <span className="ml-1.5 align-middle text-[13px] font-normal text-stone-400">只读</span>
-                )}
               </button>
               <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
                 <Search size={20} />
