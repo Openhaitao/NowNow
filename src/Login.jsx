@@ -54,6 +54,14 @@ export default function Login() {
       const { data, error: e2 } = await supabase.auth.signUp({ email, password })
       setBusy(false)
       if (!e2) {
+        // Supabase 防枚举：对已存在的邮箱 signUp 也返回"成功"但 identities 为空——这是老账号，不是新注册
+        const existing = data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0
+        if (existing) {
+          localStorage.setItem('nownow_known_emails', JSON.stringify([...known, email]))
+          setErr('密码不对，或者这个账号还没设过密码（早期用邮件链接进来的）——用下面的邮件链接登录一次，进去后在 设置→修改密码 里设一个')
+          setShowRecover(true)
+          return
+        }
         localStorage.setItem('nownow_last_email', email)
         if (!data.session) setSent(true) // 后台若开着邮箱确认的兜底
         return
