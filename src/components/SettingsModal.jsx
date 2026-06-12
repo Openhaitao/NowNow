@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Copy, Download, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, Copy, Download, Link2, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
@@ -14,6 +14,7 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
   const [inviteErr, setInviteErr] = useState('')
   const [inviteLink, setInviteLink] = useState('')
   const [membersOpen, setMembersOpen] = useState(false)
+  const [copiedEmail, setCopiedEmail] = useState('')
   const [newPw, setNewPw] = useState('')
   const [pwMsg, setPwMsg] = useState('')
 
@@ -76,6 +77,18 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
       setInviteMsg('已复制 ✓')
       setTimeout(() => setInviteMsg(''), 2000)
     } catch { /* 手动复制 */ }
+  }
+
+  // 任何成员行都能随时再拿到 ta 的邀请链接（刷新后链接不会丢）
+  async function copyInviteLink(em) {
+    const link = `${window.location.origin}/login?email=${encodeURIComponent(em)}`
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopiedEmail(em)
+      setTimeout(() => setCopiedEmail(''), 1500)
+    } catch {
+      setInviteLink(link) // 复制被浏览器拦了就把链接显示出来手动复制
+    }
   }
 
   async function removeEmail(em) {
@@ -225,7 +238,14 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
                           {p.display_name}
                           {p.id === me.id ? '（我）' : ''}
                         </span>
-                        {p.email && <span className="text-stone-300">{p.email}</span>}
+                        <span className="flex items-center gap-1.5 text-stone-300">
+                          {p.email}
+                          {p.email && (
+                            <button onClick={() => copyInviteLink(p.email)} title="复制邀请链接" className="text-stone-300 hover:text-stone-600">
+                              {copiedEmail === p.email ? <Check size={11} className="text-emerald-500" /> : <Link2 size={11} />}
+                            </button>
+                          )}
+                        </span>
                       </div>
                     ))}
                     {waiting.map((a) => (
@@ -233,6 +253,9 @@ export default function SettingsModal({ open, onClose, me, email, allEntries, pr
                         <span className="text-amber-400">已邀请 · 未加入</span>
                         <span className="flex items-center gap-1.5 text-amber-700">
                           {a.email}
+                          <button onClick={() => copyInviteLink(a.email)} title="复制邀请链接" className="text-stone-300 hover:text-stone-600">
+                            {copiedEmail === a.email ? <Check size={11} className="text-emerald-500" /> : <Link2 size={11} />}
+                          </button>
                           <button onClick={() => removeEmail(a.email)} title="移出名单" className="text-stone-300 hover:text-red-500">
                             <X size={11} />
                           </button>
