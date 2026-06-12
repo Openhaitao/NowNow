@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from './lib/supabase'
 
 // 登录：邮箱+密码为主（无邮件往返、不吃邮件限额），邮件链接作备用/找回
-export default function Login({ loggedIn = false }) {
+export default function Login() {
   // 邀请链接 /login?email=xxx：预填邮箱 + 进入"设置密码"模式（带确认密码）
   const inviteEmail = new URLSearchParams(window.location.search).get('email') || ''
   const [email, setEmail] = useState(inviteEmail)
@@ -73,16 +73,8 @@ export default function Login({ loggedIn = false }) {
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="w-full max-w-xs text-center">
-        <img src="/logo.png" alt="NowNow" className="mx-auto w-20 rounded-2xl md:w-16" />
+        <img src="/logo.png" alt="NowNow" className="mx-auto w-20 md:w-16" />
         <h1 className="mt-3 text-xl font-bold">NowNow</h1>
-        {loggedIn && (
-          <p className="mt-2 text-xs text-stone-400">
-            你已登录 ·{' '}
-            <a href="/" className="text-blue-600 hover:underline">
-              进入主页
-            </a>
-          </p>
-        )}
         {(invited || onboarding) && (
           <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
             你收到了 NowNow 的加入邀请——设置一个密码即可进入

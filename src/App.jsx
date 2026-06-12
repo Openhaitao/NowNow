@@ -51,7 +51,7 @@ export default function App() {
   if (window.location.pathname === '/login')
     return (
       <ErrorBoundary>
-        <Login loggedIn={!!session} />
+        <Login />
       </ErrorBoundary>
     )
   return <ErrorBoundary>{session ? <Board session={session} /> : <Login />}</ErrorBoundary>
