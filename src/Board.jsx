@@ -190,18 +190,21 @@ export default function Board({ session }) {
     [loadData],
   )
 
-  // "已同步 ✓" 短暂提示（同步完成后闪 1.5 秒）
-  const [justSynced, setJustSynced] = useState(false)
-  const wasSyncing = useRef(false)
+  // 只在"有问题"时提示：离线 / 同步卡了超过 2.5 秒（顺畅时完全安静）
+  const [offline, setOffline] = useState(!navigator.onLine)
   useEffect(() => {
-    if (wasSyncing.current && !syncing) {
-      setJustSynced(true)
-      const t = setTimeout(() => setJustSynced(false), 1500)
-      return () => clearTimeout(t)
-    }
-    wasSyncing.current = syncing
+    const on = () => setOffline(false)
+    const off = () => setOffline(true)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  const [syncSlow, setSyncSlow] = useState(false)
+  useEffect(() => {
+    if (!syncing) { setSyncSlow(false); return }
+    const t = setTimeout(() => setSyncSlow(true), 2500)
+    return () => clearTimeout(t)
   }, [syncing])
-  useEffect(() => { wasSyncing.current = syncing }, [syncing])
 
   // 同步没落完时阻止关页/刷新（flomo 的"未同步会丢"防护）
   useEffect(() => {
@@ -556,14 +559,6 @@ export default function Board({ session }) {
                 <span />
               )}
             </span>
-            <span className="mr-auto" />
-            {syncing ? (
-              <span className="flex shrink-0 items-center gap-1 text-xs text-stone-300">
-                <Loader2 size={12} className="animate-spin" /> 同步中
-              </span>
-            ) : justSynced ? (
-              <span className="shrink-0 text-xs text-emerald-500">已同步 ✓</span>
-            ) : null}
             <span className="relative flex items-center">
               <Search size={14} className="pointer-events-none absolute left-3 text-stone-300" />
               <input
@@ -591,6 +586,13 @@ export default function Board({ session }) {
           )}
           {view !== 'notifications' && isMyPage && (
             <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
+          )}
+          {(offline || syncSlow) && (
+            <p className="mt-1.5 text-xs text-stone-400">
+              {offline
+                ? '网络已断开——刚写的内容还没保存，恢复网络前别关页面'
+                : '正在同步，网络有点慢…'}
+            </p>
           )}
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
