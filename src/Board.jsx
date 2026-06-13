@@ -88,18 +88,16 @@ function SetupCard({ user, onDone }) {
     setErr('')
     const clean = raw.trim().replace(/^@/, '')
     if (!clean || /\s/.test(clean)) { setAuto(false); setErr('名字不能为空或带空格'); return }
-    const { error } = await supabase.rpc('claim_membership', { p_name: clean })
+    // 固定邀请码大门：登录页存进 nownow_invite_code，后端 redeem_code 校验码 + 建 profile
+    const code = (localStorage.getItem('nownow_invite_code') || localStorage.getItem('nownow_invite') || '').trim()
+    const { error } = await supabase.rpc('redeem_code', { p_code: code, p_name: clean })
     if (error) {
-      // 兼容旧路径：还留着邀请 token 的话试一下 redeem
-      if (invite) {
-        const { error: e2 } = await supabase.rpc('redeem_invite', { p_token: invite, p_name: clean })
-        if (!e2) { localStorage.removeItem('nownow_invite'); localStorage.removeItem('nownow_pending_name'); onDone(); return }
-      }
       setAuto(false)
       setErr(friendlyDbError(error.message))
       return
     }
     localStorage.removeItem('nownow_invite')
+    localStorage.removeItem('nownow_invite_code')
     localStorage.removeItem('nownow_pending_name')
     onDone()
   }

@@ -19,6 +19,8 @@ export default function Login() {
   useEffect(() => {
     document.title = onboarding ? 'Invite | NowNow' : 'Login | NowNow'
   }, [onboarding])
+  // 固定邀请码：注册大门（后端 redeem_code 校验，前端只收集）。邀请链接 ?invite= 自动填好（App 存进 nownow_invite）
+  const [inviteCode, setInviteCode] = useState(localStorage.getItem('nownow_invite') || '')
   const [mode, setMode] = useState('password') // password | link
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState('')
@@ -60,6 +62,8 @@ export default function Login() {
 
   async function doSignIn() {
     setErr('')
+    // 邀请码带进主页：起名/认领时后端用 redeem_code 校验
+    localStorage.setItem('nownow_invite_code', inviteCode.trim())
     if (onboarding) {
       const n = name.trim().replace(/^@/, '')
       if (!n) { setErr('先在上面填上你的名字'); return }
@@ -164,6 +168,7 @@ export default function Login() {
           </p>
         ) : mode === 'password' ? (
           <form onSubmit={signIn} className="mt-6 flex flex-col gap-3">
+            <input required placeholder="邀请码" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} className={inputCls} />
             <input type="email" name="email" autoComplete="username" required placeholder="邮箱" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
             <span className="relative">
               <input
