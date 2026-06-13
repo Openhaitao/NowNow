@@ -16,19 +16,61 @@ export async function loadDoc(owner, section, periodKey) {
 }
 
 // upsert 自己的文档（RLS：owner 必须 = auth.uid()）。空文档也存，保持"今天那篇"存在。
+// 落库后顺带同步 @提及索引（doc_mentions）——通知链。表还没建时容错跳过，不影响存。
 export async function saveDoc({ owner, section, periodKey, json, text }) {
-  const { error } = await supabase.from('docs').upsert(
-    {
-      owner,
-      section,
-      period_key: periodKey,
-      doc_json: json,
-      doc_text: text ?? '',
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'owner,section,period_key' },
-  )
+  const { data, error } = await supabase
+    .from('docs')
+    .upsert(
+      {
+        owner,
+        section,
+        period_key: periodKey,
+        doc_json: json,
+        doc_text: text ?? '',
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'owner,section,period_key' },
+    )
+    .select('id')
+    .single()
   if (error) throw error
+  if (data?.id) syncDocMentions(data.id, owner, json).catch(() => {}) // 非致命：doc_mentions 没建好也不挡存
+  return data?.id
+}
+
+// 从 PM JSON 递归收集 @提及到的 profile id
+function collectMentionIds(node, out = new Set()) {
+  if (!node) return out
+  if (node.type === 'mention' && node.attrs?.id) out.add(node.attrs.id)
+  if (Array.isArray(node.content)) for (const c of node.content) collectMentionIds(c, out)
+  return out
+}
+
+// 同步 @提及索引：文里现有的 upsert、文里已删的 prune。供收件箱「@我的」查询。
+export async function syncDocMentions(docId, authorId, json) {
+  const ids = [...collectMentionIds(json)]
+  if (ids.length) {
+    await supabase
+      .from('doc_mentions')
+      .upsert(ids.map((mentioned) => ({ doc_id: docId, mentioned, author: authorId })), { onConflict: 'doc_id,mentioned' })
+  }
+  let del = supabase.from('doc_mentions').delete().eq('doc_id', docId)
+  if (ids.length) del = del.not('mentioned', 'in', `(${ids.join(',')})`)
+  await del
+}
+
+// 搜 docs（团队可见的都能搜，RLS select 全可读）。命中 doc_text，返回文档 + 片段。
+export async function searchDocs(query) {
+  const q = query.trim()
+  if (!q) return []
+  const { data, error } = await supabase
+    .from('docs')
+    .select('id, owner, section, period_key, doc_text, updated_at')
+    .ilike('doc_text', `%${q}%`)
+    .order('updated_at', { ascending: false })
+    .limit(30)
+  if (error) throw error
+  return data ?? []
 }
 
 // 列某人某 section 下"有内容的过去周期"（时间线渲染用：哪些 period_key 有文档，降序）。

@@ -12,6 +12,7 @@ import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import Section from './components/Section'
 import DocTimeline from './components/DocTimeline'
+import DocSearch from './components/DocSearch'
 import TeamAllView from './components/TeamAllView'
 import SettingsModal from './components/SettingsModal'
 
@@ -438,6 +439,17 @@ export default function Board({ session }) {
     localStorage.setItem(LAST_VIEWED_KEY, JSON.stringify(next))
     setLastViewed(next)
   }, [])
+
+  // @通知跳转入口（给 Inbox/通知页用）：点一条 → 切到那人那频道、滚到那篇文档块
+  // block id = `doc-${section}-${periodKey}`（见 DocTimeline）
+  const jumpToDoc = useCallback((owner, section, periodKey) => {
+    viewPage(owner)
+    setChannel(section)
+    setQuery('')
+    setTimeout(() => {
+      document.getElementById(`doc-${section}-${periodKey}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    }, 150)
+  }, [viewPage])
 
   const hasNews = useCallback(
     (p) => {
@@ -888,6 +900,7 @@ export default function Board({ session }) {
               profiles={profiles}
               onMembersChanged={loadProfiles}
               onJump={jumpToEntry}
+              onJumpDoc={jumpToDoc}
             />
           ) : (
             <>
@@ -895,9 +908,17 @@ export default function Board({ session }) {
                 <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={[...pinnedMembers, ...restMembers]} me={me} mutate={mutateEntries} pushUndo={pushUndo} baseDate={baseDate} onPin={togglePin} pinnedIds={pinnedIds} />
               ) : (
                 <>
-              {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
-              {/* 文档内核（Tiptap）：每个频道 = 往下回溯的文档时间线，一份文档 = 一个 (owner, section, period_key) */}
-              <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} />
+              {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} onJumpDoc={jumpToDoc} />}
+              {/* 文档内核（Tiptap）：搜索时出全文结果，否则每个频道 = 往下回溯的文档时间线 */}
+              {query.trim() ? (
+                <DocSearch
+                  query={query}
+                  profiles={profiles}
+                  onJump={(h) => { viewPage(h.owner); goChannel(h.section); setQuery('') }}
+                />
+              ) : (
+                <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} />
+              )}
                 </>
               )}
             </>
