@@ -466,6 +466,18 @@ export default function Board({ session }) {
   }, [activeProfiles, memberOrder, user.id])
   // 团队成员列表 = 排除本人（本人入口走「我的目标」）；团队目标也用它，沿用同一排序
   const teamMembers = useMemo(() => orderedProfiles.filter((p) => p.id !== user.id), [orderedProfiles, user.id])
+  // 从「团队目标」点 📌 把某人置顶到团队成员靠前（紧跟本人之后）。个人偏好，存 localStorage，不进库、不影响别人
+  const pinMember = useCallback(
+    (id) => {
+      const ids = orderedProfiles.map((p) => p.id).filter((x) => x !== id)
+      const meIdx = ids.indexOf(user.id)
+      const at = meIdx === -1 ? 0 : meIdx + 1
+      const next = [...ids.slice(0, at), id, ...ids.slice(at)]
+      setMemberOrder(next)
+      localStorage.setItem(MEMBER_ORDER_KEY, JSON.stringify(next))
+    },
+    [orderedProfiles, user.id],
+  )
   const memberSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   function onMemberDragEnd({ active, over }) {
     if (!over || active.id === over.id) return
@@ -662,9 +674,10 @@ export default function Board({ session }) {
   )
 
   return (
-    <div className="mx-auto flex h-dvh max-w-4xl overflow-hidden">
+    // 桌面：整个 app 左右细边框（主页边界感）；侧栏右边框做分界。相邻处只有侧栏这一条线，不重复。手机不画框不占面积
+    <div className="mx-auto flex h-dvh max-w-4xl overflow-hidden md:border-x md:border-stone-200">
       {/* 左栏：人员列表（固定不随内容滚动） */}
-      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-hidden px-2 pb-5 pt-3 md:flex">
+      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-hidden border-r border-stone-100 px-2 pb-5 pt-3 md:flex">
         {sidebarContent}
       </aside>
 
@@ -809,7 +822,7 @@ export default function Board({ session }) {
           ) : (
             <>
               {view === 'all' ? (
-                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={teamMembers} me={me} mutate={mutateEntries} pushUndo={pushUndo} baseDate={baseDate} />
+                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={teamMembers} me={me} mutate={mutateEntries} pushUndo={pushUndo} baseDate={baseDate} onPin={pinMember} />
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
