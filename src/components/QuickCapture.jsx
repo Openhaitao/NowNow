@@ -12,10 +12,11 @@ const SECTIONS = [
 ]
 
 // flomo 式顶部快速捕捉：写任务 → @分配 → 挑放进哪个区 → 回车
-export default function QuickCapture({ me, profiles, allEntries, hasAnchor, mutate, variant, autoFocus, onDone }) {
+export default function QuickCapture({ me, profiles, allEntries, hasAnchor, mutate, variant, autoFocus, onDone, forceSection }) {
   const sheet = variant === 'sheet' // 手机底部抽屉模式：无边框、更矮、发完即收
   const [draft, setDraft] = useState('')
-  const [section, setSection] = useState('today')
+  const [sectionState, setSection] = useState('today')
+  const section = forceSection || sectionState // forceSection 时跟随当前频道，隐藏区选择
   const [isGoal, setIsGoal] = useState(true)
 
   function submit() {
@@ -73,7 +74,7 @@ export default function QuickCapture({ me, profiles, allEntries, hasAnchor, muta
         className={'px-1 pt-0.5' + (sheet ? ' text-[16px]' : '')}
       />
       <div className="mt-2 flex items-center gap-1">
-        {SECTIONS.map((s) => (
+        {!forceSection && SECTIONS.map((s) => (
           <button
             key={s.key}
             type="button"

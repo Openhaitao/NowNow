@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, CalendarDays, LayoutList, Menu, Plus, Search, Settings } from 'lucide-react'
+import { Bell, LayoutList, Menu, Plus, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -19,6 +19,7 @@ const SECTIONS = [
   { key: 'today', label: '今日' },
   { key: 'week', label: '本周' },
   { key: 'month', label: '本月' },
+  { key: 'stash', label: '暂存箱' },
 ]
 
 const LAST_VIEWED_KEY = 'nownow_last_viewed'
@@ -156,7 +157,15 @@ export default function Board({ session }) {
   const [dateOpen, setDateOpen] = useState(false)
   const [flashId, setFlashId] = useState(null) // 搜索跳转后高亮定位的条目
   const [editRequest, setEditRequest] = useState(null) // 跨区接力：让某个区的第一条进入编辑
+  const [channel, setChannel] = useState('today') // 当前频道：today/week/month/stash（一次只看一个）
   const isLive = !baseDate
+
+  // 跨频道接力：键盘流转到别的频道（如 today→week）时自动切过去，让目标 Section 挂载并接住 editRequest
+  useEffect(() => {
+    if (!editRequest) return
+    const target = editRequest.split(':')[0]
+    if (SECTIONS.some((s) => s.key === target) && target !== channel) setChannel(target)
+  }, [editRequest]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ⌘Z 撤销栈：完成/关闭/删除 这类非文字操作（文字编辑用 textarea 原生撤销）
   const undoStack = useRef([])
@@ -502,6 +511,7 @@ export default function Board({ session }) {
   const jumpToEntry = useCallback(
     (e) => {
       viewPage(e.owner)
+      if (e.section) setChannel(e.section) // 切到目标所在频道，否则单频道视图下看不到
       if (e.anchor) {
         const t = new Date(); t.setHours(0, 0, 0, 0)
         const d = new Date(e.anchor + 'T00:00:00')
@@ -713,45 +723,54 @@ export default function Board({ session }) {
 
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-3 md:px-6">
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
-          {/* 顶栏：左=日期锚（点了整张纸拨回任意一天），右=搜索（flomo 位）。手机端隐藏：日期在顶栏中间、搜索是独立页 */}
-          <div className="flex items-center justify-between gap-2 max-md:hidden">
-            <span className="relative flex items-center gap-1.5">
-              {hasAnchor ? (
-                <>
+          {/* 四频道切换器（替代日期标题）：今日/本周/本月/暂存箱，一次看一个。日期只在「今日」旁淡灰小字。右侧=搜索（桌面） */}
+          {view === 'paper' && (
+          <div className="flex items-center gap-1">
+            {SECTIONS.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => setChannel(s.key)}
+                className={
+                  'rounded-md px-3 py-1 text-[14.5px] max-md:text-[15.5px] ' +
+                  (channel === s.key ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
+                }
+              >
+                {s.label}
+              </button>
+            ))}
+            {channel === 'today' && (
+              <span className="relative ml-1 flex items-center">
+                <button
+                  onClick={() => hasAnchor && setDateOpen((v) => !v)}
+                  className="truncate text-[12.5px] text-stone-300 hover:text-stone-500"
+                  title={hasAnchor ? '点击回看任何一天' : undefined}
+                >
+                  {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
+                  {'日一二三四五六'[(baseDate || new Date()).getDay()]}
+                  {isLive ? '' : ' ·回看'}
+                </button>
+                {dateOpen && (
+                  <DatePicker
+                    value={baseDate}
+                    onClose={() => setDateOpen(false)}
+                    onSelect={(d) => {
+                      if (!d) return setBaseDate(null)
+                      const t = new Date(); t.setHours(0, 0, 0, 0)
+                      setBaseDate(d.getTime() === t.getTime() ? null : d)
+                    }}
+                  />
+                )}
+                {!isLive && (
                   <button
-                    onClick={() => setDateOpen((v) => !v)}
-                    className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[15px] font-semibold text-stone-900 hover:bg-stone-100"
-                    title="点击回看任何一天"
+                    onClick={() => setBaseDate(null)}
+                    className="ml-1 rounded-md bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
                   >
-                    <CalendarDays size={16} /> {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
-                    {'日一二三四五六'[(baseDate || new Date()).getDay()]}
-                    {isLive ? ' · 今天' : ''}
+                    回到今天
                   </button>
-                  {dateOpen && (
-                    <DatePicker
-                      value={baseDate}
-                      onClose={() => setDateOpen(false)}
-                      onSelect={(d) => {
-                        if (!d) return setBaseDate(null)
-                        const t = new Date(); t.setHours(0, 0, 0, 0)
-                        setBaseDate(d.getTime() === t.getTime() ? null : d)
-                      }}
-                    />
-                  )}
-                  {!isLive && (
-                    <button
-                      onClick={() => setBaseDate(null)}
-                      className="rounded-md bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
-                    >
-                      回到今天
-                    </button>
-                  )}
-                </>
-              ) : (
-                <span />
-              )}
-            </span>
-            <span className="relative flex items-center">
+                )}
+              </span>
+            )}
+            <span className="relative ml-auto hidden items-center md:flex">
               <Search size={14} className="pointer-events-none absolute left-3 text-stone-300" />
               <input
                 id="search-input"
@@ -764,13 +783,14 @@ export default function Board({ session }) {
                   }
                 }}
                 placeholder="搜索"
-                className="w-40 rounded-md border border-stone-200 bg-white py-1.5 pl-9 pr-2 text-[13px] outline-none placeholder:text-stone-300 focus:border-stone-300 md:w-64"
+                className="w-40 rounded-md border border-stone-200 bg-white py-1.5 pl-9 pr-2 text-[13px] outline-none placeholder:text-stone-300 focus:border-stone-300 md:w-56"
               />
               {!query && (
                 <kbd className="pointer-events-none absolute right-2.5 text-[11px] text-stone-300">⌘K</kbd>
               )}
             </span>
           </div>
+          )}
           {view !== 'notifications' && view !== 'settings' && !isMyPage && (
             <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400 max-md:hidden">
               <span>{pageUser.display_name}的主页（只读）</span>
@@ -795,7 +815,7 @@ export default function Board({ session }) {
           )}
           {view === 'paper' && isMyPage && (
             <div className="max-md:hidden">
-              <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} />
+              <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} forceSection={channel} />
             </div>
           )}
           {(offline || syncSlow) && (
@@ -841,7 +861,8 @@ export default function Board({ session }) {
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
-              {SECTIONS.map((sec) => (
+              {/* 单频道显示：只渲染当前选中的频道。暂存箱无周期，按 allTime 全显 */}
+              {SECTIONS.filter((sec) => sec.key === channel).map((sec) => (
                 <Section
                   key={sec.key}
                   sec={sec}
@@ -851,7 +872,7 @@ export default function Board({ session }) {
                   profiles={profiles}
                   allEntries={allEntries}
                   hasAnchor={hasAnchor}
-                  allTime={view === 'all'}
+                  allTime={view === 'all' || sec.key === 'stash'}
                   baseDate={baseDate}
                   isLive={isLive}
                   mutate={mutateEntries}
@@ -897,6 +918,7 @@ export default function Board({ session }) {
               mutate={mutateEntries}
               variant="sheet"
               autoFocus
+              forceSection={channel}
               onDone={() => setComposeOpen(false)}
             />
           </div>
