@@ -1,77 +1,61 @@
-import { useState } from 'react'
-import { ChevronDown, ChevronUp, Inbox as InboxIcon, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Inbox as InboxIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { loadMyMentions, markMentionRead } from '../lib/docMentionsApi'
+import { periodHeaderFromKey } from '../lib/periodKey'
 
-const SECTIONS = [
-  { key: 'today', label: '今日' },
-  { key: 'week', label: '本周' },
-  { key: 'month', label: '本月' },
-]
+const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存箱' }
 
-export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
-  const [expandedId, setExpandedId] = useState(null)
-  const [claimedIds, setClaimedIds] = useState([]) // 乐观隐藏：点了认领立刻从收件箱消失
-  const mentions = rawMentions.filter((m) => !claimedIds.includes(m.id))
-  if (mentions.length === 0) return null
+// docs 世界的「@我的」：别人在自己文档里 @ 了我 → 这里列未读、点一条跳到那篇并标已读。
+// 纯通知，无认领/拒绝/任务流（那套随目标模型一起删了）。
+export default function Inbox({ profiles, onJumpDoc }) {
+  const [items, setItems] = useState([])
 
-  function claim(m, section) {
-    setExpandedId(null)
-    setClaimedIds((ids) => [...ids, m.id])
-    supabase.rpc('claim_mention', { p_mention_id: m.id, p_section: section }).then(onChanged)
-  }
+  useEffect(() => {
+    let alive = true
+    const refresh = () =>
+      loadMyMentions()
+        .then((rows) => alive && setItems(rows.filter((r) => !r.read_at)))
+        .catch(() => {})
+    refresh()
+    // 被 @ 时实时亮（doc_mentions 已加进 realtime publication）
+    const ch = supabase
+      .channel('doc_mentions_inbox')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'doc_mentions' }, refresh)
+      .subscribe()
+    return () => {
+      alive = false
+      supabase.removeChannel(ch)
+    }
+  }, [])
 
-  // 拒绝：这活不归我/派错了。派活人会在 @名字 上看到红色删除线
-  function reject(m) {
-    setClaimedIds((ids) => [...ids, m.id])
-    supabase.from('mentions').update({ rejected_at: new Date().toISOString() }).eq('id', m.id).then(onChanged)
+  if (items.length === 0) return null
+
+  function open(m) {
+    setItems((xs) => xs.filter((x) => x.id !== m.id)) // 乐观移除
+    markMentionRead(m.id).catch(() => {})
+    onJumpDoc?.(m.owner, m.section, m.periodKey)
   }
 
   return (
     <div className="mt-5 rounded-lg bg-blue-50 px-4 py-3">
       <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-blue-700">
-        <InboxIcon size={13} /> @我的 · {mentions.length} 条待认领
+        <InboxIcon size={13} /> @我的 · {items.length} 条
       </div>
-      {mentions.map((m) => {
-        const from = profiles.find((p) => p.id === m.entries?.creator)
-        const expanded = expandedId === m.id
+      {items.map((m) => {
+        const from = profiles?.find((p) => p.id === m.author)
+        const ctx = m.section === 'stash' ? '暂存箱' : periodHeaderFromKey(m.section, m.periodKey)
         return (
-          <div key={m.id} className="py-1">
-            <div className="flex items-center gap-2 text-[13.5px] max-md:text-[15.5px] text-blue-900">
-              <span className="min-w-0 flex-1">
-                <b>{from?.display_name || '?'}：</b>
-                {m.entries?.content}
-              </span>
-              <button
-                onClick={() => setExpandedId(expanded ? null : m.id)}
-                className={
-                  'shrink-0 rounded-md border border-blue-600 px-2.5 py-0.5 text-xs ' +
-                  (expanded ? 'bg-blue-600 text-white' : 'bg-white text-blue-700 hover:bg-blue-600 hover:text-white')
-                }
-              >
-                认领 {expanded ? <ChevronUp size={12} className="inline" /> : <ChevronDown size={12} className="inline" />}
-              </button>
-              <button
-                onClick={() => reject(m)}
-                title="拒绝这个活"
-                className="shrink-0 rounded-md px-1 py-0.5 text-stone-300 outline-none hover:text-red-600"
-              >
-                <X size={13} />
-              </button>
-            </div>
-            {expanded && (
-              <div className="mt-1.5 flex justify-end gap-1.5">
-                {SECTIONS.map((s) => (
-                  <button
-                    key={s.key}
-                    onClick={() => claim(m, s.key)}
-                    className="rounded-md bg-white px-2.5 py-1 text-xs text-blue-700 shadow-sm hover:bg-blue-600 hover:text-white"
-                  >
-                    认领到{s.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <button
+            key={m.id}
+            onClick={() => open(m)}
+            className="flex w-full items-center gap-2 py-1 text-left text-[13.5px] max-md:text-[15.5px] text-blue-900 hover:underline"
+          >
+            <span className="min-w-0 flex-1 truncate">
+              <b>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section] || ''}」@了你
+            </span>
+            <span className="shrink-0 text-[11.5px] text-blue-500">{ctx} · 去看看</span>
+          </button>
         )
       })}
     </div>

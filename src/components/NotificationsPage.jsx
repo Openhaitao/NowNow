@@ -1,17 +1,38 @@
-import { Bell, CheckCircle2, UserPlus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { AtSign, Bell, UserPlus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { loadMyMentions, markMentionRead } from '../lib/docMentionsApi'
+import { periodHeaderFromKey } from '../lib/periodKey'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存箱' }
 
-// 通知 = 只读 FYI：对方把我派的活点了已解决、待确认成员。只在「@ 谁就通知谁」时出现，不做到期/过期提醒。
-// 不放需要动作的「待认领」（那在「待我处理」）；resolved 的关闭在我自己纸上的原条目完成，这里只提醒+跳转。
-export default function NotificationsPage({ resolvedMine = [], pendingMembers = [], profiles, onMembersChanged, onJump }) {
+// docs 世界的通知中心：① @我的（别人在文档里 @ 我）② 待确认成员。
+// 旧的「已解决 / 待认领」任务流随目标模型删除。
+export default function NotificationsPage({ pendingMembers = [], profiles, onMembersChanged, onJumpDoc }) {
+  const [mentions, setMentions] = useState([])
+
+  useEffect(() => {
+    let alive = true
+    loadMyMentions()
+      .then((rows) => alive && setMentions(rows))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
+
   async function approve(p, ok) {
     await supabase.rpc(ok ? 'approve_member' : 'reject_member', { p_id: p.id })
     onMembersChanged?.()
   }
 
-  const empty = resolvedMine.length === 0 && pendingMembers.length === 0
+  function openMention(m) {
+    if (!m.read_at) markMentionRead(m.id).catch(() => {})
+    setMentions((xs) => xs.map((x) => (x.id === m.id ? { ...x, read_at: x.read_at || new Date().toISOString() } : x)))
+    onJumpDoc?.(m.owner, m.section, m.periodKey)
+  }
+
+  const empty = mentions.length === 0 && pendingMembers.length === 0
 
   return (
     <div className="pt-1">
@@ -21,7 +42,7 @@ export default function NotificationsPage({ resolvedMine = [], pendingMembers = 
 
       {empty && (
         <p className="mt-6 text-sm text-stone-300 max-md:text-[15px]">
-          没有新通知。你派出去的活被对方点「已解决」、申请加入的成员，都会出现在这里。需要你认领的活在「待我处理」。
+          没有新通知。别人在文档里 @ 你、申请加入的成员，都会出现在这里。
         </p>
       )}
 
@@ -52,24 +73,32 @@ export default function NotificationsPage({ resolvedMine = [], pendingMembers = 
         </div>
       )}
 
-      {resolvedMine.length > 0 && (
+      {mentions.length > 0 && (
         <div className="mt-5 rounded-lg bg-blue-50 px-4 py-3">
           <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-blue-700 max-md:text-[13px]">
-            <CheckCircle2 size={13} /> 已解决 · {resolvedMine.length} 条对方已完成，去你纸上验收关闭
+            <AtSign size={13} /> @我的 · {mentions.length}
           </div>
-          {resolvedMine.map((e) => (
-            <button
-              key={e.id}
-              onClick={() => onJump?.(e)}
-              className="flex w-full items-center gap-2 py-1 text-left text-[13.5px] max-md:py-1.5 max-md:text-[15.5px] text-blue-900 hover:underline"
-            >
-              <span className="min-w-0 flex-1 truncate">{e.content}</span>
-              <span className="shrink-0 text-[11.5px] text-blue-500">{SECTION_LABELS[e.section]} · 去验收</span>
-            </button>
-          ))}
+          {mentions.map((m) => {
+            const from = profiles?.find((p) => p.id === m.author)
+            const ctx = m.section === 'stash' ? '暂存箱' : periodHeaderFromKey(m.section, m.periodKey)
+            return (
+              <button
+                key={m.id}
+                onClick={() => openMention(m)}
+                className={
+                  'flex w-full items-center gap-2 py-1 text-left text-[13.5px] max-md:py-1.5 max-md:text-[15.5px] hover:underline ' +
+                  (m.read_at ? 'text-stone-400' : 'text-blue-900')
+                }
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  <b>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section]}」@了你
+                </span>
+                <span className="shrink-0 text-[11.5px] text-blue-500">{ctx} · 去看看</span>
+              </button>
+            )
+          })}
         </div>
       )}
-
     </div>
   )
 }
