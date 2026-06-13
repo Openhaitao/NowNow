@@ -898,26 +898,27 @@ export default function Board({ session }) {
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
         <div ref={scrollRef} className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-2 pl-6 pr-1">
-          {view === 'settings' ? (
-            <SettingsModal
-              variant="page"
-              me={me}
-              email={user.email}
-              allEntries={allEntries}
-              profiles={profiles}
-              onProfileSaved={loadProfiles}
-            />
-          ) : view === 'notifications' ? (
-            <NotificationsPage
-              pendingMembers={pendingMembers}
-              profiles={profiles}
-              onMembersChanged={loadProfiles}
-              onJumpDoc={jumpToDoc}
-            />
-          ) : (
-            <>
-              {/* 主列 720px（--doc-width）左对齐——和上方 tab/日期头同一左边界，折叠侧栏时正文跟着撑到左边 */}
-              <div className="w-full max-w-[var(--doc-width)]">
+          {/* 所有视图统一收进 720px 主列（--doc-width）：通知/设置/正文同一阅读宽，
+             左对齐和上方 tab/日期头同边界，折叠侧栏时跟着撑到左边 */}
+          <div className="w-full max-w-[var(--doc-width)]">
+            {view === 'settings' ? (
+              <SettingsModal
+                variant="page"
+                me={me}
+                email={user.email}
+                allEntries={allEntries}
+                profiles={profiles}
+                onProfileSaved={loadProfiles}
+              />
+            ) : view === 'notifications' ? (
+              <NotificationsPage
+                pendingMembers={pendingMembers}
+                profiles={profiles}
+                onMembersChanged={loadProfiles}
+                onJumpDoc={jumpToDoc}
+              />
+            ) : (
+              <>
                 {isMyPage && view === 'paper' && <Inbox profiles={profiles} onJumpDoc={jumpToDoc} />}
                 {query.trim() ? (
                   <DocSearch
@@ -928,9 +929,9 @@ export default function Board({ session }) {
                 ) : (
                   <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} />
                 )}
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
         </div>
 
