@@ -24,7 +24,7 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : false)
   const d = { ...draft, is_goal: isGoal }
   return (
-    <div className="flex items-start gap-2.5 py-[5px] text-[14px] leading-relaxed">
+    <div className={'flex items-start gap-2.5 py-[5px] leading-relaxed ' + (isGoal ? 'text-[16px]' : 'text-[14px]')}>
       <button
         type="button"
         tabIndex={-1}
@@ -45,6 +45,7 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
         autoFocus
         initialCaret={draft.caret ?? null}
         profiles={profiles}
+        fontClass={isGoal ? 'text-[16px]' : 'text-[14px]'}
         onTab={() => setIsGoal((v) => !v)}
         onSubmit={() => {
           if (val.trim()) onCommit(d, val, true)

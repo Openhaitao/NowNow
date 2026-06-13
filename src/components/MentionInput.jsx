@@ -50,6 +50,7 @@ export default function MentionInput({
   rows = 1,
   initialCaret = null,
   mentionStates,
+  fontClass = 'text-[14px]', // 目标块用 16px、纯文字 14px；编辑层和显示层同号防光标跳
 }) {
   const ref = useRef(null)
   const [picker, setPicker] = useState(null) // {start, query} | null
@@ -187,7 +188,8 @@ export default function MentionInput({
       <div
         aria-hidden
         className={
-          'pointer-events-none absolute inset-0 select-none whitespace-pre-wrap break-words text-[14px] leading-relaxed ' +
+          'pointer-events-none absolute inset-0 select-none whitespace-pre-wrap break-words leading-relaxed ' +
+          fontClass + ' ' +
           (className || '')
         }
       >
@@ -204,7 +206,8 @@ export default function MentionInput({
         onKeyDown={handleKeyDown}
         onBlur={() => { setTimeout(() => setPicker(null), 150); onBlur?.() }}
         className={
-          'colored-input relative block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[14px] leading-relaxed text-transparent caret-stone-800 outline-none placeholder:text-stone-300 ' +
+          'colored-input relative block w-full resize-none overflow-hidden border-0 bg-transparent p-0 leading-relaxed text-transparent caret-stone-800 outline-none placeholder:text-stone-300 ' +
+          fontClass + ' ' +
           (className || '')
         }
       />
