@@ -37,9 +37,10 @@
   --text-sm: 13px;  --leading-sm: 18px;
   --text-ui: 14px;  --leading-ui: 20px;
   --text-body: 14px; --leading-body: 24px;  /* flomo 式：书写区默认 14px、行高松 */
-  --text-h3: 18px;  --leading-h3: 28px;  --weight-h3: 600;
-  --text-h2: 22px;  --leading-h2: 32px;  --weight-h2: 650;
-  --text-h1: 30px;  --leading-h1: 40px;  --weight-h1: 700;
+  /* 正文 14px → 标题按紧凑比例缩小，和书写区和谐（h1≈1.57x、h2≈1.29x、h3≈1.14x）*/
+  --text-h3: 16px;  --leading-h3: 24px;  --weight-h3: 600;
+  --text-h2: 18px;  --leading-h2: 26px;  --weight-h2: 600;
+  --text-h1: 22px;  --leading-h1: 30px;  --weight-h1: 700;
 
   /* 圆角档（卡片/浮层最多 12）*/
   --radius-sm: 6px; --radius-md: 8px; --radius-lg: 10px; --radius-pill: 9999px;  /* spool: 行6/输入8/卡片10/胶囊 */
