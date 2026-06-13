@@ -230,7 +230,7 @@ export default function Login() {
         href="https://github.com/Openhaitao"
         target="_blank"
         rel="noreferrer"
-        className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] text-xs text-stone-300 hover:text-stone-500"
+        className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] text-xs text-[var(--ink)]"
       >
         🧑🏻‍💻 made by haitao
       </a>
