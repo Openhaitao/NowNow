@@ -177,6 +177,7 @@ export default function Board({ session }) {
   const [baseDate, setBaseDate] = useState(null) // null = 真实今天；设了 = 整张纸拨回那天
   const [dateOpen, setDateOpen] = useState(false)
   const [flashId, setFlashId] = useState(null) // 搜索跳转后高亮定位的条目
+  const [flashDoc, setFlashDoc] = useState(null) // @通知跳转后落地高亮的文档块 {section, periodKey}
   const [editRequest, setEditRequest] = useState(null) // 跨区接力：让某个区的第一条进入编辑
   const [channel, setChannel] = useState('today') // 当前频道：today/week/month/stash（一次只看一个）
   // 每个频道各自的时间回看偏移（负=往前看）。‹ › 挪到了顶部频道标签旁，offset 上提到这里统一管
@@ -409,9 +410,11 @@ export default function Board({ session }) {
     viewPage(owner)
     setChannel(section)
     setQuery('')
+    setFlashDoc({ section, periodKey })
     setTimeout(() => {
       document.getElementById(`doc-${section}-${periodKey}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
     }, 150)
+    setTimeout(() => setFlashDoc(null), 2600) // 高亮闪一下就撤
   }, [viewPage])
 
   const hasNews = useCallback(
@@ -935,7 +938,7 @@ export default function Board({ session }) {
                     onJump={(h) => { viewPage(h.owner); goChannel(h.section); setQuery('') }}
                   />
                 ) : (
-                  <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} />
+                  <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null} />
                 )}
               </>
             )}

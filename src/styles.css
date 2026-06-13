@@ -147,6 +147,16 @@ select:focus-visible {
   outline: none !important;
 }
 
+/* @通知「去看看」落地：把那篇 doc 暖蓝高亮闪一下，告诉你被 @ 在这 */
+@keyframes doc-flash {
+  0%   { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  100% { background: transparent; }
+}
+.doc-flash {
+  animation: doc-flash 2.4s ease-out;
+  border-radius: var(--radius-md, 8px);
+}
+
 /* 完成动画的过渡只在勾选瞬间生效，平时不挂 transition（避免滚动/悬停时内容跟着缓动"晃"） */
 .entry-row.closing {
   transition: opacity 0.3s ease;
