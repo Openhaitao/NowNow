@@ -17,6 +17,9 @@
   --accent-hover: #a84a00;
   --accent-soft: #fff3e8;    /* 琥珀淡底：选中/强调态 */
   --highlight: #f5e8c8;      /* ==高亮== */
+  --success: #6baf6b;        /* spool warm 语义色（老铁 SaveStatus 接 --error）*/
+  --warning: #e4a640;
+  --error: #c95a4f;
   --font-sans: 'Geist Sans', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'PingFang SC', Inter, 'Helvetica Neue', sans-serif;
   /* 局部衬线（仅日期页头 + 大标题，纸感来源）。系统衬线、0 webfont */
   --font-serif: Charter, Georgia, 'Songti SC', 'STSong', serif;
@@ -35,7 +38,7 @@
   --text-h1: 30px;  --leading-h1: 40px;  --weight-h1: 700;
 
   /* 圆角档（卡片/浮层最多 12）*/
-  --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 9999px;
+  --radius-sm: 6px; --radius-md: 8px; --radius-lg: 10px; --radius-pill: 9999px;  /* spool: 行6/输入8/卡片10/胶囊 */
   --radius: var(--radius-lg);
 
   /* 文档主列宽（正文阅读舒适行长）*/
@@ -57,6 +60,9 @@
   --accent-hover: #ff8636;
   --accent-soft: #2a1800;
   --highlight: #4a3a16;     /* 暗色高亮（暖）*/
+  --success: #7dc07d;
+  --warning: #f0b854;
+  --error: #d67259;
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
@@ -90,6 +96,16 @@
   --color-amber-50: var(--highlight);
   --color-amber-400: var(--line);
   --color-amber-700: var(--ink-muted);
+
+  /* 语义状态色 → spool warm（收编绿/红/黄默认色）*/
+  --color-emerald-50: color-mix(in srgb, var(--success) 14%, var(--surface));
+  --color-emerald-500: var(--success);
+  --color-emerald-600: var(--success);
+  --color-emerald-700: var(--success);
+  --color-emerald-900: var(--success);
+  --color-red-500: var(--error);
+  --color-red-600: var(--error);
+  --color-red-700: var(--error);
 }
 
 html,
