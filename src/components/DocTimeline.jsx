@@ -37,7 +37,7 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
     <>
       {/* 当前周期：占满首屏、可写。块带 id（doc-section-periodKey）供 @通知跳转滚动定位 */}
       <div id={`doc-${section}-${curKey}`} className="mb-3" style={viewportH ? { minHeight: viewportH } : undefined}>
-        <div className="flex items-center gap-1.5 pb-1 pt-3 text-[12px] font-normal text-stone-500">
+        <div className="flex items-center gap-1.5 pb-1 pt-3 text-[13px] font-normal text-stone-500">
           {/* 主题蓝小圆点标记「当前周期」——往下回溯的过去块不带点、颜色更淡 */}
           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} aria-hidden />
           {periodHeader(section, 0, baseDate)}
@@ -47,7 +47,7 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
       {/* 过去：只读，往下回溯 */}
       {pastKeys.map((k) => (
         <div key={k} id={`doc-${section}-${k}`} className="mb-3">
-          <div className="pb-1 pt-3 text-[12px] font-normal text-stone-400">{periodHeaderFromKey(section, k)}</div>
+          <div className="pb-1 pt-3 text-[13px] font-normal text-stone-400">{periodHeaderFromKey(section, k)}</div>
           <DocBlock owner={owner} section={section} periodKey={k} editable={false} profiles={profiles} />
         </div>
       ))}

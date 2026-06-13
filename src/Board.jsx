@@ -751,22 +751,13 @@ export default function Board({ session }) {
   return (
     // 桌面：app 不画左右外边框（按 Haitao 去掉两边的线）；侧栏右边框仍做内部分界
     <div className="mx-auto flex h-dvh max-w-[970px] overflow-hidden">
-      {/* 折叠后：固定在视口最左上角的展开入口（桌面），不再缩在 tab 行里 */}
-      {sidebarCollapsed && (
-        <button
-          onClick={() => setSidebarCollapsed(false)}
-          className="fixed left-2 top-2.5 z-40 hidden rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 md:block"
-          title="展开侧栏"
-        >
-          <PanelLeftOpen size={18} />
-        </button>
-      )}
       {/* 左栏：人员列表（固定不随内容滚动）。宽度可拖拽、可折叠（桌面） */}
       <aside
         ref={asideRef}
         style={{ width: sidebarCollapsed ? 0 : sidebarW }}
         className={
-          'hidden h-full shrink-0 flex-col overflow-hidden px-2 pb-5 pt-3 md:flex ' +
+          // min-w-0：flex item 默认 min-width:auto 会把 width:0 顶到内容最小宽（露出灰色残条），必须清掉才能真折叠到 0
+          'hidden h-full min-w-0 shrink-0 flex-col overflow-hidden px-2 pb-5 pt-3 md:flex ' +
           (resizingSidebar ? '' : 'transition-[width] duration-200')
         }
       >
@@ -843,6 +834,16 @@ export default function Board({ session }) {
           {/* 顶部 今日/本周/本月/暂存箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
           {view === 'paper' && (
           <div className="flex items-center gap-1.5">
+            {/* 侧栏折叠后：展开入口就放在 tab 行最左、今日 左边一点（不是浏览器最左） */}
+            {sidebarCollapsed && (
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="hidden shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 md:block"
+                title="展开侧栏"
+              >
+                <PanelLeftOpen size={18} />
+              </button>
+            )}
             {SECTIONS.map((s) => (
               <button
                 key={s.key}
