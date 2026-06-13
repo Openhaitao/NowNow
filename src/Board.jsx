@@ -766,10 +766,11 @@ export default function Board({ session }) {
       {!sidebarCollapsed && (
         <div
           onMouseDown={startSidebarResize}
-          className="group/resize relative hidden w-px shrink-0 cursor-col-resize bg-stone-100 md:block"
+          className="relative hidden w-px shrink-0 cursor-col-resize bg-stone-100 md:block"
           title="拖动调整侧栏宽度"
         >
-          <div className="absolute inset-y-0 -left-1 -right-1 group-hover/resize:bg-stone-300" />
+          {/* 透明热区（左右各 4px）只为好抓住那条 1px 线，悬停不再显示灰条——Haitao：选中条太粗 */}
+          <div className="absolute inset-y-0 -left-1 -right-1" />
         </div>
       )}
 
