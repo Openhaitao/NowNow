@@ -68,26 +68,37 @@ export function periodRange(section, offset = 0, base) {
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
-// 一页纸的区块日期抬头：今日=完整日期+星期；本周=日期范围；本月=年月。
-// 返回 {label, date}：label 是区名（今日无 label，直接亮日期），date 是给用户看的时间串。
-export function periodHeader(section, base) {
-  const today = base ? startOfDay(base) : startOfDay(new Date())
+// 时间线区块的日期抬头（按真实日期算星期，不 hardcode）。
+// offset=0 是当前周期（带「今天/本周/本月」前缀更醒目），offset<0 是往回的过去周期。
+// 今日 → 6月13日 星期六；本周 → 日期范围；本月 → 年月。
+export function periodHeader(section, offset = 0, base) {
+  const r = periodRange(section, offset, base)
   if (section === 'today') {
-    return {
-      label: '',
-      date: `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日 星期${WEEKDAYS[today.getDay()]}`,
-    }
+    const d = r.start
+    const md = `${d.getMonth() + 1}月${d.getDate()}日 星期${WEEKDAYS[d.getDay()]}`
+    // 今天带年份更醒目；过去日同年省略年份
+    return offset === 0 ? `今天 · ${d.getFullYear()}年${md}` : md
   }
-  const r = periodRange(section, 0, base)
   if (section === 'week') {
     const endShow = new Date(r.end.getTime() - DAY)
-    return {
-      label: '本周',
-      date: `${r.start.getMonth() + 1}月${r.start.getDate()}日 – ${endShow.getMonth() + 1}月${endShow.getDate()}日`,
-    }
+    const range = `${r.start.getMonth() + 1}月${r.start.getDate()}日 – ${endShow.getMonth() + 1}月${endShow.getDate()}日`
+    return offset === 0 ? `本周 · ${range}` : range
   }
   // month
-  return { label: '本月', date: `${r.start.getFullYear()}年${r.start.getMonth() + 1}月` }
+  const m = `${r.start.getFullYear()}年${r.start.getMonth() + 1}月`
+  return offset === 0 ? `本月 · ${m}` : m
+}
+
+// 某条目的 anchor 落在该频道的第几个 offset（0=当前周期，负=过去）。null=无 anchor。
+// 用于算「有内容的过去周期」从而决定时间线渲染几块。
+export function offsetOf(section, anchorStr, base) {
+  if (!anchorStr) return null
+  const today = base ? startOfDay(base) : startOfDay(new Date())
+  const d = startOfDay(new Date(anchorStr + 'T00:00:00'))
+  if (section === 'today') return Math.round((d - today) / DAY)
+  if (section === 'week') return Math.round((startOfWeek(d) - startOfWeek(today)) / (7 * DAY))
+  // month
+  return (d.getFullYear() - today.getFullYear()) * 12 + (d.getMonth() - today.getMonth())
 }
 
 // anchor: 'YYYY-MM-DD' | null。null（老数据/未迁移）按"当前周期"处理。

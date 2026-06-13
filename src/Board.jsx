@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Bell, ChevronLeft, ChevronRight, CircleCheck, LayoutList, Menu, Pin, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
-import { inPeriod, periodHeader, periodRange } from './lib/period'
+import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
 import DatePicker from './components/DatePicker'
 import Inbox from './components/Inbox'
@@ -194,10 +194,8 @@ export default function Board({ session }) {
   }, [])
   const isLive = !baseDate
 
-  // 一页纸：顶部 今日/本周/本月/暂存箱 常驻导航 = 点一下平滑滚到对应区（不再切换隐藏其它区）
-  const scrollToSection = useCallback((key) => {
-    document.getElementById(`sec-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [])
+  // 时间线各块不做跨块/跨频道的焦点接力（焦点都在块内，避免回车/↓ 乱跳或切走视图）
+  const noEditRelay = useCallback(() => {}, [])
 
   // 跨频道接力：键盘流转到别的频道（如 today→week）时自动切过去，让目标 Section 挂载并接住 editRequest
   useEffect(() => {
@@ -438,6 +436,19 @@ export default function Board({ session }) {
     () => allEntries.filter((e) => e.owner === pageUserId),
     [allEntries, pageUserId],
   )
+
+  // 时间线：当前频道里「有内容的过去周期」offset 列表（降序 -1,-2,…）。当前周期(0)总是渲染。
+  // 今日=按天回溯，本周=按周，本月=按月。stash 无时间线。
+  const pastOffsets = useMemo(() => {
+    if (channel === 'stash') return []
+    const set = new Set()
+    for (const e of pageEntries) {
+      if (e.section !== channel || !e.anchor) continue
+      const off = offsetOf(channel, e.anchor, baseDate)
+      if (off != null && off < 0) set.add(off)
+    }
+    return [...set].sort((a, b) => b - a)
+  }, [pageEntries, channel, baseDate])
 
   useEffect(() => {
     if (me) {
@@ -788,14 +799,19 @@ export default function Board({ session }) {
 
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-3 md:px-6">
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
-          {/* 一页纸：今日/本周/本月 竖向堆叠在下方内容区。顶部 今日/本周/本月/暂存箱 = 常驻快捷导航，点一下滚到对应区。右侧=搜索（桌面） */}
+          {/* 顶部 今日/本周/本月/暂存箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
           {view === 'paper' && (
           <div className="flex items-center gap-1">
             {SECTIONS.map((s) => (
               <button
                 key={s.key}
-                onClick={() => scrollToSection(s.key)}
-                className="rounded-md px-2 py-1 text-[14px] text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                onClick={() => goChannel(s.key)}
+                className={
+                  'rounded-md px-2 py-1 text-[14px] transition-colors ' +
+                  (channel === s.key
+                    ? 'bg-stone-200/80 font-medium text-stone-900'
+                    : 'text-stone-500 hover:bg-stone-100 hover:text-stone-900')
+                }
               >
                 {s.label}
               </button>
@@ -874,63 +890,35 @@ export default function Board({ session }) {
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
-              {/* 一页纸：今日/本周/本月 竖向堆叠，各自带日期抬头；三区都挂载，跨区焦点接力正常 */}
-              {['today', 'week', 'month'].map((key) => {
-                const sec = SECTIONS.find((s) => s.key === key)
-                const h = periodHeader(key, baseDate)
-                return (
-                  <div key={key} id={`sec-${key}`} className="mb-3 scroll-mt-2">
-                    <div className="flex items-baseline gap-2 pb-0.5 pt-3">
-                      {h.label && <span className="text-[13px] font-medium text-stone-500">{h.label}</span>}
-                      <span className={'text-[13px] ' + (h.label ? 'text-stone-400' : 'font-medium text-stone-500')}>{h.date}</span>
+              {(() => {
+                const sec = SECTIONS.find((s) => s.key === channel)
+                const common = {
+                  sec, me, isMyPage, profiles, allEntries, hasAnchor, baseDate, isLive,
+                  mutate: mutateEntries, pushUndo, flashId, query, allMentions,
+                  // 时间线各块互不接力（避免回车/↓ 在过去块或跨频道乱跳）；焦点都在块内
+                  editRequest: null, onEditRequest: noEditRelay,
+                }
+                // 暂存箱 或 搜索中：单块，不分时间线（搜索 allTime 显示全部命中；暂存箱无周期）
+                if (channel === 'stash' || query.trim()) {
+                  return (
+                    <div className="pt-1">
+                      {channel === 'stash' && !query.trim() && (
+                        <div className="pb-0.5 text-[13px] font-medium text-stone-500">暂存箱</div>
+                      )}
+                      <Section {...common} entries={query.trim() ? allEntries : pageEntries} allTime offset={0} isCurrentPeriod={!query.trim()} />
                     </div>
-                    <Section
-                      sec={sec}
-                      entries={query.trim() ? allEntries : pageEntries}
-                      me={me}
-                      isMyPage={isMyPage}
-                      profiles={profiles}
-                      allEntries={allEntries}
-                      hasAnchor={hasAnchor}
-                      allTime={false}
-                      baseDate={baseDate}
-                      isLive={isLive}
-                      offset={0}
-                      mutate={mutateEntries}
-                      pushUndo={pushUndo}
-                      flashId={flashId}
-                      query={query}
-                      editRequest={editRequest}
-                      onEditRequest={setEditRequest}
-                      allMentions={allMentions}
-                    />
+                  )
+                }
+                // 今日/本周/本月：往下回溯的时间线，当前周期(0)在最上，过去有内容的周期降序在下
+                return [0, ...pastOffsets].map((off) => (
+                  <div key={off} className="mb-3">
+                    <div className={'pb-0.5 pt-3 text-[13px] font-medium ' + (off === 0 ? 'text-stone-600' : 'text-stone-400')}>
+                      {periodHeader(channel, off, baseDate)}
+                    </div>
+                    <Section {...common} entries={pageEntries} allTime={false} offset={off} isCurrentPeriod={off === 0} />
                   </div>
-                )
-              })}
-              {/* 暂存箱：无时间线、无日期，单独区放在最后 */}
-              <div id="sec-stash" className="mt-6 scroll-mt-2 border-t border-stone-200 pt-3">
-                <div className="pb-0.5 text-[13px] font-medium text-stone-500">暂存箱</div>
-                <Section
-                  sec={SECTIONS.find((s) => s.key === 'stash')}
-                  entries={query.trim() ? allEntries : pageEntries}
-                  me={me}
-                  isMyPage={isMyPage}
-                  profiles={profiles}
-                  allEntries={allEntries}
-                  hasAnchor={hasAnchor}
-                  allTime={true}
-                  baseDate={baseDate}
-                  isLive={isLive}
-                  offset={0}
-                  mutate={mutateEntries}
-                  pushUndo={pushUndo}
-                  flashId={flashId}
-                  query={query}
-                  editRequest={editRequest}
-                  onEditRequest={setEditRequest}
-                  allMentions={allMentions}
-                />
-              </div>
+                ))
+              })()}
                 </>
               )}
             </>
