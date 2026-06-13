@@ -17,37 +17,20 @@ import MentionInput from './MentionInput'
 
 const SEC_ORDER = ['today', 'week', 'month']
 
-// 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
+// 回车新建的本地草稿行：立刻可打字，有内容才入库。纯文档文字（不再有目标切换）
 function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, onSectionDone }) {
   const [val, setVal] = useState(draft.initial || '')
-  // 默认纯文字（不是目标）；Tab 或点击左侧切换成目标
-  const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : false)
-  const d = { ...draft, is_goal: isGoal }
+  const d = { ...draft, is_goal: false }
   return (
     <div className="flex items-start gap-2.5 py-[5px] text-[14px] leading-relaxed">
-      <button
-        type="button"
-        tabIndex={-1}
-        onMouseDown={(e) => { e.preventDefault(); setIsGoal((v) => !v) }}
-        title={isGoal ? '目标（Tab 或点击转文字）' : '文字（Tab 或点击转目标）'}
-        className="mt-[5px] flex h-[15px] w-[15px] shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
-      >
-        {isGoal ? (
-          <input type="checkbox" readOnly checked={false} tabIndex={-1} className="pointer-events-none h-[15px] w-[15px] accent-stone-700" />
-        ) : (
-          // 纯文字行不显示备忘 ¶ 图标，只留一个空槽位让文字左缘和目标对齐
-          <span className="block h-[15px] w-[15px]" />
-        )}
-      </button>
       <MentionInput
         value={val}
         onChange={setVal}
         autoFocus
         initialCaret={draft.caret ?? null}
-        placeholder="现在要做什么？回车存，@ 派人"
+        placeholder="写点什么…"
         profiles={profiles}
         fontClass="text-[14px]"
-        onTab={() => setIsGoal((v) => !v)}
         onSubmit={() => {
           if (val.trim()) onCommit(d, val, true)
           else {
@@ -274,16 +257,14 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   // 草稿提交入库；andNext = 回车继续往下写
   function commitDraft(dr, content, andNext) {
     cancelDraft(dr.key)
-    let isGoal = dr.is_goal
-    let c = content.trim()
-    if (c.startsWith('[]')) { isGoal = true; c = c.slice(2).trim() }
+    const c = content.trim()
     if (!c) return
     const row = {
       owner: me.id,
       creator: me.id,
       section: sec.key,
       content: c,
-      is_goal: isGoal,
+      is_goal: false,
       position: dr.pos,
     }
     // 暂存箱无排期 → anchor 留空；其它频道锚到当前周期
@@ -308,7 +289,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     if (andNext) {
       const nextEntry = active.find((e) => e.position > dr.pos)
       const pos2 = nextEntry ? (dr.pos + nextEntry.position) / 2 : dr.pos + 1
-      setDrafts((d) => [...d, { key: `d${Date.now()}-n`, pos: pos2, is_goal: isGoal, anchor: dr.anchor }])
+      setDrafts((d) => [...d, { key: `d${Date.now()}-n`, pos: pos2, is_goal: false, anchor: dr.anchor }])
     }
   }
 
@@ -395,7 +376,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           className="flex cursor-text items-start gap-2.5 py-[5px] text-[14px] leading-relaxed text-stone-300 max-md:py-2"
         >
           <span className="mt-[5px] w-[15px] shrink-0 text-center leading-none">＋</span>
-          <span>现在要做什么？回车存，@ 派人</span>
+          <span>写点什么…</span>
         </div>
       )}
       {!isMyPage && active.length === 0 && closed.length === 0 && (

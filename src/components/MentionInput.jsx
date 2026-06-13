@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bold, Highlighter, Italic, List, ListOrdered, Quote, SquareCheckBig, Strikethrough, Underline } from 'lucide-react'
+import { Bold, Highlighter, Italic, List, ListOrdered, Quote, Strikethrough, Underline } from 'lucide-react'
 import { mentionSplitRegex } from '../lib/mentions'
 import { DATE_TOKEN_RE, dateTokenState } from '../lib/dates'
 import { DATE_CHIP_CLS, MENTION_STATE } from '../lib/render'
@@ -296,8 +296,6 @@ export default function MentionInput({
             { icon: List, fn: () => prefixSel('- '), title: '项目符号' },
             { icon: ListOrdered, fn: () => prefixSel('1. '), title: '编号' },
             { icon: Quote, fn: () => prefixSel('> '), title: '引用' },
-            { sep: true },
-            { icon: SquareCheckBig, fn: () => { onTab?.(); setToolbar(null) }, title: '转为目标' },
           ].map((b, i) =>
             b.sep ? (
               <span key={i} className="mx-0.5 h-4 w-px bg-stone-200" />

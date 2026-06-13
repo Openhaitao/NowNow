@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CalendarArrowUp, Eye, Lock, MoveRight, Pencil, Pilcrow, Square, Trash2 } from 'lucide-react'
+import { CalendarArrowUp, Eye, Lock, MoveRight, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { renderEntryContent } from '../lib/render'
@@ -26,7 +26,6 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   // 手机上 ⋯ 菜单改成底部抽屉：浮在指尖的小菜单在触屏上很难点
   const openMenu = (x, y) =>
     setMenu(window.matchMedia('(max-width: 767px)').matches ? { sheet: true } : { x, y })
-  const [closing, setClosing] = useState(false) // 完成动画：先划线变灰，随后原位留存
   const [clickCaret, setClickCaret] = useState(null)
   const [datePop, setDatePop] = useState(null) // {token, x, y} 日期 chip 的修改/删除弹层
   const rowRef = useRef(null)
@@ -47,14 +46,6 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
 
   const isMine = entry.owner === me.id
   const isCreator = entry.creator === me.id
-  const closed = entry.status === 'closed'
-  const resolved = entry.status === 'resolved'
-
-  // 认领副本 → 找到原条目（用于：副本勾选回流原件 / 在对方页面给 creator 关闭入口）
-  const original = entry.source_entry ? allEntries.find((e) => e.id === entry.source_entry) : null
-  const canCloseOriginal = original && original.creator === me.id && original.status === 'resolved'
-  const originalCreator = original ? profiles.find((p) => p.id === original.creator) : null
-  const [notified, setNotified] = useState(false) // 勾选认领副本后的"已通知"轻提示
 
   // 全部走乐观更新：本地立即生效，服务端后台同步
   const patchLocal = (fields) => (list) =>
@@ -108,52 +99,10 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     if (advance) onEditNext?.(entry)
   }
 
-  async function toggleDone() {
-    const next = closed ? 'open' : 'closed'
-    if (next === 'closed') {
-      pushUndo?.({ type: 'status', id: entry.id, prev: entry.status })
-      setClosing(true)
-      if (entry.source_entry && originalCreator) {
-        setNotified(true)
-        setTimeout(() => setNotified(false), 2500)
-      }
-      await new Promise((r) => setTimeout(r, 350)) // 让打勾→划线的状态停留一拍
-      setClosing(false)
-    }
-    mutate(patchLocal({ status: next }), async () => {
-      if (entry.source_entry && next === 'closed') {
-        await supabase.rpc('resolve_entry', { p_entry_id: entry.source_entry })
-      }
-      await supabase.from('entries').update({ status: next }).eq('id', entry.id)
-    })
-  }
-
-  function closeOriginal() {
-    pushUndo?.({ type: 'status', id: original.id, prev: original.status })
-    mutate(
-      (list) => list.map((e) => (e.id === original.id ? { ...e, status: 'closed' } : e)),
-      () => supabase.from('entries').update({ status: 'closed' }).eq('id', original.id),
-    )
-  }
-
-  function closeSelf() {
-    pushUndo?.({ type: 'status', id: entry.id, prev: entry.status })
-    mutate(patchLocal({ status: 'closed' }), () =>
-      supabase.from('entries').update({ status: 'closed' }).eq('id', entry.id),
-    )
-  }
-
   function togglePrivate() {
     setMenu(null)
     mutate(patchLocal({ is_private: !entry.is_private }), () =>
       supabase.from('entries').update({ is_private: !entry.is_private }).eq('id', entry.id),
-    )
-  }
-
-  function toggleGoal() {
-    setMenu(null)
-    mutate(patchLocal({ is_goal: !entry.is_goal, status: 'open' }), () =>
-      supabase.from('entries').update({ is_goal: !entry.is_goal, status: 'open' }).eq('id', entry.id),
     )
   }
 
@@ -195,26 +144,10 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     )
   }
 
-  // @token 上的认领状态标：○未认领 ●已认领 ✓已解决
-  const mentionStates = {}
-  for (const m of allMentions.filter((x) => x.entry_id === entry.id)) {
-    const p = profiles.find((x) => x.id === m.mentioned)
-    if (p)
-      mentionStates[p.handle.toLowerCase()] = m.rejected_at
-        ? 'rejected'
-        : entry.status === 'resolved'
-          ? 'resolved'
-          : m.claimed_entry
-            ? 'claimed'
-            : 'unclaimed'
-  }
-
   const rendered = renderEntryContent(entry.content, profiles, {
     meHandle: me.handle,
     highlightMe: !isMine,
-    mutedMentions: closed || closing,
     searchTerm: searchTerm || null,
-    mentionStates,
     onDateClick: isMine
       ? (token, e) => {
           e.stopPropagation()
@@ -229,17 +162,9 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
       ref={rowRef}
       className={
         'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 leading-relaxed transition-colors max-md:py-2 max-md:pr-0 ' +
-        'text-[14px] ' + // 全部内容统一 14px（目标不再放大）
-        (closing ? 'closing ' : '') +
+        'text-[14px] ' + // 纯文档文字，全内容统一 14px
         (editing ? '' : 'hover:bg-stone-50 ') +
-        (flash ? 'bg-amber-100 ' : '') +
-        (closed || closing
-          ? 'text-stone-300'
-          : resolved
-            ? 'bg-blue-50/70 px-1.5 -ml-1.5 text-blue-900'
-            : pastDue
-              ? 'bg-red-50/70 px-1.5 -ml-1.5'
-              : '') // 目标与纯文字统一黑色（继承 --ink），文档化后纯文字是主内容、不再灰
+        (flash ? 'bg-amber-100 ' : '')
       }
       onContextMenu={(e) => {
         if (!isMine) return
@@ -247,20 +172,6 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         openMenu(e.clientX, e.clientY)
       }}
     >
-      {entry.is_goal ? (
-        <input
-          type="checkbox"
-          checked={closed || closing}
-          disabled={!isMine || closing}
-          onChange={toggleDone}
-          className="mt-[5px] h-[15px] w-[15px] shrink-0 accent-stone-700 max-md:mt-[4px] max-md:h-[20px] max-md:w-[20px]"
-          title={entry.source_entry ? '完成（会通知发起人）' : '完成'}
-        />
-      ) : (
-        // 纯文字行：不显示 ¶ 图标，留空槽位让文字左缘和目标对齐（文档化）
-        <span className="mt-[5px] block h-[15px] w-[15px] shrink-0 max-md:h-[20px] max-md:w-[20px]" />
-      )}
-
       {editing && isMine ? (
         <>
           {entry.is_private && (
@@ -273,23 +184,19 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           onBlur={() => saveEdit(false)}
           onEscape={() => { setText(entry.content); setEditing(false) }}
           onEmptyBackspace={onDeleteEmpty ? () => { clearTimeout(saveTimer.current); setEditing(false); onDeleteEmpty(entry) } : undefined}
-          onTab={() => mutate(patchLocal({ is_goal: !entry.is_goal }), () =>
-            supabase.from('entries').update({ is_goal: !entry.is_goal }).eq('id', entry.id),
-          )}
           onArrowUp={onNavUp ? () => { saveEdit(false); onNavUp(entry) } : undefined}
           onArrowDown={onNavDown ? () => { saveEdit(false); onNavDown(entry) } : undefined}
           profiles={profiles}
           fontClass="text-[14px]"
-          mentionStates={mentionStates}
           autoFocus
           initialCaret={clickCaret}
         />
         </>
       ) : (
         <span
-          className={'min-w-0 flex-1 whitespace-pre-wrap ' + (closed || closing ? 'line-through' : '')}
+          className="min-w-0 flex-1 whitespace-pre-wrap"
           onClick={(e) => {
-            if (!isMine || closed) return
+            if (!isMine) return
             setClickCaret(caretOffsetIn(e.currentTarget))
             setText(entry.content)
             setEditing(true)
@@ -304,19 +211,6 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
       )}
 
       <span className="flex shrink-0 items-center gap-1.5">
-        {notified && (
-          <span className="rounded-md bg-emerald-100 px-2 py-px text-xs text-emerald-700 max-md:text-[13px]">
-            已通知 {originalCreator?.display_name}
-          </span>
-        )}
-        {!notified && originalCreator && !closed && (
-          <span
-            className="rounded-md bg-stone-100 px-1.5 py-px text-[11px] text-stone-500 max-md:text-[13px]"
-            title="认领来的活，完成后会自动通知对方验收"
-          >
-            来自{originalCreator.display_name}
-          </span>
-        )}
         {isMine && (
           <button
             title="操作"
@@ -329,28 +223,6 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             className="flex h-[20px] items-center self-center rounded-md px-1 text-stone-400 opacity-0 outline-none hover:bg-stone-100 hover:text-stone-600 group-hover:opacity-100 max-md:h-[32px] max-md:px-2 max-md:opacity-60"
           >
             ⋯
-          </button>
-        )}
-        {resolved && (
-          <span className="rounded-md bg-blue-100 px-2 py-px text-xs text-blue-700">
-            已解决
-          </span>
-        )}
-        {resolved && isCreator && (
-          <button
-            onClick={closeSelf}
-            className="rounded-md border border-blue-600 px-2 py-px text-xs text-blue-700 hover:bg-blue-600 hover:text-white"
-          >
-            关闭
-          </button>
-        )}
-        {canCloseOriginal && (
-          <button
-            onClick={closeOriginal}
-            title="你派的事已解决，确认关闭"
-            className="rounded-md border border-blue-600 px-2 py-px text-xs text-blue-700 opacity-0 group-hover:opacity-100 hover:bg-blue-600 hover:text-white max-md:opacity-100 max-md:py-1"
-          >
-            关闭我派的原件
           </button>
         )}
       </span>
@@ -401,10 +273,6 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={togglePrivate}>
               {entry.is_private ? <Eye size={13} /> : <Lock size={13} />}
               {entry.is_private ? '设为公开' : '仅自己可见'}
-            </button>
-            <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={toggleGoal}>
-              {entry.is_goal ? <Pilcrow size={13} /> : <Square size={13} />}
-              {entry.is_goal ? '转为文字' : '转为目标'}
             </button>
             {canMoveToToday && (
               <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-amber-700 outline-none hover:bg-amber-50 max-md:px-4 max-md:py-3" onClick={moveToToday}>
