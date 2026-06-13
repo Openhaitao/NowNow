@@ -97,6 +97,20 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
     setAllowed((a) => a.filter((x) => x.email !== em))
   }
 
+  // 固定邀请码链接：后端 get_invite_code() 拿码（前端 bundle 不含码），拼 ?invite= 复制
+  async function copyFixedInvite() {
+    setInviteErr('')
+    const { data: code, error } = await supabase.rpc('get_invite_code')
+    if (error || !code) { setInviteErr('拿不到邀请码，刷新或确认你已是成员'); return }
+    const link = `${window.location.origin}/?invite=${encodeURIComponent(code)}`
+    setInviteLink(link)
+    try {
+      await navigator.clipboard.writeText(link)
+      setInviteMsg('已复制 ✓')
+      setTimeout(() => setInviteMsg(''), 2000)
+    } catch { /* 复制被拦：链接已显示，手动复制 */ }
+  }
+
   // 数据导出：我的全部条目 → Markdown 下载（数据所有权，flomo 同款理念）
   function exportData() {
     const mine = allEntries.filter((e) => e.owner === me.id)
@@ -177,42 +191,20 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
         {/* 成员 */}
         <div className="mt-5 border-t border-stone-100 pt-4">
           <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">成员</div>
-          <div className="mt-2 flex gap-1.5">
-            <input
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => { setInviteEmail(e.target.value); setInviteMsg(''); setInviteErr('') }}
-              onKeyDown={(e) => e.key === 'Enter' && addEmail()}
-              placeholder="对方邮箱"
-              className="min-w-0 flex-1 rounded-md border border-stone-200 px-3 py-1.5 text-[13px] outline-none focus:border-stone-400 max-md:text-[16px]"
-            />
-            <button
-              onClick={addEmail}
-              className="flex shrink-0 items-center gap-1 rounded-md bg-[var(--btn-bg)] px-3 py-1.5 text-[13px] text-[var(--btn-fg)] hover:bg-[var(--btn-bg-hover)] max-md:text-[14.5px]"
-            >
-              <UserPlus size={13} /> 邀请
-            </button>
-          </div>
+          <button
+            onClick={copyFixedInvite}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md bg-[var(--btn-bg)] px-3 py-2 text-[13px] text-[var(--btn-fg)] hover:bg-[var(--btn-bg-hover)] max-md:text-[14.5px]"
+          >
+            <Copy size={13} /> {inviteMsg || '复制邀请链接'}
+          </button>
           {inviteErr && <p className="mt-1.5 text-xs text-red-500">{inviteErr}</p>}
           {inviteLink && (
-            <div className="mt-2 flex items-center gap-2 rounded-md bg-stone-50 px-2.5 py-2">
-              <span className="min-w-0 flex-1 select-all break-all text-xs text-stone-600">{inviteLink}</span>
-              <button
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(inviteLink)
-                    setInviteMsg('已复制 ✓')
-                    setTimeout(() => setInviteMsg(''), 2000)
-                  } catch { /* 手动复制 */ }
-                }}
-                className="flex shrink-0 items-center gap-1 text-xs text-stone-400 outline-none hover:text-stone-600"
-              >
-                <Copy size={12} /> {inviteMsg || '复制'}
-              </button>
+            <div className="mt-2 rounded-md bg-stone-50 px-2.5 py-2 text-xs text-stone-500 select-all break-all">
+              {inviteLink}
             </div>
           )}
           <p className="mt-1 text-[11px] text-stone-300 max-md:text-[12.5px]">
-            邀请 = 放行邮箱。对方打开 {window.location.origin} 用这个邮箱设置密码、起名即进
+            把这个链接发给谁，对方打开就能用邀请码注册进来，无需审批。
           </p>
           {(() => {
             const joined = profiles.filter((p) => p.status !== 'pending')
