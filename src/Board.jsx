@@ -796,22 +796,27 @@ export default function Board({ session }) {
               const stepper = s.key !== 'stash' && hasAnchor // 暂存箱无周期，不带 ‹ ›
               const activeTab = channel === s.key
               const off = offsets[s.key] || 0
-              // ‹ › 固定常显（不随 hover 滑动，标签不动）；各自 hover 高亮；› 到当前周期变灰不可点
-              const arrowCls = 'rounded p-0.5 text-stone-300 transition-colors hover:bg-stone-100 hover:text-stone-700'
+              // 未选中：纯文字标签。选中（点过）：胶囊高亮，且把 ‹ › 包进胶囊里——平时不显示，点选才出现
+              if (!activeTab) {
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => goChannel(s.key)}
+                    className="rounded-md px-2 py-1 text-[14.5px] text-stone-400 hover:bg-stone-100 max-md:text-[15.5px]"
+                  >
+                    {s.label}
+                  </button>
+                )
+              }
+              const arrowCls = 'rounded p-0.5 text-stone-500 transition-colors hover:bg-stone-300/60 hover:text-stone-900'
               return (
-                <span key={s.key} className="flex items-center">
+                <span key={s.key} className="flex items-center gap-0.5 rounded-md bg-stone-200/80 px-1 py-1 font-medium text-stone-900">
                   {stepper && (
                     <button onClick={() => stepChannel(s.key, -1)} title="往前看一段" className={arrowCls}>
                       <ChevronLeft size={14} />
                     </button>
                   )}
-                  <button
-                    onClick={() => goChannel(s.key)}
-                    className={
-                      'rounded-md px-1.5 py-1 text-[14.5px] max-md:text-[15.5px] ' +
-                      (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
-                    }
-                  >
+                  <button onClick={() => goChannel(s.key)} className="px-1 text-[14.5px] max-md:text-[15.5px]">
                     {s.label}
                   </button>
                   {stepper && (
@@ -819,7 +824,7 @@ export default function Board({ session }) {
                       onClick={() => stepChannel(s.key, 1)}
                       disabled={off >= 0}
                       title="往后看一段"
-                      className={arrowCls + ' disabled:cursor-default disabled:text-stone-200 disabled:hover:bg-transparent'}
+                      className={arrowCls + ' disabled:cursor-default disabled:text-stone-300 disabled:hover:bg-transparent'}
                     >
                       <ChevronRight size={14} />
                     </button>
