@@ -1,0 +1,68 @@
+/* Tiptap 文档内核样式：对齐 NowNow 的轻量「一张纸」观感，正文 14px、黑字继承 --ink */
+.doc-prose {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1d1d1f;
+}
+.doc-prose > * + * {
+  margin-top: 0.4em;
+}
+.doc-prose h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 0.8em;
+}
+.doc-prose h2 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-top: 0.7em;
+}
+.doc-prose h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 0.6em;
+}
+.doc-prose ul {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+.doc-prose ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+}
+.doc-prose li {
+  margin: 0.1em 0;
+}
+.doc-prose blockquote {
+  border-left: 3px solid #d6d3d1;
+  padding-left: 0.7em;
+  color: #57534e;
+}
+.doc-prose mark {
+  background: rgba(253, 230, 138, 0.7); /* amber-200/70，对齐旧高亮 */
+  border-radius: 2px;
+  padding: 0 0.1em;
+  color: inherit;
+}
+.doc-prose code {
+  background: #f5f5f4;
+  border-radius: 4px;
+  padding: 0 0.3em;
+  font-size: 13px;
+}
+.doc-prose a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.doc-prose img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+/* Placeholder：空文档时显示灰提示（@tiptap/extension-placeholder 给首个空块加 is-empty） */
+.doc-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #d6d3d1;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
