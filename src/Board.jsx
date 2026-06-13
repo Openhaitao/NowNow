@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, LayoutList, Menu, Pin, Search, Settings, Target } from 'lucide-react'
+import { Bell, LayoutList, Menu, Pin, CircleCheck, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -628,7 +628,7 @@ export default function Board({ session }) {
             (view === 'paper' && isMyPage ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
           }
         >
-          <Target size={16} /> 我的目标
+          <CircleCheck size={16} /> 我的目标
         </button>
         <button
           onClick={() => setView('all')}
