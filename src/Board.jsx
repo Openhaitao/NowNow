@@ -751,6 +751,16 @@ export default function Board({ session }) {
   return (
     // 桌面：app 不画左右外边框（按 Haitao 去掉两边的线）；侧栏右边框仍做内部分界
     <div className="mx-auto flex h-dvh max-w-[970px] overflow-hidden">
+      {/* 折叠后：固定在视口最左上角的展开入口（桌面），不再缩在 tab 行里 */}
+      {sidebarCollapsed && (
+        <button
+          onClick={() => setSidebarCollapsed(false)}
+          className="fixed left-2 top-2.5 z-40 hidden rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 md:block"
+          title="展开侧栏"
+        >
+          <PanelLeftOpen size={18} />
+        </button>
+      )}
       {/* 左栏：人员列表（固定不随内容滚动）。宽度可拖拽、可折叠（桌面） */}
       <aside
         ref={asideRef}
@@ -833,16 +843,6 @@ export default function Board({ session }) {
           {/* 顶部 今日/本周/本月/暂存箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
           {view === 'paper' && (
           <div className="flex items-center gap-1.5">
-            {/* 侧栏折叠时，tab 行最左给一个展开入口（桌面） */}
-            {sidebarCollapsed && (
-              <button
-                onClick={() => setSidebarCollapsed(false)}
-                className="hidden shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 md:block"
-                title="展开侧栏"
-              >
-                <PanelLeftOpen size={18} />
-              </button>
-            )}
             {SECTIONS.map((s) => (
               <button
                 key={s.key}
@@ -915,8 +915,8 @@ export default function Board({ session }) {
             />
           ) : (
             <>
-              {/* 主列收到 720px（--doc-width）居中，舒适行长 */}
-              <div className="mx-auto w-full max-w-[var(--doc-width)]">
+              {/* 主列 720px（--doc-width）左对齐——和上方 tab/日期头同一左边界，折叠侧栏时正文跟着撑到左边 */}
+              <div className="w-full max-w-[var(--doc-width)]">
                 {isMyPage && view === 'paper' && <Inbox profiles={profiles} onJumpDoc={jumpToDoc} />}
                 {query.trim() ? (
                   <DocSearch
