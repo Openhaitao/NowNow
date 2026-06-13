@@ -140,6 +140,12 @@ select:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
 }
+/* 注册页「Hi @名字」是下划线输入框，不画焦点框 */
+.nn-name-input:focus,
+.nn-name-input:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
 
 /* 完成动画的过渡只在勾选瞬间生效，平时不挂 transition（避免滚动/悬停时内容跟着缓动"晃"） */
 .entry-row.closing {

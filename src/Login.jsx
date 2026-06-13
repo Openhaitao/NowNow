@@ -141,7 +141,7 @@ export default function Login() {
                   if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
                 }}
                 placeholder="名字"
-                className="absolute inset-0 w-full border-b-2 border-stone-200 bg-transparent px-0.5 text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-stone-400 focus-visible:shadow-none placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
+                className="nn-name-input absolute inset-0 w-full border-b-2 border-stone-200 bg-transparent px-0.5 text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-stone-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
               />
             </span>
           </h1>
@@ -164,10 +164,10 @@ export default function Login() {
           </form>
         ) : authMode === 'register' ? (
           <form onSubmit={doRegister} className="mt-6 flex flex-col gap-3">
-            <input required placeholder="邀请码" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} className={inputCls} />
             <input type="email" name="email" autoComplete="username" required placeholder="邮箱" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
             {pwField('设置密码（至少 6 位）', 'new-password')}
             <input type={showPw ? 'text' : 'password'} required placeholder="再输一遍确认" value={password2} onChange={(e) => setPassword2(e.target.value)} className={inputCls} />
+            <input required placeholder="邀请码" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} className={inputCls} />
             <button type="submit" disabled={busy} className={btnCls}>{busy ? '注册中…' : '注册并进入'}</button>
             {err && <p className="text-sm text-red-600">{err}</p>}
             <button type="button" onClick={() => { setAuthMode('login'); setErr('') }} className={linkCls}>已有账号？去登录</button>
