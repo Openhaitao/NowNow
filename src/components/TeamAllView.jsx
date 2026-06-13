@@ -10,11 +10,10 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
   const [foldOpen, setFoldOpen] = useState({}) // personId -> bool（折叠区成员展开整块）
   const [dayOff, setDayOff] = useState({}) // personId -> 天数偏移（负=往回看这个人前几天的目标）
 
-  // 人的顺序跟侧栏拖拽顺序一致（orderedPeople 由 Board 传入）；兜底用"我在前"
+  // 团队目标 = 只看其他成员（不含本人），顺序跟侧栏团队成员列表一致（orderedPeople 由 Board 传入，已排除本人）
   const people = useMemo(() => {
     if (orderedPeople?.length) return orderedPeople
-    const active = profiles.filter((p) => p.status !== 'pending')
-    return [...active.filter((p) => p.id === me.id), ...active.filter((p) => p.id !== me.id)]
+    return profiles.filter((p) => p.status !== 'pending' && p.id !== me.id)
   }, [orderedPeople, profiles, me.id])
 
   // 顶部日期锚 + 每个人自己的 ‹ › 日偏移：这个人的"当天/当周/当月"按偏移后的日子算
@@ -161,7 +160,7 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
   return (
     <div>
       <div className="mt-4 flex items-center gap-2 text-[15px] font-semibold">
-        <LayoutList size={16} /> 全部目标
+        <LayoutList size={16} /> 团队目标
         <span className="text-[12px] font-normal text-stone-300">每个人今天在干什么 · 谁的活谁派的</span>
       </div>
 
