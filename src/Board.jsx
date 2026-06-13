@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Bell, ChevronLeft, ChevronRight, CircleCheck, LayoutList, Menu, Pin, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
-import { inPeriod, periodRange } from './lib/period'
+import { inPeriod, periodHeader, periodRange } from './lib/period'
 import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
 import DatePicker from './components/DatePicker'
 import Inbox from './components/Inbox'
@@ -518,16 +518,7 @@ export default function Board({ session }) {
     () => (me ? allEntries.filter((e) => e.creator === me.id && e.status === 'resolved') : []),
     [me, allEntries],
   )
-  // 到期提醒：我的未完成目标里，日期 token = 今天或已过期的
-  const dueMine = useMemo(() => {
-    if (!me) return []
-    return allEntries.filter((e) => {
-      if (e.owner !== me.id || !e.is_goal || e.status !== 'open') return false
-      const tokens = e.content.match(DATE_TOKEN_RE) || []
-      return tokens.some((t) => ['today', 'overdue'].includes(dateTokenState(t)))
-    })
-  }, [me, allEntries])
-
+  // 「到期/过期提醒」已按 Haitao 移除——只保留 @谁就通知谁，不再据日期生成通知
   const pendingMembers = useMemo(
     () => profiles.filter((p) => p.status === 'pending' && myInviteTokens.includes(p.invited_with)),
     [profiles, myInviteTokens],
@@ -535,7 +526,7 @@ export default function Board({ session }) {
 
   // 「待我处理 / 我派出去的」侧栏入口已按 Haitao 移除；mentions/notifications 底层数据保留，要恢复见 git 3e4455d
   const inboxCount = mentions.length // 还用在手机 ☰ 红点（@我窄条仍在「我的目标」里）
-  const notifCount = resolvedMine.length + dueMine.length + pendingMembers.length
+  const notifCount = resolvedMine.length + pendingMembers.length
 
   // 三格：今日未完成 / 本周未完成（今天还要干啥）+ 累计已完成（成就感，flomo 的"863 笔记"对应物）
   // 搜索跳转：纸拨回那条所在的日期 + 高亮闪烁定位
@@ -792,74 +783,9 @@ export default function Board({ session }) {
 
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-3 md:px-6">
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
-          {/* 四频道切换器（替代日期标题）：今日/本周/本月/暂存箱，一次看一个。日期只在「今日」旁淡灰小字。右侧=搜索（桌面） */}
+          {/* 一页纸：今日/本周/本月 竖向堆叠在下方内容区（各自带日期抬头），不再有频道切换/‹ ›。顶部只留搜索（桌面） */}
           {view === 'paper' && (
           <div className="flex items-center gap-1">
-            {SECTIONS.map((s) => {
-              const stepper = s.key !== 'stash' && hasAnchor // 暂存箱无周期，不带 ‹ ›
-              const activeTab = channel === s.key
-              const off = offsets[s.key] || 0
-              // 暂存箱：纯标签无箭头
-              if (!stepper) {
-                return (
-                  <button
-                    key={s.key}
-                    onClick={() => goChannel(s.key)}
-                    className={
-                      'rounded-md px-2 py-1 text-[14px] ' +
-                      (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
-                    }
-                  >
-                    {s.label}
-                  </button>
-                )
-              }
-              // 箭头槽位永远占位、位置固定不动；只有选中的频道里箭头才显形可点，其它频道槽位透明
-              // → 切换频道时只有高亮和箭头颜色变化，标签尺寸不变，完全不动
-              const arrowVis = activeTab
-                ? 'text-stone-500 hover:bg-stone-300/60 hover:text-stone-900'
-                : 'pointer-events-none text-transparent'
-              return (
-                <span
-                  key={s.key}
-                  className={
-                    'flex items-center gap-0.5 rounded-md px-1 py-1 ' +
-                    (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
-                  }
-                >
-                  <button onClick={() => stepChannel(s.key, -1)} title="往前看一段" className={'rounded p-0.5 transition-colors ' + arrowVis}>
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button onClick={() => goChannel(s.key)} className="px-0.5 text-[14px]">
-                    {s.label}
-                  </button>
-                  <button
-                    onClick={() => stepChannel(s.key, 1)}
-                    disabled={!activeTab || off >= 0}
-                    title="往后看一段"
-                    className={
-                      'rounded p-0.5 transition-colors disabled:hover:bg-transparent ' +
-                      arrowVis +
-                      (activeTab && off >= 0 ? ' !text-stone-300' : '')
-                    }
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </span>
-              )
-            })}
-            {/* 回看中：显示在看哪天/哪周/哪月 + 一键回到当前 */}
-            {channelOffset !== 0 && (
-              <span className="ml-1 flex items-center gap-1 whitespace-nowrap text-[12px] text-stone-400">
-                {periodRange(channel, channelOffset, baseDate).label}
-                <button
-                  onClick={() => goChannel(channel)}
-                  className="rounded-md bg-stone-100 px-1.5 py-px text-stone-500 hover:bg-stone-200"
-                >
-                  回到当前
-                </button>
-              </span>
-            )}
             <span className="relative ml-auto hidden items-center md:flex">
               <Search size={16} strokeWidth={2.5} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
               <input
@@ -922,7 +848,6 @@ export default function Board({ session }) {
           ) : view === 'notifications' ? (
             <NotificationsPage
               resolvedMine={resolvedMine}
-              dueMine={dueMine}
               pendingMembers={pendingMembers}
               profiles={profiles}
               onMembersChanged={loadProfiles}
@@ -935,21 +860,54 @@ export default function Board({ session }) {
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
-              {/* 单频道显示：只渲染当前选中的频道。暂存箱无周期，按 allTime 全显 */}
-              {SECTIONS.filter((sec) => sec.key === channel).map((sec) => (
+              {/* 一页纸：今日/本周/本月 竖向堆叠，各自带日期抬头；三区都挂载，跨区焦点接力正常 */}
+              {['today', 'week', 'month'].map((key) => {
+                const sec = SECTIONS.find((s) => s.key === key)
+                const h = periodHeader(key, baseDate)
+                return (
+                  <div key={key} className="mb-3">
+                    <div className="flex items-baseline gap-2 pb-0.5 pt-3">
+                      {h.label && <span className="text-[13px] font-medium text-stone-500">{h.label}</span>}
+                      <span className={'text-[13px] ' + (h.label ? 'text-stone-400' : 'font-medium text-stone-500')}>{h.date}</span>
+                    </div>
+                    <Section
+                      sec={sec}
+                      entries={query.trim() ? allEntries : pageEntries}
+                      me={me}
+                      isMyPage={isMyPage}
+                      profiles={profiles}
+                      allEntries={allEntries}
+                      hasAnchor={hasAnchor}
+                      allTime={false}
+                      baseDate={baseDate}
+                      isLive={isLive}
+                      offset={0}
+                      mutate={mutateEntries}
+                      pushUndo={pushUndo}
+                      flashId={flashId}
+                      query={query}
+                      editRequest={editRequest}
+                      onEditRequest={setEditRequest}
+                      allMentions={allMentions}
+                    />
+                  </div>
+                )
+              })}
+              {/* 暂存箱：无时间线、无日期，单独区放在最后 */}
+              <div className="mt-6 border-t border-stone-200 pt-3">
+                <div className="pb-0.5 text-[13px] font-medium text-stone-500">暂存箱</div>
                 <Section
-                  key={sec.key}
-                  sec={sec}
+                  sec={SECTIONS.find((s) => s.key === 'stash')}
                   entries={query.trim() ? allEntries : pageEntries}
                   me={me}
                   isMyPage={isMyPage}
                   profiles={profiles}
                   allEntries={allEntries}
                   hasAnchor={hasAnchor}
-                  allTime={view === 'all' || sec.key === 'stash'}
+                  allTime={true}
                   baseDate={baseDate}
                   isLive={isLive}
-                  offset={channelOffset}
+                  offset={0}
                   mutate={mutateEntries}
                   pushUndo={pushUndo}
                   flashId={flashId}
@@ -958,7 +916,7 @@ export default function Board({ session }) {
                   onEditRequest={setEditRequest}
                   allMentions={allMentions}
                 />
-              ))}
+              </div>
                 </>
               )}
             </>

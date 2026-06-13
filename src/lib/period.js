@@ -66,6 +66,30 @@ export function periodRange(section, offset = 0, base) {
   return { start, end, label, isCurrent }
 }
 
+const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
+
+// 一页纸的区块日期抬头：今日=完整日期+星期；本周=日期范围；本月=年月。
+// 返回 {label, date}：label 是区名（今日无 label，直接亮日期），date 是给用户看的时间串。
+export function periodHeader(section, base) {
+  const today = base ? startOfDay(base) : startOfDay(new Date())
+  if (section === 'today') {
+    return {
+      label: '',
+      date: `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日 星期${WEEKDAYS[today.getDay()]}`,
+    }
+  }
+  const r = periodRange(section, 0, base)
+  if (section === 'week') {
+    const endShow = new Date(r.end.getTime() - DAY)
+    return {
+      label: '本周',
+      date: `${r.start.getMonth() + 1}月${r.start.getDate()}日 – ${endShow.getMonth() + 1}月${endShow.getDate()}日`,
+    }
+  }
+  // month
+  return { label: '本月', date: `${r.start.getFullYear()}年${r.start.getMonth() + 1}月` }
+}
+
 // anchor: 'YYYY-MM-DD' | null。null（老数据/未迁移）按"当前周期"处理。
 export function inPeriod(anchor, range) {
   if (!anchor) return range.isCurrent
