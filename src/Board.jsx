@@ -897,7 +897,7 @@ export default function Board({ session }) {
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
               {/* 文档内核（Tiptap）：每个频道 = 往下回溯的文档时间线，一份文档 = 一个 (owner, section, period_key) */}
-              <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} />
+              <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} />
                 </>
               )}
             </>

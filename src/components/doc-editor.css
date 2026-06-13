@@ -54,6 +54,10 @@
   color: #2563eb;
   text-decoration: underline;
 }
+.doc-mention {
+  color: #2563eb;
+  font-weight: 600;
+}
 .doc-prose img {
   max-width: 100%;
   border-radius: 6px;

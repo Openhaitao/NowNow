@@ -4,7 +4,7 @@ import { loadDoc, saveDoc } from '../lib/docsApi'
 
 // 时间线里的一个文档块 = 一个 (owner, section, period_key)。
 // 当前周期可写（防抖 600ms 自动落库）；过去/别人的只读。
-export default function DocBlock({ owner, section, periodKey, editable, placeholder }) {
+export default function DocBlock({ owner, section, periodKey, editable, placeholder, profiles }) {
   const [content, setContent] = useState(undefined) // undefined=加载中, null=空, obj=PM JSON
   const saveTimer = useRef(null)
 
@@ -29,6 +29,7 @@ export default function DocBlock({ owner, section, periodKey, editable, placehol
       content={content || undefined}
       editable={editable}
       placeholder={placeholder}
+      profiles={profiles}
       onChange={({ json, text }) => {
         if (!editable) return
         clearTimeout(saveTimer.current)
