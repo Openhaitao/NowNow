@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, LayoutList, Menu, Pin, CircleCheck, Search, Settings } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, CircleCheck, LayoutList, Menu, Pin, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -181,6 +181,17 @@ export default function Board({ session }) {
   const [flashId, setFlashId] = useState(null) // 搜索跳转后高亮定位的条目
   const [editRequest, setEditRequest] = useState(null) // 跨区接力：让某个区的第一条进入编辑
   const [channel, setChannel] = useState('today') // 当前频道：today/week/month/stash（一次只看一个）
+  // 每个频道各自的时间回看偏移（负=往前看）。‹ › 挪到了顶部频道标签旁，offset 上提到这里统一管
+  const [offsets, setOffsets] = useState({})
+  const channelOffset = offsets[channel] || 0
+  const goChannel = useCallback((key) => {
+    setChannel(key)
+    setOffsets((o) => ({ ...o, [key]: 0 })) // 点标签名字 = 切到该频道并回到当前
+  }, [])
+  const stepChannel = useCallback((key, dir) => {
+    setChannel(key)
+    setOffsets((o) => ({ ...o, [key]: Math.min(0, (o[key] || 0) + dir) })) // 不能看未来，封顶 0
+  }, [])
   const isLive = !baseDate
 
   // 跨频道接力：键盘流转到别的频道（如 today→week）时自动切过去，让目标 Section 挂载并接住 editRequest
@@ -780,19 +791,55 @@ export default function Board({ session }) {
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
           {/* 四频道切换器（替代日期标题）：今日/本周/本月/暂存箱，一次看一个。日期只在「今日」旁淡灰小字。右侧=搜索（桌面） */}
           {view === 'paper' && (
-          <div className="flex items-center gap-1">
-            {SECTIONS.map((s) => (
-              <button
-                key={s.key}
-                onClick={() => setChannel(s.key)}
-                className={
-                  'rounded-md px-3 py-1 text-[14.5px] max-md:text-[15.5px] ' +
-                  (channel === s.key ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
-                }
-              >
-                {s.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-0.5">
+            {SECTIONS.map((s) => {
+              const stepper = s.key !== 'stash' && hasAnchor // 暂存箱无周期，不带 ‹ ›
+              const activeTab = channel === s.key
+              const off = offsets[s.key] || 0
+              // 滑入式箭头：默认 w-0 opacity-0，hover 到这个标签才展开；每个箭头各自 hover 高亮
+              const arrowCls =
+                'flex w-0 items-center justify-center overflow-hidden text-stone-300 opacity-0 transition-all duration-150 hover:text-stone-700 group-hover/tab:w-[18px] group-hover/tab:opacity-100'
+              return (
+                <span key={s.key} className="group/tab flex items-center">
+                  {stepper && (
+                    <button onClick={() => stepChannel(s.key, -1)} title="往前看一段" className={arrowCls}>
+                      <ChevronLeft size={15} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => goChannel(s.key)}
+                    className={
+                      'rounded-md px-2 py-1 text-[14.5px] max-md:text-[15.5px] ' +
+                      (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
+                    }
+                  >
+                    {s.label}
+                  </button>
+                  {stepper && (
+                    <button
+                      onClick={() => stepChannel(s.key, 1)}
+                      disabled={off >= 0}
+                      title="往后看一段"
+                      className={arrowCls + ' disabled:!w-0 disabled:!opacity-0'}
+                    >
+                      <ChevronRight size={15} />
+                    </button>
+                  )}
+                </span>
+              )
+            })}
+            {/* 回看中：显示在看哪天/哪周/哪月 + 一键回到当前 */}
+            {channelOffset !== 0 && (
+              <span className="ml-1 flex items-center gap-1 whitespace-nowrap text-[12px] text-stone-400">
+                {periodRange(channel, channelOffset, baseDate).label}
+                <button
+                  onClick={() => goChannel(channel)}
+                  className="rounded-md bg-stone-100 px-1.5 py-px text-stone-500 hover:bg-stone-200"
+                >
+                  回到当前
+                </button>
+              </span>
+            )}
             <span className="relative ml-auto hidden items-center md:flex">
               <Search size={14} className="pointer-events-none absolute left-3 text-stone-300" />
               <input
@@ -879,6 +926,7 @@ export default function Board({ session }) {
                   allTime={view === 'all' || sec.key === 'stash'}
                   baseDate={baseDate}
                   isLive={isLive}
+                  offset={channelOffset}
                   mutate={mutateEntries}
                   pushUndo={pushUndo}
                   flashId={flashId}

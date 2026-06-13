@@ -9,14 +9,13 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ChevronLeft, ChevronRight, Pilcrow, Square } from 'lucide-react'
+import { Pilcrow, Square } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { fmtDate, inPeriod, periodRange } from '../lib/period'
 import EntryRow from './EntryRow'
 import MentionInput from './MentionInput'
 
-const BACK_LABEL = { today: '回到今天', week: '回到本周', month: '回到本月' }
 const SEC_ORDER = ['today', 'week', 'month']
 
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
@@ -92,8 +91,8 @@ function SortableRow({ entry, draggable, children }) {
 
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
-export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query, editRequest, onEditRequest, allMentions }) {
-  const [offset, setOffset] = useState(0)
+export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query, editRequest, onEditRequest, allMentions, offset = 0 }) {
+  // offset 由顶部频道标签旁的 ‹ › 控制，上提到 Board（见 goChannel/stepChannel）
   const [editId, setEditId] = useState(null) // 退格删条后让上一条进入编辑态
   const [drafts, setDrafts] = useState([]) // 回车新建的本地草稿行（写了字才真正入库，零等待）
 
@@ -336,42 +335,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   }
 
   return (
-    <section className="pt-6">
-      <div className="group/head mb-1 flex items-center gap-1.5">
-        <h3 className="text-[13px] font-medium tracking-wide text-stone-400 max-md:text-[15px]">
-          {sec.label}
-          {range.label && <span className="ml-1.5 text-stone-300">· {range.label}</span>}
-        </h3>
-        {offset !== 0 && (
-          <button
-            onClick={() => setOffset(0)}
-            className="rounded-md bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200 max-md:text-[13px]"
-          >
-            {BACK_LABEL[sec.key]}
-          </button>
-        )}
-        {/* ‹ › 统一钉在行最右：不随标题/标签长度漂移 */}
-        {hasAnchor && !allTime && !q && (
-          <span className="ml-auto flex items-center gap-0.5">
-            <button
-              onClick={() => setOffset((o) => o - 1)}
-              className="rounded-md px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500"
-              title="往回看"
-            >
-              <ChevronLeft size={13} />
-            </button>
-            <button
-              onClick={() => setOffset((o) => o + 1)}
-              disabled={offset >= 0}
-              className="rounded-md px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500 disabled:opacity-30"
-              title="往后翻"
-            >
-              <ChevronRight size={13} />
-            </button>
-          </span>
-        )}
-      </div>
-
+    <section className="pt-3">
       {prevUnfinished.length > 0 && !q && (
         <button
           onClick={carryOver}
