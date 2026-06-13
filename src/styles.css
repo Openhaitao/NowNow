@@ -17,7 +17,7 @@
   --accent-hover: #a84a00;
   --accent-soft: #fff3e8;    /* 琥珀淡底：选中/强调态 */
   --highlight: #f5e8c8;      /* ==高亮== */
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'PingFang SC', Inter, 'Helvetica Neue', sans-serif;
+  --font-sans: 'Geist', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'PingFang SC', Inter, 'Helvetica Neue', sans-serif;
   /* 局部衬线（仅日期页头 + 大标题，纸感来源）。系统衬线、0 webfont */
   --font-serif: Charter, Georgia, 'Songti SC', 'STSong', serif;
 
@@ -40,6 +40,24 @@
 
   /* 文档主列宽（正文阅读舒适行长）*/
   --doc-width: 720px;
+}
+
+/* ===== 暗色模式（spool dark token；老铁挂 <html data-theme="dark"> 切换）===== */
+[data-theme='dark'] {
+  --bg: #141410;            /* 暖近黑（never pure #000）*/
+  --paper: var(--bg);
+  --surface: #1c1c18;
+  --surface-hover: #242420;
+  --surface-elevated: #1c1c18;
+  --ink: #f2f2ec;           /* 暖近白 */
+  --ink-muted: #8a8a80;
+  --ink-faint: #505048;
+  --line: #2e2e28;
+  --accent: #f07020;        /* 暗色提亮的琥珀 */
+  --accent-hover: #ff8636;
+  --accent-soft: #2a1800;
+  --highlight: #4a3a16;     /* 暗色高亮（暖）*/
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 /* 把 Tailwind 调色板指向 token —— 全站现有 blue-/stone-/amber- 类自动走暖色 token，
