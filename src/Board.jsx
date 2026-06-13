@@ -16,7 +16,7 @@ const SECTIONS = [
   { key: 'today', label: '今日' },
   { key: 'week', label: '本周' },
   { key: 'month', label: '本月' },
-  { key: 'stash', label: '暂存箱' },
+  { key: 'stash', label: '暂存' },
 ]
 
 const LAST_VIEWED_KEY = 'nownow_last_viewed'
@@ -754,14 +754,26 @@ export default function Board({ session }) {
       {/* 左栏：人员列表（固定不随内容滚动）。宽度可拖拽、可折叠（桌面） */}
       <aside
         ref={asideRef}
-        style={{ width: sidebarCollapsed ? 0 : sidebarW }}
+        style={{ width: sidebarCollapsed ? 44 : sidebarW }}
         className={
-          // min-w-0：flex item 默认 min-width:auto 会把 width:0 顶到内容最小宽（露出灰色残条），必须清掉才能真折叠到 0
-          'hidden h-full min-w-0 shrink-0 flex-col overflow-hidden px-2 pb-5 pt-3 md:flex ' +
+          // min-w-0：flex item 默认 min-width:auto 会把 width 顶到内容最小宽，必须清掉
+          'hidden h-full min-w-0 shrink-0 flex-col overflow-hidden pb-5 pt-3 md:flex ' +
+          (sidebarCollapsed ? 'items-center px-0 ' : 'px-2 ') +
           (resizingSidebar ? '' : 'transition-[width] duration-200')
         }
       >
-        {sidebarContent}
+        {sidebarCollapsed ? (
+          // 折叠 = 一条 44px 窄轨（隐藏条），展开 icon 顶在最上最左，点它复原
+          <button
+            onClick={() => setSidebarCollapsed(false)}
+            className="mt-1.5 rounded p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+            title="展开侧栏"
+          >
+            <PanelLeftOpen size={18} />
+          </button>
+        ) : (
+          sidebarContent
+        )}
       </aside>
       {/* 中间那条分隔线 = 拖拽手柄：拖动改侧栏宽度（折叠时收起）。1px 实线 + 左右各 4px 透明热区 */}
       {!sidebarCollapsed && (
@@ -834,16 +846,6 @@ export default function Board({ session }) {
           {/* 顶部 今日/本周/本月/暂存箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
           {view === 'paper' && (
           <div className="flex items-center gap-1.5">
-            {/* 侧栏折叠后：展开入口就放在 tab 行最左、今日 左边一点（不是浏览器最左） */}
-            {sidebarCollapsed && (
-              <button
-                onClick={() => setSidebarCollapsed(false)}
-                className="hidden shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 md:block"
-                title="展开侧栏"
-              >
-                <PanelLeftOpen size={18} />
-              </button>
-            )}
             {SECTIONS.map((s) => (
               <button
                 key={s.key}
