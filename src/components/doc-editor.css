@@ -254,8 +254,8 @@
   position: absolute;
   width: 18px;
   height: 18px;
-  border: 0 solid #fff;
-  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.55));
+  border: 0 solid #1c1c18;
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.7));
 }
 .doc-crop-h.nw { left: -2px; top: -2px; border-left-width: 3px; border-top-width: 3px; cursor: nwse-resize; }
 .doc-crop-h.ne { right: -2px; top: -2px; border-right-width: 3px; border-top-width: 3px; cursor: nesw-resize; }
