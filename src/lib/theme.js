@@ -36,6 +36,21 @@ export function setTheme(theme) {
   applyTheme(theme)
 }
 
+// 设置中的三态：'light' | 'dark' | 'system'。system = 清掉记忆、跟随系统。
+export function setPreference(pref) {
+  if (pref === 'system') {
+    try { localStorage.removeItem(KEY) } catch {}
+    applyTheme(systemPrefersDark() ? 'dark' : 'light')
+  } else {
+    setTheme(pref)
+  }
+}
+
+// 当前偏好（给设置面板的三态选择回显）：存过 light/dark 就是它，没存过 = 'system'。
+export function getPreference() {
+  return stored() || 'system'
+}
+
 export function toggleTheme() {
   const next = currentTheme() === 'dark' ? 'light' : 'dark'
   setTheme(next)
