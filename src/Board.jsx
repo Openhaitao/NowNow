@@ -803,7 +803,7 @@ export default function Board({ session }) {
                     key={s.key}
                     onClick={() => goChannel(s.key)}
                     className={
-                      'rounded-md px-2 py-1 text-[16px] ' +
+                      'rounded-md px-2 py-1 text-[14px] ' +
                       (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
                     }
                   >
@@ -827,7 +827,7 @@ export default function Board({ session }) {
                   <button onClick={() => stepChannel(s.key, -1)} title="往前看一段" className={'rounded p-0.5 transition-colors ' + arrowVis}>
                     <ChevronLeft size={14} />
                   </button>
-                  <button onClick={() => goChannel(s.key)} className="px-0.5 text-[16px]">
+                  <button onClick={() => goChannel(s.key)} className="px-0.5 text-[14px]">
                     {s.label}
                   </button>
                   <button
