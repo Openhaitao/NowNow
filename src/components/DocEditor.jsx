@@ -190,7 +190,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
     <div className="doc-editor">
       <BubbleMenu
         editor={editor}
-        className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-white p-1 text-stone-600 shadow-xl"
+        className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-[var(--surface-elevated)] p-1 text-stone-600 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
       >
         {tb.map((b, i) =>
           b.sep ? (
@@ -245,7 +245,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
       <EditorContent editor={editor} />
       {sug && sug.items.length > 0 && sug.rect && (
         <div
-          className="fixed z-50 w-48 rounded-lg border border-stone-200 bg-white p-1 shadow-xl"
+          className="fixed z-50 w-48 rounded-lg border border-stone-200 bg-[var(--surface-elevated)] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
           style={{ left: sug.rect.left, top: sug.rect.bottom + 4 }}
         >
           {sug.items.map((p, i) => (
@@ -266,7 +266,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
       )}
       {slash && slash.items.length > 0 && slash.rect && (
         <div
-          className="fixed z-50 max-h-72 w-52 overflow-auto rounded-lg border border-stone-200 bg-white p-1 shadow-xl"
+          className="fixed z-50 max-h-72 w-52 overflow-auto rounded-lg border border-stone-200 bg-[var(--surface-elevated)] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
           style={{ left: slash.rect.left, top: slash.rect.bottom + 4 }}
         >
           {slash.items.map((it, i) => (
