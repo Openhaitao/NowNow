@@ -16,6 +16,7 @@ export default function Login() {
   const [email, setEmail] = useState(lastEmail)
   const [password, setPassword] = useState('')
   const [password2, setPassword2] = useState('')
+  const [name, setName] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState('')
@@ -36,14 +37,29 @@ export default function Login() {
     return m
   }
 
+  // 重名预检：注册页就拦下，不让进门后才发现（函数没建时跳过，靠进门后兜底）
+  async function nameTaken(n) {
+    try {
+      const { data, error } = await supabase.rpc('handle_taken', { p_name: n })
+      return error ? false : !!data
+    } catch {
+      return false
+    }
+  }
+
   async function doRegister(e) {
     e.preventDefault()
     setErr('')
     if (!inviteCode.trim()) { setErr('请填写邀请码'); return }
+    const n = name.trim().replace(/^@/, '')
+    if (!n) { setErr('先填上你的名字（上面 Hi @ 那里）'); return }
+    if (/\s/.test(n)) { setErr('名字不能带空格'); return }
     if (password !== password2) { setErr('两次输入的密码不一样'); return }
     setBusy(true)
-    // 邀请码带进门，SetupCard 起名时后端 redeem_code 校验
+    if (await nameTaken(n)) { setBusy(false); setErr(`@${n} 已经有人用了，换一个名字`); return }
+    // 邀请码 + 名字带进门：进 Board → SetupCard 自动用名字认领、后端 redeem_code 校验码
     localStorage.setItem('nownow_invite_code', inviteCode.trim())
+    localStorage.setItem('nownow_pending_name', n)
     const { data, error } = await supabase.auth.signUp({ email, password })
     setBusy(false)
     if (error) {
@@ -107,9 +123,31 @@ export default function Login() {
     <div className="login-paper relative flex min-h-dvh flex-col items-center justify-center px-4 max-md:justify-start max-md:pt-[12vh]">
       <div className="float-in w-full max-w-sm rounded-lg border border-stone-200/80 bg-[var(--surface-elevated)] px-8 py-10 text-center shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
         <img src="/logo.png" alt="NowNow" className="mx-auto w-20" />
-        <h1 className="mt-5 text-xl font-bold">
-          {recover ? '邮件链接登录' : authMode === 'register' ? '注册 NowNow' : lastName ? `Hi @${lastName}` : '登录 NowNow'}
-        </h1>
+        {!recover && authMode === 'register' ? (
+          <h1 className="mt-5 flex items-baseline justify-center text-xl font-bold">
+            Hi&nbsp;@
+            {/* 固定宽度名字槽：Hi @ 不动，下划线随字长 */}
+            <span className="ml-2 w-24 text-left">
+              <span className="relative inline-block min-w-[3.25rem]">
+                <span aria-hidden="true" className="invisible whitespace-pre px-0.5">{name || '名字'}</span>
+                <input
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); setErr('') }}
+                  onBlur={async () => {
+                    const n = name.trim().replace(/^@/, '')
+                    if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
+                  }}
+                  placeholder="名字"
+                  className="absolute inset-0 w-full border-b-2 border-stone-200 bg-transparent px-0.5 text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-stone-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
+                />
+              </span>
+            </span>
+          </h1>
+        ) : (
+          <h1 className="mt-5 text-xl font-bold">
+            {recover ? '邮件链接登录' : lastName ? `Hi @${lastName}` : '登录 NowNow'}
+          </h1>
+        )}
 
         {sent ? (
           <p className="mt-6 text-sm text-stone-600">
