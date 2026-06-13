@@ -627,9 +627,6 @@ export default function Board({ session }) {
 
         {/* 段2 · 团队成员（不含本人；本人入口是上面的「我的目标」） */}
         <div className="my-2 border-t border-stone-100" />
-        <div className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">
-          团队成员
-        </div>
         {/* 成员多到放不下时这一段自己滚动（细灰滚动条），通知/设置钉在底部不动 */}
         <div className="paper-scroll min-h-0 flex-1 overflow-y-auto">
           <DndContext sensors={memberSensors} collisionDetection={closestCenter} onDragEnd={onMemberDragEnd}>
