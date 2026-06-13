@@ -872,7 +872,7 @@ export default function Board({ session }) {
                 className="w-40 rounded-md border border-stone-200 bg-white py-1.5 pl-9 pr-2 text-[13px] outline-none focus:border-stone-300 md:w-56"
               />
               {!query && (
-                <kbd className="pointer-events-none absolute left-9 text-[14px] text-stone-300">⌘+K</kbd>
+                <kbd className="pointer-events-none absolute left-9 text-[15px] font-medium text-stone-400">⌘+K</kbd>
               )}
             </span>
           </div>
