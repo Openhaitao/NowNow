@@ -691,11 +691,11 @@ export default function Board({ session }) {
           <button
             onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
             className={
-              'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] hover:bg-stone-100 ' +
+              'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] hover:bg-stone-100 ' +
               (view === 'notifications' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-500')
             }
           >
-            <Bell size={14} /> 通知
+            <Bell size={16} /> 通知
             {notifCount > 0 && (
               <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] font-medium text-white">
                 {notifCount}
@@ -704,9 +704,9 @@ export default function Board({ session }) {
           </button>
           <button
             onClick={() => setSettingsOpen(true)}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-stone-100"
           >
-            <Settings size={14} /> 设置
+            <Settings size={16} /> 设置
           </button>
         </div>
     </>
