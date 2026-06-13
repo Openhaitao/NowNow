@@ -6,8 +6,6 @@ import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, Pin, Search, Settin
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
-import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
-import DatePicker from './components/DatePicker'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
@@ -238,15 +236,9 @@ export default function Board({ session }) {
 
   const [loaded, setLoaded] = useState(false)
 
-  // 拉取与应用分离：应用前还要验"拉的期间有没有新写操作"
-  const fetchAll = useCallback(async () => {
-    const [{ data: es }, { data: ms }, { data: am }] = await Promise.all([
-      supabase.from('entries').select('*'),
-      inboxMentionsQuery(user.id),
-      supabase.from('mentions').select('entry_id, mentioned, claimed_entry, rejected_at'),
-    ])
-    return { es: es || [], ms: ms || [], am: am || [] }
-  }, [user.id])
+  // 旧 entries/mentions 表已下线（全文档化）：不再查旧表，留空让所有旧派生值自然为空。
+  // 文档内容走 docsApi（DocBlock/DocTimeline 各自加载），不经这里。
+  const fetchAll = useCallback(async () => ({ es: [], ms: [], am: [] }), [])
 
   const applyLoad = useCallback(
     ({ es, ms, am }) => {
@@ -367,35 +359,10 @@ export default function Board({ session }) {
         document.getElementById('search-input')?.focus()
         return
       }
-      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !inText) {
-        const it = undoStack.current.pop()
-        if (!it) return
-        e.preventDefault()
-        if (it.type === 'status') {
-          mutateEntries(
-            (list) => list.map((x) => (x.id === it.id ? { ...x, status: it.prev } : x)),
-            () => supabase.from('entries').update({ status: it.prev }).eq('id', it.id),
-          )
-        } else if (it.type === 'delete') {
-          const r = it.row
-          const row = {
-            id: r.id, owner: r.owner, creator: r.creator, section: r.section,
-            content: r.content, is_goal: r.is_goal, status: r.status,
-            is_private: r.is_private, source_entry: r.source_entry, position: r.position,
-          }
-          if (hasAnchor && r.anchor) row.anchor = r.anchor
-          mutateEntries((list) => [...list, r], () => supabase.from('entries').insert(row))
-        }
-        return
-      }
-      if (e.key === '/' && !inText) {
-        e.preventDefault()
-        document.getElementById('quick-capture')?.focus()
-      }
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
-  }, [mutateEntries, hasAnchor])
+  }, [])
 
   useEffect(() => { loadProfiles() }, [loadProfiles])
   useEffect(() => { doLoad() }, [doLoad])
@@ -422,12 +389,10 @@ export default function Board({ session }) {
   useEffect(() => {
     const ch = supabase
       .channel('nownow')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, applyEntryEvent)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mentions' }, reloadMentions)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, loadProfiles)
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [applyEntryEvent, reloadMentions, loadProfiles])
+  }, [loadProfiles])
 
   // 切到某人页面 = 记录"看过的时间"，红点据此熄灭
   const viewPage = useCallback((pid) => {
