@@ -752,7 +752,7 @@ export default function Board({ session }) {
     // 桌面：app 不画左右外边框（按 Haitao 去掉两边的线）；侧栏右边框仍做内部分界
     <div className="mx-auto flex h-dvh max-w-[970px] overflow-hidden">
       {/* 左栏：人员列表（固定不随内容滚动） */}
-      <aside className="hidden h-full w-52 shrink-0 flex-col overflow-hidden border-r border-stone-100 px-2 pb-5 pt-3 md:flex">
+      <aside className="hidden h-full w-60 shrink-0 flex-col overflow-hidden border-r border-stone-100 px-2 pb-5 pt-3 md:flex">
         {sidebarContent}
       </aside>
 
