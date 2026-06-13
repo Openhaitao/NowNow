@@ -245,23 +245,22 @@
 .doc-crop-rect {
   position: absolute;
   box-sizing: border-box;
-  border: 1px solid #fff;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
   cursor: move;
 }
+/* 飞书式 L 形直角角标（白色描边、四角各画两条边） */
 .doc-crop-h {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  border: 1.5px solid var(--accent);
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  width: 18px;
+  height: 18px;
+  border: 0 solid #fff;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.55));
 }
-.doc-crop-h.nw { left: -6px; top: -6px; cursor: nwse-resize; }
-.doc-crop-h.ne { right: -6px; top: -6px; cursor: nesw-resize; }
-.doc-crop-h.sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
-.doc-crop-h.se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.doc-crop-h.nw { left: -2px; top: -2px; border-left-width: 3px; border-top-width: 3px; cursor: nwse-resize; }
+.doc-crop-h.ne { right: -2px; top: -2px; border-right-width: 3px; border-top-width: 3px; cursor: nesw-resize; }
+.doc-crop-h.sw { left: -2px; bottom: -2px; border-left-width: 3px; border-bottom-width: 3px; cursor: nesw-resize; }
+.doc-crop-h.se { right: -2px; bottom: -2px; border-right-width: 3px; border-bottom-width: 3px; cursor: nwse-resize; }
 /* Placeholder：空文档时显示灰提示（@tiptap/extension-placeholder 给首个空块加 is-empty） */
 .doc-prose p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
