@@ -13,9 +13,9 @@
   --line: #e8e8e2;           /* 分隔/卡片边 */
   --radius-card: 10px;       /* spool 卡片 10 */
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.04);
-  --accent: #c85a00;         /* spool 琥珀橙（never blue）：链接/@名字/焦点 */
-  --accent-hover: #a84a00;
-  --accent-soft: #fff3e8;    /* 琥珀淡底：选中/强调态 */
+  --accent: #2563eb;         /* 链接蓝（海涛要回从前那版亮蓝，非 spool 墨蓝）：链接/@名字/焦点 */
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;    /* 蓝淡底：选中/强调态/横幅 */
   --highlight: #f5e8c8;      /* ==高亮== */
   --success: #6baf6b;        /* spool warm 语义色（老铁 SaveStatus 接 --error）*/
   --warning: #e4a640;
