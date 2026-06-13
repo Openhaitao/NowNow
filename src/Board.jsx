@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, LayoutList, Menu, Search, Settings } from 'lucide-react'
+import { Bell, Home, Inbox as InboxIcon, LayoutList, Menu, Search, Send, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -491,7 +491,33 @@ export default function Board({ session }) {
     [profiles, myInviteTokens],
   )
 
-  const notifCount = mentions.length + resolvedMine.length + dueMine.length + pendingMembers.length
+  // 我派出去的（Kent gate）：我创建 + 有@ + 对方已认领 + 未 resolved/closed（=还在对方手上推进中）。resolved 后离开这里
+  const dispatched = useMemo(() => {
+    if (!me) return []
+    const claimedIds = new Set(
+      allMentions.filter((m) => m.claimed_entry != null && !m.rejected_at).map((m) => m.entry_id),
+    )
+    return allEntries.filter((e) => e.creator === me.id && e.status === 'open' && claimedIds.has(e.id))
+  }, [me, allEntries, allMentions])
+
+  const todayStr = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [])
+  // 派出去的活只在「过期没动」时标红（PRD：正常推进不打扰）
+  const isDispatchOverdue = useCallback(
+    (e) => {
+      if (e.anchor && e.anchor < todayStr) return true
+      const tokens = e.content.match(DATE_TOKEN_RE) || []
+      return tokens.some((t) => dateTokenState(t) === 'overdue')
+    },
+    [todayStr],
+  )
+  const dispatchedOverdue = useMemo(() => dispatched.filter(isDispatchOverdue).length, [dispatched, isDispatchOverdue])
+
+  // 待我处理 = 别人@我待认领（mentions）；通知 = 只读 FYI（对方已解决 + 到期 + 待确认成员）
+  const inboxCount = mentions.length
+  const notifCount = resolvedMine.length + dueMine.length + pendingMembers.length
 
   // 三格：今日未完成 / 本周未完成（今天还要干啥）+ 累计已完成（成就感，flomo 的"863 笔记"对应物）
   // 搜索跳转：纸拨回那条所在的日期 + 高亮闪烁定位
@@ -587,19 +613,56 @@ export default function Board({ session }) {
             </button>
           </span>
         </div>
-        {/* 视图入口与人员列表分组：全部目标在上，团队成员单独一组 */}
-        {hasAnchor && (
-          <button
-            onClick={() => setView(view === 'all' ? 'paper' : 'all')}
-            className={
-              'mb-2 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
-              (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
-            }
-          >
-            <LayoutList size={14} /> 全部目标
-          </button>
-        )}
-        <div className="mb-1 mt-3 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">
+        {/* 段1 · 看什么：我的目标 + 全部目标（两个并列主视图） */}
+        <button
+          onClick={() => viewPage(me.id)}
+          className={
+            'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+            (view === 'paper' && isMyPage ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
+          }
+        >
+          <Home size={14} /> 我的目标
+        </button>
+        <button
+          onClick={() => setView('all')}
+          className={
+            'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+            (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
+          }
+        >
+          <LayoutList size={14} /> 全部目标
+        </button>
+
+        {/* 段2 · 我的协作：待我处理 + 我派出去的 */}
+        <div className="my-2 border-t border-stone-100" />
+        <button
+          onClick={() => setView('inbox')}
+          className={
+            'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+            (view === 'inbox' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
+          }
+        >
+          <InboxIcon size={14} /> 待我处理
+          {inboxCount > 0 && (
+            <span className="ml-auto rounded-md bg-blue-500 px-1.5 text-[11px] font-medium text-white">{inboxCount}</span>
+          )}
+        </button>
+        <button
+          onClick={() => setView('dispatched')}
+          className={
+            'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+            (view === 'dispatched' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
+          }
+        >
+          <Send size={14} /> 我派出去的
+          {dispatchedOverdue > 0 && (
+            <span className="ml-auto rounded-md bg-red-500 px-1.5 text-[11px] font-medium text-white">{dispatchedOverdue} 过期</span>
+          )}
+        </button>
+
+        {/* 段3 · 团队 */}
+        <div className="my-2 border-t border-stone-100" />
+        <div className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">
           团队
         </div>
         {/* 成员多到放不下时这一段自己滚动（细灰滚动条），通知/设置钉在底部不动 */}
@@ -687,7 +750,7 @@ export default function Board({ session }) {
             <>
               <button onClick={() => setDrawerOpen(true)} className="relative p-1.5 text-stone-600" title="菜单">
                 <Menu size={20} />
-                {notifCount > 0 && <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500" />}
+                {inboxCount + notifCount > 0 && <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500" />}
               </button>
               <button
                 onClick={() => viewPage(me.id)}
@@ -695,11 +758,15 @@ export default function Board({ session }) {
               >
                 {view === 'all'
                   ? '全部目标'
-                  : view === 'notifications'
-                    ? '通知'
-                    : view === 'settings'
-                      ? '设置'
-                      : pageUser.display_name}
+                  : view === 'inbox'
+                    ? '待我处理'
+                    : view === 'dispatched'
+                      ? '我派出去的'
+                      : view === 'notifications'
+                        ? '通知'
+                        : view === 'settings'
+                          ? '设置'
+                          : pageUser.display_name}
               </button>
               <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
                 <Search size={20} />
@@ -746,20 +813,9 @@ export default function Board({ session }) {
             </span>
           </div>
           )}
-          {view !== 'notifications' && view !== 'settings' && !isMyPage && (
+          {view === 'paper' && !isMyPage && (
             <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400 max-md:hidden">
               <span>{pageUser.display_name}的主页（只读）</span>
-              <button
-                onClick={() => viewPage(me.id)}
-                className="text-stone-400 transition-colors hover:text-stone-600"
-              >
-                ← 回到我的主页
-              </button>
-            </div>
-          )}
-          {(view === 'notifications' || view === 'settings') && (
-            <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400 max-md:hidden">
-              <span>{view === 'notifications' ? '通知' : '设置'}</span>
               <button
                 onClick={() => viewPage(me.id)}
                 className="text-stone-400 transition-colors hover:text-stone-600"
@@ -792,18 +848,54 @@ export default function Board({ session }) {
               profiles={profiles}
               onProfileSaved={loadProfiles}
             />
+          ) : view === 'inbox' ? (
+            // 待我处理：别人派给我、待认领/完成/拒绝的活（与「我的目标」页里的 @我窄条同源）
+            <div className="pt-1">
+              <div className="mb-3 flex items-center gap-2 text-[15px] font-semibold max-md:text-[17px]">
+                <InboxIcon size={16} /> 待我处理
+              </div>
+              {mentions.length === 0 ? (
+                <p className="mt-6 text-sm text-stone-300 max-md:text-[15px]">没有待处理的活。别人 @你 派来的事会出现在这里，认领后进你自己的纸。</p>
+              ) : (
+                <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />
+              )}
+            </div>
+          ) : view === 'dispatched' ? (
+            // 我派出去的：在对方手上推进中；正常不打扰，过期标红
+            <div className="pt-1">
+              <div className="mb-3 flex items-center gap-2 text-[15px] font-semibold max-md:text-[17px]">
+                <Send size={16} /> 我派出去的
+              </div>
+              {dispatched.length === 0 ? (
+                <p className="mt-6 text-sm text-stone-300 max-md:text-[15px]">还没有派给别人、对方已认领的活。在条目里 @某人，对方认领后会出现在这里。</p>
+              ) : (
+                dispatched.map((e) => {
+                  const claimer = profiles.find((p) =>
+                    allMentions.some((m) => m.entry_id === e.id && m.mentioned === p.id && m.claimed_entry != null),
+                  )
+                  const overdue = isDispatchOverdue(e)
+                  return (
+                    <button
+                      key={e.id}
+                      onClick={() => jumpToEntry(e)}
+                      className="flex w-full items-center gap-2 border-b border-stone-100 py-2.5 text-left last:border-0 hover:bg-stone-50 max-md:py-3"
+                    >
+                      <span className="min-w-0 flex-1 truncate text-[14px] max-md:text-[16px]">{e.content}</span>
+                      {claimer && <span className="shrink-0 text-xs text-stone-400 max-md:text-[13px]">{claimer.display_name} 认领</span>}
+                      {overdue && <span className="shrink-0 rounded-md bg-red-500 px-1.5 py-px text-[11px] text-white max-md:text-[13px]">过期</span>}
+                    </button>
+                  )
+                })
+              )}
+            </div>
           ) : view === 'notifications' ? (
             <NotificationsPage
-              mentions={mentions}
               resolvedMine={resolvedMine}
               dueMine={dueMine}
               pendingMembers={pendingMembers}
               profiles={profiles}
-              onChanged={loadData}
               onMembersChanged={loadProfiles}
-              mutate={mutateEntries}
-              onBack={() => viewPage(me.id)}
-              onJumpHome={() => viewPage(me.id)}
+              onJump={jumpToEntry}
             />
           ) : (
             <>
