@@ -197,6 +197,19 @@ export default function Board({ session }) {
   // 时间线各块不做跨块/跨频道的焦点接力（焦点都在块内，避免回车/↓ 乱跳或切走视图）
   const noEditRelay = useCallback(() => {}, [])
 
+  // 当前周期块占满首屏：用 JS 量出滚动区可视高度（CSS min-h-full 会被容器 pb-24 内边距吃掉而短一截）
+  const scrollRef = useRef(null)
+  const [viewportH, setViewportH] = useState(0)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const measure = () => setViewportH(el.clientHeight)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   // 跨频道接力：键盘流转到别的频道（如 today→week）时自动切过去，让目标 Section 挂载并接住 editRequest
   useEffect(() => {
     if (!editRequest) return
@@ -855,7 +868,7 @@ export default function Board({ session }) {
           )}
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
-        <div className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-24 pl-6 pr-1">
+        <div ref={scrollRef} className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-24 pl-6 pr-1">
           {view === 'settings' ? (
             <SettingsModal
               variant="page"
@@ -902,8 +915,8 @@ export default function Board({ session }) {
                 // 今日/本周/本月：往下回溯的时间线，当前周期(0)在最上，过去有内容的周期降序在下
                 return [0, ...pastOffsets].map((off) => (
                   // 当前周期(0)块至少占满首屏：没写就是空白一页，过去的时间线沉到下面、下拉才见
-                  <div key={off} className={'mb-3 ' + (off === 0 ? 'min-h-full' : '')}>
-                    <div className={'pb-0.5 pt-3 text-[13px] font-medium ' + (off === 0 ? 'text-stone-600' : 'text-stone-400')}>
+                  <div key={off} className="mb-3" style={off === 0 && viewportH ? { minHeight: viewportH } : undefined}>
+                    <div className="pb-0.5 pt-3 text-[13px] font-medium text-stone-500">
                       {periodHeader(channel, off, baseDate)}
                     </div>
                     <Section {...common} entries={pageEntries} allTime={false} offset={off} isCurrentPeriod={off === 0} />
