@@ -74,7 +74,7 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
       )}
 
       {mentions.length > 0 && (
-        <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--surface)' }}>
+        <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
           <div className="mb-1.5 flex items-center gap-1 text-xs font-medium max-md:text-[13px]" style={{ color: 'var(--accent)' }}>
             <AtSign size={13} /> @我的 · {mentions.length}
           </div>

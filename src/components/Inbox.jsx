@@ -38,7 +38,7 @@ export default function Inbox({ profiles, onJumpDoc }) {
   }
 
   return (
-    <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--surface)' }}>
+    <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
       <div className="mb-1.5 flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--accent)' }}>
         <InboxIcon size={13} /> @我的 · {items.length} 条
       </div>
