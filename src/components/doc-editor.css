@@ -256,6 +256,40 @@
   color: var(--accent);
   background: var(--accent-soft);
 }
+.doc-img-tbsep {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  background: var(--line);
+}
+/* 裁剪模式：工作台显示整图，裁剪框外用 box-shadow 罩暗 */
+.doc-crop-stage {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  line-height: 0;
+  border-radius: 6px;
+}
+.doc-crop-rect {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid #fff;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+  cursor: move;
+}
+.doc-crop-h {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--accent);
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.doc-crop-h.nw { left: -6px; top: -6px; cursor: nwse-resize; }
+.doc-crop-h.ne { right: -6px; top: -6px; cursor: nesw-resize; }
+.doc-crop-h.sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.doc-crop-h.se { right: -6px; bottom: -6px; cursor: nwse-resize; }
 /* Placeholder：空文档时显示灰提示（@tiptap/extension-placeholder 给首个空块加 is-empty） */
 .doc-prose p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
