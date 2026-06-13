@@ -18,7 +18,7 @@ export default function SaveStatus({ state, onRetry }) {
     )
   if (state === 'error')
     return (
-      <span className="text-[12px]" style={{ color: '#B54A3A' }}>
+      <span className="text-[12px]" style={{ color: 'var(--error)' }}>
         保存失败{' '}
         <button onClick={onRetry} className="underline underline-offset-2">
           重试
