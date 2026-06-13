@@ -796,39 +796,52 @@ export default function Board({ session }) {
               const stepper = s.key !== 'stash' && hasAnchor // 暂存箱无周期，不带 ‹ ›
               const activeTab = channel === s.key
               const off = offsets[s.key] || 0
-              // 未选中：纯文字标签。选中（点过）：胶囊高亮，且把 ‹ › 包进胶囊里——平时不显示，点选才出现
-              if (!activeTab) {
+              // 暂存箱：纯标签无箭头
+              if (!stepper) {
                 return (
                   <button
                     key={s.key}
                     onClick={() => goChannel(s.key)}
-                    className="rounded-md px-2 py-1 text-[14.5px] text-stone-400 hover:bg-stone-100 max-md:text-[15.5px]"
+                    className={
+                      'rounded-md px-2 py-1 text-[14.5px] max-md:text-[15.5px] ' +
+                      (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
+                    }
                   >
                     {s.label}
                   </button>
                 )
               }
-              const arrowCls = 'rounded p-0.5 text-stone-500 transition-colors hover:bg-stone-300/60 hover:text-stone-900'
+              // 箭头槽位永远占位、位置固定不动；只有选中的频道里箭头才显形可点，其它频道槽位透明
+              // → 切换频道时只有高亮和箭头颜色变化，标签尺寸不变，完全不动
+              const arrowVis = activeTab
+                ? 'text-stone-500 hover:bg-stone-300/60 hover:text-stone-900'
+                : 'pointer-events-none text-transparent'
               return (
-                <span key={s.key} className="flex items-center gap-0.5 rounded-md bg-stone-200/80 px-1 py-1 font-medium text-stone-900">
-                  {stepper && (
-                    <button onClick={() => stepChannel(s.key, -1)} title="往前看一段" className={arrowCls}>
-                      <ChevronLeft size={14} />
-                    </button>
-                  )}
-                  <button onClick={() => goChannel(s.key)} className="px-1 text-[14.5px] max-md:text-[15.5px]">
+                <span
+                  key={s.key}
+                  className={
+                    'flex items-center gap-0.5 rounded-md px-1 py-1 ' +
+                    (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
+                  }
+                >
+                  <button onClick={() => stepChannel(s.key, -1)} title="往前看一段" className={'rounded p-0.5 transition-colors ' + arrowVis}>
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button onClick={() => goChannel(s.key)} className="px-0.5 text-[14.5px] max-md:text-[15.5px]">
                     {s.label}
                   </button>
-                  {stepper && (
-                    <button
-                      onClick={() => stepChannel(s.key, 1)}
-                      disabled={off >= 0}
-                      title="往后看一段"
-                      className={arrowCls + ' disabled:cursor-default disabled:text-stone-300 disabled:hover:bg-transparent'}
-                    >
-                      <ChevronRight size={14} />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => stepChannel(s.key, 1)}
+                    disabled={!activeTab || off >= 0}
+                    title="往后看一段"
+                    className={
+                      'rounded p-0.5 transition-colors disabled:hover:bg-transparent ' +
+                      arrowVis +
+                      (activeTab && off >= 0 ? ' !text-stone-300' : '')
+                    }
+                  >
+                    <ChevronRight size={14} />
+                  </button>
                 </span>
               )
             })}
