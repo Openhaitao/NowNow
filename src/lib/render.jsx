@@ -79,12 +79,16 @@ export const MENTION_STATE = {
 
 export function renderEntryContent(content, profiles, { meHandle, highlightMe, mutedMentions, onDateClick, searchTerm, mentionStates } = {}) {
   let body = content
-  let heading = 0
+  let heading = 0 // 1=标题 2=小标题 3=副标题（对齐苹果备忘录三级）
+  let quote = false // 块引用：> 开头 → 左竖条缩进
   let listPrefix = null // 列表前缀：- / * → ·，  数字. 保留
   const hm = /^(#{1,3})\s+/.exec(body)
   if (hm) {
     heading = hm[1].length
     body = body.slice(hm[0].length)
+  } else if (/^>\s+/.test(body)) {
+    quote = true
+    body = body.replace(/^>\s+/, '')
   } else {
     const bulletM = /^[-*]\s+/.exec(body)
     const orderM = /^(\d+)\.\s+/.exec(body)
@@ -117,8 +121,13 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe, m
     return renderDates(part, i, onDateClick, searchTerm)
   })
 
-  if (heading === 1) return <span className="text-[17px] font-bold">{nodes}</span>
-  if (heading >= 2) return <span className="text-[15.5px] font-semibold">{nodes}</span>
+  if (heading === 1) return <span className="text-[20px] font-bold">{nodes}</span> // 标题
+  if (heading === 2) return <span className="text-[17px] font-bold">{nodes}</span> // 小标题
+  if (heading >= 3) return <span className="text-[15px] font-semibold">{nodes}</span> // 副标题
+  if (quote)
+    return (
+      <span className="block border-l-[3px] border-stone-300 pl-2.5">{nodes}</span> // 块引用：黑字+灰竖条（对齐备忘录，不发灰）
+    )
   if (listPrefix)
     return (
       <span>
