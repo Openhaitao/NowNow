@@ -2,19 +2,20 @@
 
 /* ===== 设计 token（改这里全站生效，细调一处即可）—— Claude 暖色系 ===== */
 :root {
-  --bg: #f7f7f5;             /* flomo 页面浅灰（不要纸黄）*/
+  --bg: #fafaf8;             /* spool 暖米白（never pure white）*/
   --paper: var(--bg);        /* 兼容旧引用 */
-  --surface: #f0f0ed;        /* 胶囊/弱填充/选中底 */
-  --surface-hover: #ececea;
-  --surface-elevated: #ffffff; /* 白卡片 / 弹层底 */
-  --ink: #2b2b2b;            /* 正文（flomo 柔黑）*/
-  --ink-muted: #8a8a86;      /* 次要/时间/日期 */
-  --ink-faint: #c9c9c5;      /* 占位/弱图标 */
-  --line: #e8e8e4;           /* 细线 */
-  --radius-card: 14px;
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.035);
-  --accent: #1b365d;         /* kami 墨蓝：唯一强调（链接/@名字/焦点，字色线色，不做背景）*/
-  --accent-hover: #2d5a8a;
+  --surface: #f4f4f0;        /* 卡片/标题栏/胶囊填充 */
+  --surface-hover: #eeeee9;  /* hover/选中底 */
+  --surface-elevated: #fcfcfa; /* 浮层/弹层底 */
+  --ink: #1c1c18;            /* 正文 */
+  --ink-muted: #6b6b60;      /* 次要/标签/时间 */
+  --ink-faint: #adadaa;      /* 占位/禁用 */
+  --line: #e8e8e2;           /* 分隔/卡片边 */
+  --radius-card: 10px;       /* spool 卡片 10 */
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.04);
+  --accent: #c85a00;         /* spool 琥珀橙（never blue）：链接/@名字/焦点 */
+  --accent-hover: #a84a00;
+  --accent-soft: #fff3e8;    /* 琥珀淡底：选中/强调态 */
   --highlight: #f5e8c8;      /* ==高亮== */
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'PingFang SC', Inter, 'Helvetica Neue', sans-serif;
   /* 局部衬线（仅日期页头 + 大标题，纸感来源）。系统衬线、0 webfont */
