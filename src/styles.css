@@ -1,9 +1,54 @@
 @import 'tailwindcss';
 
-/* 纸的底色和文字 —— Apple Notes 基调 */
+/* ===== 设计 token（改这里全站生效，细调一处即可）—— Claude 暖色系 ===== */
 :root {
-  --paper: #fffefb;
-  --ink: #1d1d1f;
+  --bg: #faf9f5;             /* 暖白底 */
+  --paper: var(--bg);        /* 兼容旧引用 */
+  --surface: #f0eee6;        /* 暖灰填充：胶囊/卡片/收件箱/选中底 */
+  --surface-hover: #e9e6dc;
+  --ink: #1f1e1c;            /* 正文 */
+  --ink-muted: #6b6760;      /* 次要/日期抬头 */
+  --ink-faint: #a8a39a;      /* 占位 */
+  --line: #e5e1d8;           /* 细线 */
+  --accent: #d97757;         /* 珊瑚：链接/@名字/焦点（字色线色，不做大面积背景）*/
+  --accent-hover: #c2603f;
+  --highlight: #f5e8c8;      /* ==高亮== */
+  --radius: 10px;
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'PingFang SC', Inter, 'Helvetica Neue', sans-serif;
+  --text-body: 16px;         /* 文档正文字号 */
+  --leading-body: 1.7;
+}
+
+/* 把 Tailwind 调色板指向 token —— 全站现有 blue-/stone-/amber- 类自动走暖色 token，
+   以后改 :root 一处、全站生效。emerald/red 是语义状态色，保留。 */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-ink: var(--ink);
+  --color-line: var(--line);
+
+  --color-blue-50: var(--surface);
+  --color-blue-100: var(--surface-hover);
+  --color-blue-400: var(--accent);
+  --color-blue-500: var(--accent);
+  --color-blue-600: var(--accent);
+  --color-blue-700: var(--accent-hover);
+  --color-blue-900: var(--accent-hover);
+
+  --color-stone-50: var(--surface);
+  --color-stone-100: var(--surface);
+  --color-stone-200: var(--surface-hover);
+  --color-stone-300: var(--line);
+  --color-stone-400: var(--ink-faint);
+  --color-stone-500: var(--ink-muted);
+  --color-stone-600: var(--ink-muted);
+  --color-stone-700: var(--ink);
+  --color-stone-900: var(--ink);
+
+  --color-amber-50: var(--highlight);
+  --color-amber-400: var(--line);
+  --color-amber-700: var(--ink-muted);
 }
 
 html,
@@ -14,8 +59,8 @@ body {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
-  background: var(--paper);
+  font-family: var(--font-sans);
+  background: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
 }

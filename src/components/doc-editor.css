@@ -1,8 +1,8 @@
 /* Tiptap 文档内核样式：对齐 NowNow 的轻量「一张纸」观感，正文 14px、黑字继承 --ink */
 .doc-prose {
-  font-size: 14px;
-  line-height: 1.7;
-  color: #1d1d1f;
+  font-size: var(--text-body, 16px);
+  line-height: var(--leading-body, 1.7);
+  color: var(--ink, #1f1e1c);
 }
 .doc-prose > * + * {
   margin-top: 0.4em;
@@ -42,12 +42,12 @@
   width: 18px;
   height: 22px;
   border-radius: 4px;
-  color: #d6d3d1;
+  color: var(--ink-faint);
   cursor: grab;
   z-index: 10;
 }
 .drag-handle:hover {
-  background: #f5f5f4;
+  background: var(--surface);
   color: #78716c;
 }
 .drag-handle:active {
@@ -85,7 +85,7 @@
   text-decoration: line-through;
 }
 .doc-prose pre {
-  background: #f5f5f4;
+  background: var(--surface);
   border-radius: 6px;
   padding: 0.6em 0.8em;
   font-size: 13px;
@@ -93,13 +93,13 @@
 }
 .doc-prose hr {
   border: none;
-  border-top: 1px solid #e7e5e4;
+  border-top: 1px solid var(--line);
   margin: 0.8em 0;
 }
 /* 提示块 Callout */
 .doc-callout {
-  background: #f5f6f8;
-  border-left: 3px solid #2563eb;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
   border-radius: 6px;
   padding: 0.6em 0.9em;
   margin: 0.5em 0;
@@ -116,13 +116,13 @@
 }
 .doc-prose td,
 .doc-prose th {
-  border: 1px solid #e7e5e4;
+  border: 1px solid var(--line);
   padding: 0.35em 0.6em;
   vertical-align: top;
   min-width: 3em;
 }
 .doc-prose th {
-  background: #f5f5f4;
+  background: var(--surface);
   font-weight: 600;
   text-align: left;
 }
@@ -130,7 +130,7 @@
   background: #dbeafe66;
 }
 .doc-prose .column-resize-handle {
-  background: #2563eb;
+  background: var(--accent);
   width: 3px;
   position: absolute;
   right: -1px;
@@ -144,32 +144,32 @@
 .doc-prose .hljs-keyword, .doc-prose .hljs-selector-tag, .doc-prose .hljs-built_in { color: #9333ea; }
 .doc-prose .hljs-string, .doc-prose .hljs-attr { color: #16a34a; }
 .doc-prose .hljs-number, .doc-prose .hljs-literal { color: #ea580c; }
-.doc-prose .hljs-title, .doc-prose .hljs-function .hljs-title, .doc-prose .hljs-name { color: #2563eb; }
+.doc-prose .hljs-title, .doc-prose .hljs-function .hljs-title, .doc-prose .hljs-name { color: var(--accent); }
 .doc-prose .hljs-type, .doc-prose .hljs-class .hljs-title { color: #ca8a04; }
 .doc-prose .hljs-tag { color: #78716c; }
 .doc-prose blockquote {
-  border-left: 3px solid #d6d3d1;
+  border-left: 3px solid var(--line);
   padding-left: 0.7em;
-  color: #57534e;
+  color: var(--ink-muted);
 }
 .doc-prose mark {
-  background: rgba(253, 230, 138, 0.7); /* amber-200/70，对齐旧高亮 */
+  background: var(--highlight); /* amber-200/70，对齐旧高亮 */
   border-radius: 2px;
   padding: 0 0.1em;
   color: inherit;
 }
 .doc-prose code {
-  background: #f5f5f4;
+  background: var(--surface);
   border-radius: 4px;
   padding: 0 0.3em;
   font-size: 13px;
 }
 .doc-prose a {
-  color: #2563eb;
+  color: var(--accent);
   text-decoration: underline;
 }
 .doc-mention {
-  color: #2563eb;
+  color: var(--accent);
   font-weight: 600;
 }
 .doc-prose img {
@@ -191,7 +191,7 @@
   width: 11px;
   height: 11px;
   border: 2px solid #fff;
-  background: #2563eb;
+  background: var(--accent);
   border-radius: 2px;
   opacity: 0;
   transition: opacity 0.15s;
@@ -206,7 +206,7 @@
 /* Placeholder：空文档时显示灰提示（@tiptap/extension-placeholder 给首个空块加 is-empty） */
 .doc-prose p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: #d6d3d1;
+  color: var(--ink-faint);
   float: left;
   height: 0;
   pointer-events: none;
