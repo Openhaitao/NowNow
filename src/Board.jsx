@@ -822,7 +822,7 @@ export default function Board({ session }) {
                 key={s.key}
                 onClick={() => goChannel(s.key)}
                 className={
-                  'rounded-full px-4 py-1.5 text-[16px] transition-colors ' +
+                  'rounded-full px-3.5 py-1.5 text-[14px] leading-none transition-colors ' +
                   (channel === s.key
                     ? 'bg-stone-200/80 font-medium text-stone-900'
                     : 'text-stone-500 hover:bg-stone-100 hover:text-stone-900')
