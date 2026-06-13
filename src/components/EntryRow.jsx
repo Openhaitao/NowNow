@@ -239,9 +239,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             ? 'bg-blue-50/70 px-1.5 -ml-1.5 text-blue-900'
             : pastDue
               ? 'bg-red-50/70 px-1.5 -ml-1.5'
-              : entry.is_goal
-                ? ''
-                : 'text-stone-500') // 备忘比目标灰一档，扫一眼即可区分
+              : '') // 目标与纯文字统一黑色（继承 --ink），文档化后纯文字是主内容、不再灰
       }
       onContextMenu={(e) => {
         if (!isMine) return
