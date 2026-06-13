@@ -16,6 +16,7 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
   const [nat, setNat] = useState(null) // 自然尺寸 {w,h}
   const [cropping, setCropping] = useState(false)
   const [draft, setDraft] = useState(null) // 裁剪中草稿 {x,y,w,h}
+  const [cropW, setCropW] = useState(0) // 进入裁剪时实测的显示宽（避免尺寸跳变）
 
   const ratio = nat ? nat.h / nat.w : null // 自然高/宽
 
@@ -50,13 +51,15 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
   }
 
   // ===== 裁剪 =====
-  // 工作区宽：让现有裁剪区在工作区里正好等于当前显示宽 W，整图按比例放大显示
-  const workW = (W || 360) / (crop?.w || 1)
+  // 工作区宽 = 进入裁剪时图片的真实显示宽（实测 offsetWidth），保证裁剪模式不跳大跳小。
+  // 已裁剪时 imgRef 是放大后的整图(offsetWidth=整图宽)、未裁剪时就是显示宽——两种都对。
+  const workW = cropW || W || 360
   const workH = ratio ? workW * ratio : workW
 
   const enterCrop = (e) => {
     e.preventDefault()
     e.stopPropagation()
+    setCropW(imgRef.current?.offsetWidth || W || 360)
     setDraft(crop || { x: 0, y: 0, w: 1, h: 1 })
     setCropping(true)
   }
