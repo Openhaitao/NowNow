@@ -49,7 +49,7 @@ function SortableMemberRow({ p, isMe, active, news, onClick }) {
       onClick={onClick}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={
-        'flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+        'flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
         (isDragging ? 'z-10 ' : '') +
         (active || isDragging ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
       }
@@ -558,7 +558,7 @@ export default function Board({ session }) {
         </button>
       </div>
     ) : (
-      <div className="mx-auto flex h-screen max-w-4xl animate-pulse">
+      <div className="mx-auto flex h-screen max-w-[970px] animate-pulse">
         <div className="hidden w-52 shrink-0 px-4 py-6 md:block">
           <div className="h-5 w-24 rounded-md bg-stone-100" />
           <div className="mt-6 h-10 rounded-md bg-stone-100" />
@@ -609,7 +609,7 @@ export default function Board({ session }) {
         <button
           onClick={() => viewPage(me.id)}
           className={
-            'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+            'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[16px] max-md:py-2 ' +
             (view === 'paper' && isMyPage ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
           }
         >
@@ -618,7 +618,7 @@ export default function Board({ session }) {
         <button
           onClick={() => setView('all')}
           className={
-            'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+            'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[16px] max-md:py-2 ' +
             (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
           }
         >
@@ -675,7 +675,7 @@ export default function Board({ session }) {
 
   return (
     // 桌面：整个 app 左右细边框（主页边界感）；侧栏右边框做分界。相邻处只有侧栏这一条线，不重复。手机不画框不占面积
-    <div className="mx-auto flex h-dvh max-w-4xl overflow-hidden md:border-x md:border-stone-200">
+    <div className="mx-auto flex h-dvh max-w-[970px] overflow-hidden md:border-x md:border-stone-200">
       {/* 左栏：人员列表（固定不随内容滚动） */}
       <aside className="hidden h-full w-52 shrink-0 flex-col overflow-hidden border-r border-stone-100 px-2 pb-5 pt-3 md:flex">
         {sidebarContent}

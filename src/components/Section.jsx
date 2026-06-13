@@ -25,7 +25,7 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
   const d = { ...draft, is_goal: isGoal }
   return (
-    <div className="flex items-start gap-2.5 py-[5px] text-[13.5px] leading-relaxed max-md:text-[16.5px]">
+    <div className="flex items-start gap-2.5 py-[5px] text-[16px] leading-relaxed">
       <button
         type="button"
         tabIndex={-1}
@@ -459,7 +459,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
               },
             ])
           }
-          className="flex cursor-text items-start gap-2.5 py-[5px] text-[13.5px] leading-relaxed text-stone-300 max-md:py-2 max-md:text-[16.5px]"
+          className="flex cursor-text items-start gap-2.5 py-[5px] text-[16px] leading-relaxed text-stone-300 max-md:py-2"
         >
           <span className="mt-[5px] w-[15px] shrink-0 text-center leading-none">＋</span>
           <span>现在要做什么？回车存，@ 派人</span>

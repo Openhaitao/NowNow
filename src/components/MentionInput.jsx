@@ -187,7 +187,7 @@ export default function MentionInput({
       <div
         aria-hidden
         className={
-          'pointer-events-none absolute inset-0 select-none whitespace-pre-wrap break-words text-[13.5px] leading-relaxed ' +
+          'pointer-events-none absolute inset-0 select-none whitespace-pre-wrap break-words text-[16px] leading-relaxed ' +
           (className || '')
         }
       >
@@ -204,7 +204,7 @@ export default function MentionInput({
         onKeyDown={handleKeyDown}
         onBlur={() => { setTimeout(() => setPicker(null), 150); onBlur?.() }}
         className={
-          'colored-input relative block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[13.5px] leading-relaxed text-transparent caret-stone-800 outline-none placeholder:text-stone-300 ' +
+          'colored-input relative block w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-[16px] leading-relaxed text-transparent caret-stone-800 outline-none placeholder:text-stone-300 ' +
           (className || '')
         }
       />
