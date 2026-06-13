@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ChevronDown, ChevronLeft, ChevronRight, Pilcrow, Square } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pilcrow, Square } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { fmtDate, inPeriod, periodRange } from '../lib/period'
@@ -93,7 +93,6 @@ function SortableRow({ entry, draggable, children }) {
 // allTime = 「全部目标」视图：无视日历周期，这一区的所有条目都显示
 // baseDate / isLive = 全局日期锚：整张纸拨回某天（isLive=false 时为回看模式）
 export default function Section({ sec, entries, me, isMyPage, profiles, allEntries, hasAnchor, allTime, baseDate, isLive = true, mutate, pushUndo, flashId, query, editRequest, onEditRequest, allMentions }) {
-  const [showClosed, setShowClosed] = useState(true) // 默认展开（用户拍板）
   const [offset, setOffset] = useState(0)
   const [editId, setEditId] = useState(null) // 退格删条后让上一条进入编辑态
   const [drafts, setDrafts] = useState([]) // 回车新建的本地草稿行（写了字才真正入库，零等待）
@@ -114,10 +113,15 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     return p ? (p.display_name + ' ' + p.handle).toLowerCase().includes(q) : false
   }
 
+  // 频道周期判定。Kent gate：今日严格 = anchor==当天，空 anchor 绝不漏进今日（自然日翻篇靠这条焊死）
+  const inThisPeriod = (e) => {
+    if (q || allTime) return true
+    if (sec.key === 'today') return e.anchor != null && inPeriod(e.anchor, range)
+    return inPeriod(e.anchor ?? null, range)
+  }
+
   const { active, closed, prevUnfinished } = useMemo(() => {
-    const list = entries.filter(
-      (e) => e.section === sec.key && matchesQuery(e) && (q || allTime || inPeriod(e.anchor ?? null, range)),
-    )
+    const list = entries.filter((e) => e.section === sec.key && matchesQuery(e) && inThisPeriod(e))
     const prevRange = periodRange(sec.key, offset - 1, baseDate)
     return {
       active: list.filter((e) => e.status !== 'closed').sort((a, b) => a.position - b.position),
@@ -377,9 +381,14 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         </button>
       )}
 
+      {/* 完成的条目不沉底不折叠：和未完成的混在一起，按 position 就地留存（=今天的足迹） */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={active.map((e) => e.id)} strategy={verticalListSortingStrategy}>
-          {[...active.map((e) => ({ t: 'e', v: e, pos: e.position })), ...(q ? [] : drafts).map((d) => ({ t: 'd', v: d, pos: d.pos }))]
+          {[
+            ...active.map((e) => ({ t: 'e', v: e, pos: e.position })),
+            ...closed.map((e) => ({ t: 'c', v: e, pos: e.position })),
+            ...(q ? [] : drafts).map((d) => ({ t: 'd', v: d, pos: d.pos })),
+          ]
             .sort((a, b) => a.pos - b.pos)
             .map((item) =>
               item.t === 'e' ? (
@@ -407,6 +416,20 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     searchTerm={q || null}
                   />
                 </SortableRow>
+              ) : item.t === 'c' ? (
+                <EntryRow
+                  key={item.v.id}
+                  entry={item.v}
+                  me={me}
+                  profiles={profiles}
+                  allEntries={allEntries}
+                  mutate={mutate}
+                  pushUndo={pushUndo}
+                  allMentions={allMentions}
+                  flash={flashId === item.v.id}
+                  ownerLabel={q ? profiles.find((p) => p.id === item.v.owner)?.display_name : null}
+                  searchTerm={q || null}
+                />
               ) : (
                 <DraftRow
                   key={item.v.key}
@@ -422,20 +445,6 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             )}
         </SortableContext>
       </DndContext>
-
-      {/* 已完成折叠：不让灰色尸体堆满整页 */}
-      {closed.length > 0 && (
-        <button
-          onClick={() => setShowClosed((v) => !v)}
-          className="mt-1.5 flex items-center gap-1 rounded-md bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 max-md:py-1 max-md:text-[14px]"
-        >
-          {showClosed ? <ChevronDown size={12} /> : <ChevronRight size={12} />} 已完成 {closed.length}
-        </button>
-      )}
-      {(showClosed || q) &&
-        closed.map((e) => (
-          <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} pushUndo={pushUndo} />
-        ))}
       {/* 幽灵行：常驻在频道底部，点一下就地开写，回车连续新建（纸即输入，取代独立输入框） */}
       {isMyPage && !q && (
         <div
