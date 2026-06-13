@@ -1,5 +1,6 @@
 /* Tiptap 文档内核样式：对齐 NowNow 的轻量「一张纸」观感，正文 14px、黑字继承 --ink */
 .doc-prose {
+  font-family: var(--font-doc);
   font-size: var(--text-body, 16px);
   line-height: var(--leading-body, 1.7);
   color: var(--ink, #1f1e1c);

@@ -11,10 +11,12 @@
   --ink-muted: #6b6760;      /* 次要/日期抬头 */
   --ink-faint: #a8a39a;      /* 占位 */
   --line: #e5e1d8;           /* 细线 */
-  --accent: #d97757;         /* 珊瑚：链接/@名字/焦点（字色线色，不做大面积背景）*/
-  --accent-hover: #c2603f;
+  --accent: #1b365d;         /* kami 墨蓝：唯一强调（链接/@名字/焦点，字色线色，不做背景）*/
+  --accent-hover: #15294a;
   --highlight: #f5e8c8;      /* ==高亮== */
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'PingFang SC', Inter, 'Helvetica Neue', sans-serif;
+  /* 文档正文衬线（kami 编辑式手感）。系统衬线、0 webfont：Latin=Charter/Iowan/Georgia，中文=宋体 */
+  --font-doc: Charter, 'Iowan Old Style', 'Source Serif 4', Georgia, 'Songti SC', 'STSong', 'Noto Serif SC', serif;
 
   /* 间距尺度（组件内 4/8/12，块间 16/24，分区 32/40/48；不写散值）*/
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
