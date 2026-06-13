@@ -67,15 +67,15 @@ function renderInline(text, keyBase, q) {
 
 // 完整渲染：标题前缀（#/##）→ 加粗加大；@token 高亮；日期 chip 可点；其余行内 md
 // 派活状态长在 @名字 的"下划线"里：不加任何字符、不占宽度、编辑态光标也不歪
-// 虚线灰=未认领 实线蓝=已认领 实线绿=已解决 红删除线=已拒绝
+// 虚线灰=未认领 实线蓝=已认领 蓝色标记=已解决 红删除线=已拒绝
 export const MENTION_STATE = {
   unclaimed: { cls: 'underline decoration-stone-300 decoration-dashed underline-offset-2', tip: '未认领' },
   claimed: { cls: 'underline decoration-blue-500 decoration-2 underline-offset-2', tip: '已认领' },
-  resolved: { cls: 'underline decoration-emerald-500 decoration-2 underline-offset-2', tip: '已解决' },
+  resolved: { cls: 'rounded-sm bg-blue-50 px-0.5 underline decoration-blue-500 decoration-2 underline-offset-2', tip: '已解决' },
   rejected: { cls: 'line-through decoration-red-400 decoration-2', tip: '已拒绝' },
 }
 
-export function renderEntryContent(content, profiles, { meHandle, highlightMe, onDateClick, searchTerm, mentionStates } = {}) {
+export function renderEntryContent(content, profiles, { meHandle, highlightMe, mutedMentions, onDateClick, searchTerm, mentionStates } = {}) {
   let body = content
   let heading = 0
   const hm = /^(#{1,3})\s+/.exec(body)
@@ -95,7 +95,7 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe, o
         <span
           key={i}
           title={st?.tip}
-          className={(isMe && highlightMe ? 'mention-me ' : 'mention ') + (st?.cls || '')}
+          className={mutedMentions ? 'font-semibold text-inherit' : (isMe && highlightMe ? 'mention-me ' : 'mention ') + (st?.cls || '')}
         >
           {part}
         </span>

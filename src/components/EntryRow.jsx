@@ -26,7 +26,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   // 手机上 ⋯ 菜单改成底部抽屉：浮在指尖的小菜单在触屏上很难点
   const openMenu = (x, y) =>
     setMenu(window.matchMedia('(max-width: 767px)').matches ? { sheet: true } : { x, y })
-  const [closing, setClosing] = useState(false) // 完成动画：先划线变灰，再沉底
+  const [closing, setClosing] = useState(false) // 完成动画：先划线变灰，随后原位留存
   const [clickCaret, setClickCaret] = useState(null)
   const [datePop, setDatePop] = useState(null) // {token, x, y} 日期 chip 的修改/删除弹层
   const rowRef = useRef(null)
@@ -117,7 +117,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         setNotified(true)
         setTimeout(() => setNotified(false), 2500)
       }
-      await new Promise((r) => setTimeout(r, 350)) // 让打勾→划线的爽感停留一拍再沉底
+      await new Promise((r) => setTimeout(r, 350)) // 让打勾→划线的状态停留一拍
       setClosing(false)
     }
     mutate(patchLocal({ status: next }), async () => {
@@ -212,6 +212,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
   const rendered = renderEntryContent(entry.content, profiles, {
     meHandle: me.handle,
     highlightMe: !isMine,
+    mutedMentions: closed || closing,
     searchTerm: searchTerm || null,
     mentionStates,
     onDateClick: isMine
@@ -234,7 +235,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
         (closed || closing
           ? 'text-stone-300'
           : resolved
-            ? 'bg-blue-50/60 px-1.5 -ml-1.5'
+            ? 'bg-blue-50/70 px-1.5 -ml-1.5 text-blue-900'
             : pastDue
               ? 'bg-red-50/70 px-1.5 -ml-1.5'
               : entry.is_goal
