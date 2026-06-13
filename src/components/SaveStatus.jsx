@@ -1,12 +1,9 @@
-// 保存状态指示（低干扰，按 @UI 规范）：
-// 已保存=最弱 ink-faint、无绿色；保存中=ink-muted；离线=暖灰胶囊「离线编辑中」无警告红；失败=轻危险色+重试。
+// 保存状态指示（静默自动保存——永不丢字，正常打字时不打扰）：
+// 'saving'/'saved' 不显示任何东西（Haitao：「已保存」在旁边很打扰）；
+// 只在真正需要用户知道时才冒出来：离线=暖灰胶囊「离线编辑中」、失败=轻危险色+重试。
 // state: 'saving' | 'saved' | 'offline' | 'error' | null
 export default function SaveStatus({ state, onRetry }) {
-  if (!state) return null
-  if (state === 'saving')
-    return <span className="text-[12px]" style={{ color: 'var(--ink-muted)' }}>保存中…</span>
-  if (state === 'saved')
-    return <span className="text-[12px]" style={{ color: 'var(--ink-faint)' }}>已保存</span>
+  if (!state || state === 'saving' || state === 'saved') return null
   if (state === 'offline')
     return (
       <span
