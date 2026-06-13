@@ -194,6 +194,11 @@ export default function Board({ session }) {
   }, [])
   const isLive = !baseDate
 
+  // 一页纸：顶部 今日/本周/本月/暂存箱 常驻导航 = 点一下平滑滚到对应区（不再切换隐藏其它区）
+  const scrollToSection = useCallback((key) => {
+    document.getElementById(`sec-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
   // 跨频道接力：键盘流转到别的频道（如 today→week）时自动切过去，让目标 Section 挂载并接住 editRequest
   useEffect(() => {
     if (!editRequest) return
@@ -783,9 +788,18 @@ export default function Board({ session }) {
 
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-3 md:px-6">
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
-          {/* 一页纸：今日/本周/本月 竖向堆叠在下方内容区（各自带日期抬头），不再有频道切换/‹ ›。顶部只留搜索（桌面） */}
+          {/* 一页纸：今日/本周/本月 竖向堆叠在下方内容区。顶部 今日/本周/本月/暂存箱 = 常驻快捷导航，点一下滚到对应区。右侧=搜索（桌面） */}
           {view === 'paper' && (
           <div className="flex items-center gap-1">
+            {SECTIONS.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => scrollToSection(s.key)}
+                className="rounded-md px-2 py-1 text-[14px] text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900"
+              >
+                {s.label}
+              </button>
+            ))}
             <span className="relative ml-auto hidden items-center md:flex">
               <Search size={16} strokeWidth={2.5} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
               <input
@@ -865,7 +879,7 @@ export default function Board({ session }) {
                 const sec = SECTIONS.find((s) => s.key === key)
                 const h = periodHeader(key, baseDate)
                 return (
-                  <div key={key} className="mb-3">
+                  <div key={key} id={`sec-${key}`} className="mb-3 scroll-mt-2">
                     <div className="flex items-baseline gap-2 pb-0.5 pt-3">
                       {h.label && <span className="text-[13px] font-medium text-stone-500">{h.label}</span>}
                       <span className={'text-[13px] ' + (h.label ? 'text-stone-400' : 'font-medium text-stone-500')}>{h.date}</span>
@@ -894,7 +908,7 @@ export default function Board({ session }) {
                 )
               })}
               {/* 暂存箱：无时间线、无日期，单独区放在最后 */}
-              <div className="mt-6 border-t border-stone-200 pt-3">
+              <div id="sec-stash" className="mt-6 scroll-mt-2 border-t border-stone-200 pt-3">
                 <div className="pb-0.5 text-[13px] font-medium text-stone-500">暂存箱</div>
                 <Section
                   sec={SECTIONS.find((s) => s.key === 'stash')}
