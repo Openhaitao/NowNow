@@ -37,13 +37,13 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
     <>
       {/* 当前周期：占满首屏、可写。块带 id（doc-section-periodKey）供 @通知跳转滚动定位 */}
       <div id={`doc-${section}-${curKey}`} className="mb-3" style={viewportH ? { minHeight: viewportH } : undefined}>
-        <div className="pb-0.5 pt-3 text-[15px] font-medium text-stone-500 font-[family-name:var(--font-serif)]">{periodHeader(section, 0, baseDate)}</div>
+        <div className="pb-0.5 pt-3 text-[13px] font-medium text-stone-500">{periodHeader(section, 0, baseDate)}</div>
         <DocBlock owner={owner} section={section} periodKey={curKey} editable={isMyPage} placeholder="写点什么…" profiles={profiles} />
       </div>
       {/* 过去：只读，往下回溯 */}
       {pastKeys.map((k) => (
         <div key={k} id={`doc-${section}-${k}`} className="mb-3">
-          <div className="pb-0.5 pt-3 text-[15px] font-medium text-stone-500 font-[family-name:var(--font-serif)]">{periodHeaderFromKey(section, k)}</div>
+          <div className="pb-0.5 pt-3 text-[13px] font-medium text-stone-500">{periodHeaderFromKey(section, k)}</div>
           <DocBlock owner={owner} section={section} periodKey={k} editable={false} profiles={profiles} />
         </div>
       ))}

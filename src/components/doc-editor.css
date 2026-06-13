@@ -4,11 +4,6 @@
   line-height: var(--leading-body, 1.7);
   color: var(--ink, #1f1e1c);
 }
-/* 局部衬线：只大标题级别，正文/列表/表格保持 sans（B 方案）*/
-.doc-prose h1,
-.doc-prose h2 {
-  font-family: var(--font-serif);
-}
 .doc-prose > * + * {
   margin-top: 0.4em;
 }
