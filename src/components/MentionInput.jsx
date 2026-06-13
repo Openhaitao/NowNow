@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Bold, Highlighter, Italic, List, ListOrdered, Quote, SquareCheckBig, Strikethrough, Underline } from 'lucide-react'
 import { mentionSplitRegex } from '../lib/mentions'
 import { DATE_TOKEN_RE, dateTokenState } from '../lib/dates'
 import { DATE_CHIP_CLS, MENTION_STATE } from '../lib/render'
@@ -56,6 +57,7 @@ export default function MentionInput({
   const [picker, setPicker] = useState(null) // {start, query} | null
   const [active, setActive] = useState(0)
   const [pickerPos, setPickerPos] = useState({ x: 0, y: 24 })
+  const [toolbar, setToolbar] = useState(null) // 选区悬浮格式条 {start, end, x, y} | null
 
   // 把选择器定位到 @ 字符的正下方（canvas 量文字宽度，无需镜像 DOM）
   function caretXY(text, idx) {
@@ -124,6 +126,53 @@ export default function MentionInput({
       const pos = picker.start + p.handle.length + 2
       ref.current.focus()
       ref.current.setSelectionRange(pos, pos)
+    })
+  }
+
+  // 选区悬浮格式条：选中文字时浮出，点按钮给选区加/包 md 标记（没选区就收起）
+  function refreshToolbar() {
+    const el = ref.current
+    if (!el) return
+    const s = el.selectionStart, e = el.selectionEnd
+    if (s == null || s === e) { setToolbar(null); return }
+    const cs = getComputedStyle(el)
+    const lh = parseFloat(cs.lineHeight) || 24
+    const lines = el.value.slice(0, s).split('\n').length - 1
+    const { x: rawX } = caretXY(el.value, s)
+    // 工具条约 330px 宽，夹在输入框内不溢出右边
+    const x = Math.max(0, Math.min(rawX, el.clientWidth - 330))
+    // 浮在选区上方一行；顶到容器外就改放下方
+    const above = lines * lh - 40
+    const y = above < 0 ? (lines + 1) * lh + 6 : above
+    setToolbar({ start: s, end: e, x, y })
+  }
+
+  // 包裹型行内标记（**粗** ==高亮== __下划线__ ~~删除~~ *斜体*）：选区两端同号
+  function wrapSel(mk) {
+    if (!toolbar) return
+    const { start, end } = toolbar
+    const next = value.slice(0, start) + mk + value.slice(start, end) + mk + value.slice(end)
+    onChange(next)
+    const ns = start + mk.length, ne = end + mk.length
+    requestAnimationFrame(() => {
+      const el = ref.current
+      if (!el) return
+      el.focus(); el.setSelectionRange(ns, ne); refreshToolbar()
+    })
+  }
+
+  // 行前缀型块标记（- 项目符号 / 1. 编号 / > 引用）：加在选区所在行的行首
+  function prefixSel(pfx) {
+    if (!toolbar) return
+    const { start, end } = toolbar
+    const ls = value.lastIndexOf('\n', start - 1) + 1
+    const next = value.slice(0, ls) + pfx + value.slice(ls)
+    onChange(next)
+    const ns = start + pfx.length, ne = end + pfx.length
+    requestAnimationFrame(() => {
+      const el = ref.current
+      if (!el) return
+      el.focus(); el.setSelectionRange(ns, ne); refreshToolbar()
     })
   }
 
@@ -204,7 +253,8 @@ export default function MentionInput({
         placeholder={placeholder}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        onBlur={() => { setTimeout(() => setPicker(null), 150); onBlur?.() }}
+        onSelect={refreshToolbar}
+        onBlur={() => { setTimeout(() => { setPicker(null); setToolbar(null) }, 150); onBlur?.() }}
         className={
           'colored-input relative block w-full resize-none overflow-hidden border-0 bg-transparent p-0 leading-relaxed text-transparent caret-stone-800 outline-none placeholder:text-stone-300 ' +
           fontClass + ' ' +
@@ -229,6 +279,40 @@ export default function MentionInput({
               <span>{p.display_name}</span>
             </button>
           ))}
+        </div>
+      )}
+      {toolbar && !picker && (
+        <div
+          className="absolute z-30 flex items-center gap-0.5 rounded-lg border border-stone-200 bg-white p-1 text-stone-600 shadow-xl"
+          style={{ left: Math.max(0, toolbar.x - 8), top: toolbar.y }}
+        >
+          {[
+            { icon: Bold, fn: () => wrapSel('**'), title: '加粗' },
+            { icon: Highlighter, fn: () => wrapSel('=='), title: '高亮' },
+            { icon: Underline, fn: () => wrapSel('__'), title: '下划线' },
+            { icon: Strikethrough, fn: () => wrapSel('~~'), title: '删除线' },
+            { icon: Italic, fn: () => wrapSel('*'), title: '斜体' },
+            { sep: true },
+            { icon: List, fn: () => prefixSel('- '), title: '项目符号' },
+            { icon: ListOrdered, fn: () => prefixSel('1. '), title: '编号' },
+            { icon: Quote, fn: () => prefixSel('> '), title: '引用' },
+            { sep: true },
+            { icon: SquareCheckBig, fn: () => { onTab?.(); setToolbar(null) }, title: '转为目标' },
+          ].map((b, i) =>
+            b.sep ? (
+              <span key={i} className="mx-0.5 h-4 w-px bg-stone-200" />
+            ) : (
+              <button
+                key={i}
+                type="button"
+                title={b.title}
+                onMouseDown={(e) => { e.preventDefault(); b.fn() }}
+                className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-stone-100 hover:text-stone-900"
+              >
+                <b.icon size={15} strokeWidth={2.2} />
+              </button>
+            ),
+          )}
         </div>
       )}
     </div>
