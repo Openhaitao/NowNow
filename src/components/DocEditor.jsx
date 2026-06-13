@@ -7,6 +7,7 @@ import Highlight from '@tiptap/extension-highlight'
 import Mention from '@tiptap/extension-mention'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
+import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
 import { ResizableImage } from './ResizableImage'
 import { SlashCommand } from './SlashCommand'
 import { Bold, CheckSquare, Code, Heading1, Heading2, Heading3, Highlighter, Image as ImageIcon, Italic, List, ListOrdered, Minus, Quote, Strikethrough, Underline as UnderlineIcon } from 'lucide-react'
@@ -72,6 +73,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
       ResizableImage,
       TaskList,
       TaskItem.configure({ nested: true }),
+      ...(editable ? [GlobalDragHandle.configure({ dragHandleWidth: 20, scrollTreshold: 100 })] : []),
       SlashCommand.configure({
         suggestion: {
           items: ({ query }) => {

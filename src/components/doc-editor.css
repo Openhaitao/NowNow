@@ -33,6 +33,35 @@
 .doc-prose li {
   margin: 0.1em 0;
 }
+/* 块拖拽手柄（悬停块时在左边距出现 ⠿，拖动整块换位） */
+.drag-handle {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 22px;
+  border-radius: 4px;
+  color: #d6d3d1;
+  cursor: grab;
+  z-index: 10;
+}
+.drag-handle:hover {
+  background: #f5f5f4;
+  color: #78716c;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.drag-handle::before {
+  content: '⠿';
+  font-size: 14px;
+  line-height: 1;
+}
+.drag-handle.hide {
+  display: none;
+}
+
 /* 待办清单：复选框 + 内容横排，勾上划线变灰 */
 .doc-prose ul[data-type='taskList'] {
   list-style: none;
