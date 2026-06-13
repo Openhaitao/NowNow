@@ -131,19 +131,17 @@ export default function Login() {
           <h1 className="mt-5 flex items-baseline justify-center text-xl font-bold">
             Hi&nbsp;@
             {/* 固定宽度名字槽：Hi @ 不动，下划线随字长 */}
-            <span className="relative ml-1 inline-block min-w-[3.25rem] text-left">
-              <span aria-hidden="true" className="invisible whitespace-pre px-0.5">{name || '名字'}</span>
-              <input
-                value={name}
-                onChange={(e) => { setName(e.target.value); setErr('') }}
-                onBlur={async () => {
-                  const n = name.trim().replace(/^@/, '')
-                  if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
-                }}
-                placeholder="名字"
-                className="nn-name-input absolute inset-0 w-full border-b-2 border-stone-200 bg-transparent px-0.5 text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-stone-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
-              />
-            </span>
+            {/* 固定宽度（约 3 字）：Hi @ 不随输入移动；超长名字框内滚动 */}
+            <input
+              value={name}
+              onChange={(e) => { setName(e.target.value); setErr('') }}
+              onBlur={async () => {
+                const n = name.trim().replace(/^@/, '')
+                if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
+              }}
+              placeholder="名字"
+              className="nn-name-input ml-1 w-[4.5rem] border-b-2 border-stone-200 bg-transparent px-0.5 text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-stone-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
+            />
           </h1>
         ) : (
           <h1 className="mt-5 text-xl font-bold">
