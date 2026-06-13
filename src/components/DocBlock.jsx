@@ -32,7 +32,8 @@ export default function DocBlock({ owner, section, periodKey, editable, placehol
   }, [owner, section, periodKey])
 
   if (content === undefined) {
-    return <div className="py-2 text-[13px]" style={{ color: 'var(--ink-faint)' }}>加载中…</div>
+    // 加载中静默占位（不显示"加载中…"文字，避免开屏闪一下文案再变幽灵字）；留点高度防跳动
+    return <div className="min-h-[1.75rem]" aria-hidden />
   }
 
   return (
