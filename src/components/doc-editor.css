@@ -96,6 +96,57 @@
   border-top: 1px solid #e7e5e4;
   margin: 0.8em 0;
 }
+/* 提示块 Callout */
+.doc-callout {
+  background: #f5f6f8;
+  border-left: 3px solid #2563eb;
+  border-radius: 6px;
+  padding: 0.6em 0.9em;
+  margin: 0.5em 0;
+}
+.doc-callout > * + * {
+  margin-top: 0.3em;
+}
+/* 表格 */
+.doc-prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+  table-layout: fixed;
+}
+.doc-prose td,
+.doc-prose th {
+  border: 1px solid #e7e5e4;
+  padding: 0.35em 0.6em;
+  vertical-align: top;
+  min-width: 3em;
+}
+.doc-prose th {
+  background: #f5f5f4;
+  font-weight: 600;
+  text-align: left;
+}
+.doc-prose .selectedCell {
+  background: #dbeafe66;
+}
+.doc-prose .column-resize-handle {
+  background: #2563eb;
+  width: 3px;
+  position: absolute;
+  right: -1px;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+/* 代码块语法高亮（lowlight/highlight.js token，浅色） */
+.doc-prose pre code.hljs { display: block; }
+.doc-prose .hljs-comment, .doc-prose .hljs-quote { color: #a8a29e; font-style: italic; }
+.doc-prose .hljs-keyword, .doc-prose .hljs-selector-tag, .doc-prose .hljs-built_in { color: #9333ea; }
+.doc-prose .hljs-string, .doc-prose .hljs-attr { color: #16a34a; }
+.doc-prose .hljs-number, .doc-prose .hljs-literal { color: #ea580c; }
+.doc-prose .hljs-title, .doc-prose .hljs-function .hljs-title, .doc-prose .hljs-name { color: #2563eb; }
+.doc-prose .hljs-type, .doc-prose .hljs-class .hljs-title { color: #ca8a04; }
+.doc-prose .hljs-tag { color: #78716c; }
 .doc-prose blockquote {
   border-left: 3px solid #d6d3d1;
   padding-left: 0.7em;
