@@ -206,19 +206,20 @@
   outline: 1px solid var(--accent);
   outline-offset: 1px;
 }
-/* 四角缩放手柄：只在选中时随手柄一起渲染（不再 hover 常显） */
+/* 四角缩放手柄：飞书式——白底蓝环的圆点，落在四角外侧（只在选中时渲染） */
 .doc-img-handle {
   position: absolute;
-  width: 11px;
-  height: 11px;
-  border: 2px solid #fff;
-  background: var(--accent);
-  border-radius: 2px;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--accent);
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
-.doc-img-handle.tl { left: 2px; top: 2px; cursor: nwse-resize; }
-.doc-img-handle.tr { right: 2px; top: 2px; cursor: nesw-resize; }
-.doc-img-handle.bl { left: 2px; bottom: 2px; cursor: nesw-resize; }
-.doc-img-handle.br { right: 2px; bottom: 2px; cursor: nwse-resize; }
+.doc-img-handle.tl { left: -6px; top: -6px; cursor: nwse-resize; }
+.doc-img-handle.tr { right: -6px; top: -6px; cursor: nesw-resize; }
+.doc-img-handle.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.doc-img-handle.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
 /* 选中浮出的对齐工具条（飞书式，悬在图片上方居中） */
 .doc-img-toolbar {
   position: absolute;
