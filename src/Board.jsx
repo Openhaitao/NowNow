@@ -858,7 +858,7 @@ export default function Board({ session }) {
               </span>
             )}
             <span className="relative ml-auto hidden items-center md:flex">
-              <Search size={14} className="pointer-events-none absolute left-3 text-stone-300" />
+              <Search size={16} className="pointer-events-none absolute left-2.5 text-stone-400" />
               <input
                 id="search-input"
                 value={query}
@@ -869,11 +869,10 @@ export default function Board({ session }) {
                     e.target.blur()
                   }
                 }}
-                placeholder="搜索"
-                className="w-40 rounded-md border border-stone-200 bg-white py-1.5 pl-9 pr-2 text-[13px] outline-none placeholder:text-stone-300 focus:border-stone-300 md:w-56"
+                className="w-40 rounded-md border border-stone-200 bg-white py-1.5 pl-9 pr-2 text-[13px] outline-none focus:border-stone-300 md:w-56"
               />
               {!query && (
-                <kbd className="pointer-events-none absolute right-2.5 text-[11px] text-stone-300">⌘K</kbd>
+                <kbd className="pointer-events-none absolute left-9 text-[12px] text-stone-300">⌘+K</kbd>
               )}
             </span>
           </div>
