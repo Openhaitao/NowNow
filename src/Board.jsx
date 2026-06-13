@@ -197,17 +197,19 @@ export default function Board({ session }) {
   // 时间线各块不做跨块/跨频道的焦点接力（焦点都在块内，避免回车/↓ 乱跳或切走视图）
   const noEditRelay = useCallback(() => {}, [])
 
-  // 当前周期块占满首屏：用 JS 量出滚动区可视高度（CSS min-h-full 会被容器 pb-24 内边距吃掉而短一截）
-  const scrollRef = useRef(null)
+  // 当前周期块占满首屏：用 JS 量滚动区可视高度（CSS min-h-full 会被容器 pb-24 内边距吃掉而短一截）。
+  // 用 callback ref 而非 useRef+effect：组件初次渲染常在 loading 态，滚动区还没挂载，普通 effect 会量到 null 且不再重跑。
   const [viewportH, setViewportH] = useState(0)
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el || typeof ResizeObserver === 'undefined') return
-    const measure = () => setViewportH(el.clientHeight)
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    return () => ro.disconnect()
+  const roRef = useRef(null)
+  const scrollRef = useCallback((node) => {
+    roRef.current?.disconnect()
+    roRef.current = null
+    if (node && typeof ResizeObserver !== 'undefined') {
+      const measure = () => setViewportH(node.clientHeight)
+      measure()
+      roRef.current = new ResizeObserver(measure)
+      roRef.current.observe(node)
+    }
   }, [])
 
   // 跨频道接力：键盘流转到别的频道（如 today→week）时自动切过去，让目标 Section 挂载并接住 editRequest
@@ -747,8 +749,8 @@ export default function Board({ session }) {
   )
 
   return (
-    // 桌面：整个 app 左右细边框（主页边界感）；侧栏右边框做分界。相邻处只有侧栏这一条线，不重复。手机不画框不占面积
-    <div className="mx-auto flex h-dvh max-w-[970px] overflow-hidden md:border-x md:border-stone-200">
+    // 桌面：app 不画左右外边框（按 Haitao 去掉两边的线）；侧栏右边框仍做内部分界
+    <div className="mx-auto flex h-dvh max-w-[970px] overflow-hidden">
       {/* 左栏：人员列表（固定不随内容滚动） */}
       <aside className="hidden h-full w-52 shrink-0 flex-col overflow-hidden border-r border-stone-100 px-2 pb-5 pt-3 md:flex">
         {sidebarContent}
@@ -903,11 +905,9 @@ export default function Board({ session }) {
                 }
                 // 暂存箱 或 搜索中：单块，不分时间线（搜索 allTime 显示全部命中；暂存箱无周期）
                 if (channel === 'stash' || query.trim()) {
+                  // 暂存箱：和今日/本周/本月同款写作区，但无日期抬头、无「暂存箱」字样、无时间线（顶部 tab 已标明在暂存箱），同样占满首屏
                   return (
-                    <div className="pt-1">
-                      {channel === 'stash' && !query.trim() && (
-                        <div className="pb-0.5 text-[13px] font-medium text-stone-500">暂存箱</div>
-                      )}
+                    <div className="pt-1" style={channel === 'stash' && !query.trim() && viewportH ? { minHeight: viewportH } : undefined}>
                       <Section {...common} entries={query.trim() ? allEntries : pageEntries} allTime offset={0} isCurrentPeriod={!query.trim()} />
                     </div>
                   )
