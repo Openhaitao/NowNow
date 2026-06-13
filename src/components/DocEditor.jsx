@@ -5,8 +5,11 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Highlight from '@tiptap/extension-highlight'
 import Mention from '@tiptap/extension-mention'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
 import { ResizableImage } from './ResizableImage'
-import { Bold, Highlighter, Italic, List, ListOrdered, Quote, Strikethrough, Underline as UnderlineIcon } from 'lucide-react'
+import { SlashCommand } from './SlashCommand'
+import { Bold, CheckSquare, Code, Heading1, Heading2, Heading3, Highlighter, Image as ImageIcon, Italic, List, ListOrdered, Minus, Quote, Strikethrough, Underline as UnderlineIcon } from 'lucide-react'
 import { uploadImage } from '../lib/storage'
 import './doc-editor.css'
 
@@ -41,6 +44,24 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
   const [sug, setSug] = useState(null) // { items, rect, command, index } | null
   const sugRef = useRef(null)
   sugRef.current = sug
+  // Slash `/` 菜单
+  const [slash, setSlash] = useState(null)
+  const slashRef = useRef(null)
+  slashRef.current = slash
+  const fileInputRef = useRef(null)
+
+  const slashItems = [
+    { title: '待办清单', icon: CheckSquare, kw: 'todo task daiban 待办 清单', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleTaskList().run() },
+    { title: '标题 1', icon: Heading1, kw: 'h1 标题 title', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run() },
+    { title: '标题 2', icon: Heading2, kw: 'h2 标题', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run() },
+    { title: '标题 3', icon: Heading3, kw: 'h3 标题', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run() },
+    { title: '项目符号', icon: List, kw: 'bullet list 列表 符号', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleBulletList().run() },
+    { title: '编号列表', icon: ListOrdered, kw: 'number ordered 编号', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleOrderedList().run() },
+    { title: '引用', icon: Quote, kw: 'quote 引用', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleBlockquote().run() },
+    { title: '代码块', icon: Code, kw: 'code 代码', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleCodeBlock().run() },
+    { title: '分割线', icon: Minus, kw: 'divider hr 分割 线', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setHorizontalRule().run() },
+    { title: '图片', icon: ImageIcon, kw: 'image 图片 picture', command: ({ editor, range }) => { editor.chain().focus().deleteRange(range).run(); fileInputRef.current?.click() } },
+  ]
 
   const editor = useEditor({
     editable,
@@ -49,6 +70,30 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Highlight, // ==高亮==
       ResizableImage,
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      SlashCommand.configure({
+        suggestion: {
+          items: ({ query }) => {
+            const q = query.toLowerCase()
+            return slashItems.filter((it) => it.title.toLowerCase().includes(q) || it.kw.includes(q))
+          },
+          render: () => ({
+            onStart: (props) => setSlash({ items: props.items, rect: props.clientRect?.(), command: props.command, index: 0 }),
+            onUpdate: (props) => setSlash((s) => (s ? { ...s, items: props.items, rect: props.clientRect?.(), command: props.command, index: 0 } : null)),
+            onKeyDown: (props) => {
+              const s = slashRef.current
+              if (!s || !s.items.length) return false
+              if (props.event.key === 'ArrowDown') { setSlash((x) => ({ ...x, index: (x.index + 1) % x.items.length })); return true }
+              if (props.event.key === 'ArrowUp') { setSlash((x) => ({ ...x, index: (x.index - 1 + x.items.length) % x.items.length })); return true }
+              if (props.event.key === 'Enter') { const it = s.items[s.index]; if (it) s.command(it); return true }
+              if (props.event.key === 'Escape') { setSlash(null); return true }
+              return false
+            },
+            onExit: () => setSlash(null),
+          }),
+        },
+      }),
       Placeholder.configure({ placeholder }),
       Mention.configure({
         HTMLAttributes: { class: 'doc-mention' },
@@ -160,6 +205,38 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
           ))}
         </div>
       )}
+      {slash && slash.items.length > 0 && slash.rect && (
+        <div
+          className="fixed z-50 max-h-72 w-52 overflow-auto rounded-lg border border-stone-200 bg-white p-1 shadow-xl"
+          style={{ left: slash.rect.left, top: slash.rect.bottom + 4 }}
+        >
+          {slash.items.map((it, i) => (
+            <button
+              key={it.title}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); slash.command(it) }}
+              className={
+                'flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm ' +
+                (i === slash.index ? 'bg-blue-50 text-blue-700' : 'text-stone-700')
+              }
+            >
+              <it.icon size={15} strokeWidth={2} />
+              <span>{it.title}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file && uploaderId) insertImageFromFile(editor.view, file, uploaderId)
+          e.target.value = ''
+        }}
+      />
     </div>
   )
 }

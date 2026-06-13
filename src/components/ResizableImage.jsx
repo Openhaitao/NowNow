@@ -7,14 +7,15 @@ function ResizableImageView({ node, updateAttributes, editor }) {
   const imgRef = useRef(null)
   const editable = editor.isEditable
 
-  const startResize = (e) => {
+  // 四角拖拽缩放：左侧角往左拖变大（dir=-1），右侧角往右拖变大（dir=1）
+  const startResize = (dir) => (e) => {
     if (!editable) return
     e.preventDefault()
     e.stopPropagation()
     const startX = e.clientX
     const startW = imgRef.current?.offsetWidth || 300
     const onMove = (ev) => {
-      const w = Math.max(60, Math.round(startW + (ev.clientX - startX)))
+      const w = Math.max(60, Math.round(startW + dir * (ev.clientX - startX)))
       updateAttributes({ width: w })
     }
     const onUp = () => {
@@ -34,7 +35,14 @@ function ResizableImageView({ node, updateAttributes, editor }) {
         draggable={false}
         style={{ width: node.attrs.width ? node.attrs.width + 'px' : 'auto' }}
       />
-      {editable && <span className="doc-img-handle" onPointerDown={startResize} title="拖拽缩放" />}
+      {editable && (
+        <>
+          <span className="doc-img-handle tl" onPointerDown={startResize(-1)} title="拖拽缩放" />
+          <span className="doc-img-handle tr" onPointerDown={startResize(1)} title="拖拽缩放" />
+          <span className="doc-img-handle bl" onPointerDown={startResize(-1)} title="拖拽缩放" />
+          <span className="doc-img-handle br" onPointerDown={startResize(1)} title="拖拽缩放" />
+        </>
+      )}
     </NodeViewWrapper>
   )
 }
