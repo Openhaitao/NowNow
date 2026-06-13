@@ -1,17 +1,17 @@
-import { AlarmClock, Bell, CheckCircle2, UserPlus } from 'lucide-react'
+import { Bell, CheckCircle2, UserPlus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存箱' }
 
-// 通知 = 只读 FYI（定稿 PRD 六）：对方把我派的活点了已解决、到期提醒、待确认成员。
+// 通知 = 只读 FYI：对方把我派的活点了已解决、待确认成员。只在「@ 谁就通知谁」时出现，不做到期/过期提醒。
 // 不放需要动作的「待认领」（那在「待我处理」）；resolved 的关闭在我自己纸上的原条目完成，这里只提醒+跳转。
-export default function NotificationsPage({ resolvedMine = [], dueMine = [], pendingMembers = [], profiles, onMembersChanged, onJump }) {
+export default function NotificationsPage({ resolvedMine = [], pendingMembers = [], profiles, onMembersChanged, onJump }) {
   async function approve(p, ok) {
     await supabase.rpc(ok ? 'approve_member' : 'reject_member', { p_id: p.id })
     onMembersChanged?.()
   }
 
-  const empty = resolvedMine.length === 0 && dueMine.length === 0 && pendingMembers.length === 0
+  const empty = resolvedMine.length === 0 && pendingMembers.length === 0
 
   return (
     <div className="pt-1">
@@ -21,7 +21,7 @@ export default function NotificationsPage({ resolvedMine = [], dueMine = [], pen
 
       {empty && (
         <p className="mt-6 text-sm text-stone-300 max-md:text-[15px]">
-          没有新通知。你派出去的活被对方点「已解决」、到期的目标、申请加入的成员，都会出现在这里。需要你认领的活在「待我处理」。
+          没有新通知。你派出去的活被对方点「已解决」、申请加入的成员，都会出现在这里。需要你认领的活在「待我处理」。
         </p>
       )}
 
@@ -70,23 +70,6 @@ export default function NotificationsPage({ resolvedMine = [], dueMine = [], pen
         </div>
       )}
 
-      {dueMine.length > 0 && (
-        <div className="mt-5 rounded-lg bg-red-50 px-4 py-3">
-          <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-red-700 max-md:text-[13px]">
-            <AlarmClock size={13} /> 到期 · {dueMine.length} 条今天到期或已过期
-          </div>
-          {dueMine.map((e) => (
-            <button
-              key={e.id}
-              onClick={() => onJump?.(e)}
-              className="flex w-full items-center gap-2 py-1 text-left text-[13.5px] text-red-900 max-md:py-1.5 max-md:text-[15.5px] hover:underline"
-            >
-              <span className="min-w-0 flex-1 truncate">{e.content}</span>
-              <span className="shrink-0 text-[11.5px] text-red-500">{SECTION_LABELS[e.section]}</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

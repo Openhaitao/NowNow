@@ -67,7 +67,7 @@ function renderInline(text, keyBase, q) {
   })
 }
 
-// 完整渲染：标题前缀（#/##）→ 加粗加大；@token 高亮；日期 chip 可点；其余行内 md
+// 完整渲染（飞书云文档轻量风格，无多级标题）：引用/列表块前缀；@token 高亮；日期 chip 可点；其余行内 md
 // 派活状态长在 @名字 的"下划线"里：不加任何字符、不占宽度、编辑态光标也不歪
 // 虚线灰=未认领 实线蓝=已认领 蓝色标记=已解决 红删除线=已拒绝
 export const MENTION_STATE = {
@@ -79,14 +79,10 @@ export const MENTION_STATE = {
 
 export function renderEntryContent(content, profiles, { meHandle, highlightMe, mutedMentions, onDateClick, searchTerm, mentionStates } = {}) {
   let body = content
-  let heading = 0 // 1=标题 2=小标题 3=副标题（对齐苹果备忘录三级）
   let quote = false // 块引用：> 开头 → 左竖条缩进
   let listPrefix = null // 列表前缀：- / * → ·，  数字. 保留
-  const hm = /^(#{1,3})\s+/.exec(body)
-  if (hm) {
-    heading = hm[1].length
-    body = body.slice(hm[0].length)
-  } else if (/^>\s+/.test(body)) {
+  // 飞书云文档轻量风格：不做多级标题（# ## ###），保留行内 + 引用 + 列表
+  if (/^>\s+/.test(body)) {
     quote = true
     body = body.replace(/^>\s+/, '')
   } else {
@@ -121,9 +117,6 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe, m
     return renderDates(part, i, onDateClick, searchTerm)
   })
 
-  if (heading === 1) return <span className="text-[20px] font-bold">{nodes}</span> // 标题
-  if (heading === 2) return <span className="text-[17px] font-bold">{nodes}</span> // 小标题
-  if (heading >= 3) return <span className="text-[15px] font-semibold">{nodes}</span> // 副标题
   if (quote)
     return (
       <span className="block border-l-[3px] border-stone-300 pl-2.5">{nodes}</span> // 块引用：黑字+灰竖条（对齐备忘录，不发灰）

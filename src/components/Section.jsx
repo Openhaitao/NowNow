@@ -99,11 +99,6 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   const [drafts, setDrafts] = useState([]) // 回车新建的本地草稿行（写了字才真正入库，零等待）
 
   const range = periodRange(sec.key, offset, baseDate)
-  const nowRange = periodRange(sec.key, 0) // 真实当前周期，用于判断"过期未完成"
-
-  // 锚定在当前周期之前 + 还没完成的目标 = 过期未完成（标红）
-  const isPastDue = (e) =>
-    e.is_goal && e.status === 'open' && e.anchor && new Date(e.anchor + 'T00:00:00') < nowRange.start
 
   // 搜索：匹配内容文字或人（名字/handle），无视周期
   const q = (query || '').trim().toLowerCase()
@@ -121,24 +116,13 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     return inPeriod(e.anchor ?? null, range)
   }
 
-  const { active, closed, prevUnfinished } = useMemo(() => {
+  const { active, closed } = useMemo(() => {
     const list = entries.filter((e) => e.section === sec.key && matchesQuery(e) && inThisPeriod(e))
-    const prevRange = periodRange(sec.key, offset - 1, baseDate)
     return {
       active: list.filter((e) => e.status !== 'closed').sort((a, b) => a.position - b.position),
       closed: list
         .filter((e) => e.status === 'closed')
         .sort((a, b) => (a.updated_at < b.updated_at ? 1 : -1)),
-      prevUnfinished:
-        isMyPage && hasAnchor && offset === 0 && !allTime && isLive
-          ? entries.filter(
-              (e) =>
-                e.section === sec.key &&
-                inPeriod(e.anchor ?? null, prevRange) &&
-                e.is_goal &&
-                e.status !== 'closed',
-            )
-          : [],
     }
   }, [entries, sec.key, offset, range, isMyPage, hasAnchor, allTime, baseDate, isLive, q])
 
@@ -178,9 +162,10 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
   function focusAfterRemoval(entry) {
     const idx = active.findIndex((e) => e.id === entry.id)
     const neighbor = (idx > 0 ? active[idx - 1] : null) || active[idx + 1]
-    if (neighbor) setEditId(neighbor.id)
-    else if (prevSecKey) onEditRequest(`${prevSecKey}:last`)
-    else if (nextSecKey) onEditRequest(`${nextSecKey}:first`)
+    if (neighbor) { setEditId(neighbor.id); return }
+    // 本区被删空：原地留一行空草稿并聚焦，绝不丢光标。
+    // 删除不跨区（跨区只走 ↑↓ / 回车这种主动导航），否则空区之间会来回生成草稿=反复横跳
+    setDrafts((d) => [...d, { key: `d${Date.now()}-r`, pos: entry.position, is_goal: false, anchor: entry.anchor ?? null }])
   }
 
   // 退格删空一条 → 删掉它，光标按统一规则落位
@@ -200,9 +185,10 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     setDrafts((d) => [...d, { key: `d${Date.now()}-a`, pos, is_goal: entry.is_goal, anchor: entry.anchor ?? null }])
   }
 
-  // ↑↓ 在相邻条目间移动编辑光标；区与区之间通过幽灵行接力（整张纸连续）
-  const prevSecKey = SEC_ORDER[SEC_ORDER.indexOf(sec.key) - 1]
-  const nextSecKey = SEC_ORDER[SEC_ORDER.indexOf(sec.key) + 1]
+  // ↑↓ / 回车 在区与区之间主动接力（整张纸连续）。stash 不在 SEC_ORDER → 不跨区（否则会错跳到今日）
+  const secIdx = SEC_ORDER.indexOf(sec.key)
+  const prevSecKey = secIdx > 0 ? SEC_ORDER[secIdx - 1] : null
+  const nextSecKey = secIdx >= 0 ? SEC_ORDER[secIdx + 1] ?? null : null
 
   // 跨区接力："week:first" = 本周第一条进入编辑；空区直接给一行新草稿
   useEffect(() => {
@@ -264,7 +250,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     cancelDraft(dr.key)
     const prev = [...active].reverse().find((e) => e.position < dr.pos)
     if (prev) setEditId(prev.id)
-    else if (prevSecKey) onEditRequest(`${prevSecKey}:last`)
+    // 本区上方没内容：撤掉这行空草稿即可，光标交回常驻幽灵行（删除不跨区，避免空区横跳）
   }
 
   // 草稿里按 ↑↓ = 这条默认创建完成，光标移到相邻条目
@@ -322,31 +308,8 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     }
   }
 
-  // 上一周期的未完成目标一键挪过来（手动，系统不自动滚动）
-  function carryOver() {
-    const today = fmtDate(new Date())
-    const ids = prevUnfinished.map((e) => e.id)
-    mutate(
-      (list) => list.map((e) => (ids.includes(e.id) ? { ...e, anchor: today } : e)),
-      async () => {
-        for (const id of ids) {
-          await supabase.from('entries').update({ anchor: today }).eq('id', id)
-        }
-      },
-    )
-  }
-
   return (
     <section className="pt-3">
-      {prevUnfinished.length > 0 && !q && (
-        <button
-          onClick={carryOver}
-          className="mb-1 rounded-md bg-amber-50 px-2.5 py-0.5 text-xs text-amber-700 hover:bg-amber-100"
-        >
-          {sec.key === 'today' ? '昨天' : sec.key === 'week' ? '上周' : '上月'}还有 {prevUnfinished.length} 条未完成 → 挪过来
-        </button>
-      )}
-
       {/* 完成的条目不沉底不折叠：和未完成的混在一起，按 position 就地留存（=今天的足迹） */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={active.map((e) => e.id)} strategy={verticalListSortingStrategy}>
@@ -376,7 +339,6 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     onDeleted={isMyPage ? focusAfterRemoval : undefined}
                     pushUndo={pushUndo}
                     flash={flashId === item.v.id}
-                    pastDue={isPastDue(item.v)}
                     allMentions={allMentions}
                     ownerLabel={q ? profiles.find((p) => p.id === item.v.owner)?.display_name : null}
                     searchTerm={q || null}
