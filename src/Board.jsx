@@ -851,17 +851,19 @@ export default function Board({ session }) {
             />
           ) : (
             <>
-              {isMyPage && view === 'paper' && <Inbox profiles={profiles} onJumpDoc={jumpToDoc} />}
-              {/* 文档内核（Tiptap）：搜索时出全文结果，否则每个频道 = 往下回溯的文档时间线 */}
-              {query.trim() ? (
-                <DocSearch
-                  query={query}
-                  profiles={profiles}
-                  onJump={(h) => { viewPage(h.owner); goChannel(h.section); setQuery('') }}
-                />
-              ) : (
-                <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} />
-              )}
+              {/* 主列收到 720px（--doc-width）居中，舒适行长 */}
+              <div className="mx-auto w-full max-w-[var(--doc-width)]">
+                {isMyPage && view === 'paper' && <Inbox profiles={profiles} onJumpDoc={jumpToDoc} />}
+                {query.trim() ? (
+                  <DocSearch
+                    query={query}
+                    profiles={profiles}
+                    onJump={(h) => { viewPage(h.owner); goChannel(h.section); setQuery('') }}
+                  />
+                ) : (
+                  <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} />
+                )}
+              </div>
             </>
           )}
         </div>

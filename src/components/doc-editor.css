@@ -8,19 +8,22 @@
   margin-top: 0.4em;
 }
 .doc-prose h1 {
-  font-size: 20px;
-  font-weight: 700;
-  margin-top: 0.8em;
+  font-size: var(--text-h1, 30px);
+  line-height: var(--leading-h1, 40px);
+  font-weight: var(--weight-h1, 700);
+  margin-top: var(--space-6, 24px);
 }
 .doc-prose h2 {
-  font-size: 17px;
-  font-weight: 700;
-  margin-top: 0.7em;
+  font-size: var(--text-h2, 22px);
+  line-height: var(--leading-h2, 32px);
+  font-weight: var(--weight-h2, 650);
+  margin-top: var(--space-5, 20px);
 }
 .doc-prose h3 {
-  font-size: 15px;
-  font-weight: 600;
-  margin-top: 0.6em;
+  font-size: var(--text-h3, 18px);
+  line-height: var(--leading-h3, 28px);
+  font-weight: var(--weight-h3, 600);
+  margin-top: var(--space-4, 16px);
 }
 .doc-prose ul {
   list-style: disc;
