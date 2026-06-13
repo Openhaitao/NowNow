@@ -791,7 +791,7 @@ export default function Board({ session }) {
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
           {/* 四频道切换器（替代日期标题）：今日/本周/本月/暂存箱，一次看一个。日期只在「今日」旁淡灰小字。右侧=搜索（桌面） */}
           {view === 'paper' && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {SECTIONS.map((s) => {
               const stepper = s.key !== 'stash' && hasAnchor // 暂存箱无周期，不带 ‹ ›
               const activeTab = channel === s.key
@@ -803,7 +803,7 @@ export default function Board({ session }) {
                     key={s.key}
                     onClick={() => goChannel(s.key)}
                     className={
-                      'rounded-md px-2 py-1 text-[14.5px] max-md:text-[15.5px] ' +
+                      'rounded-md px-2 py-1 text-[16px] ' +
                       (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
                     }
                   >
@@ -827,7 +827,7 @@ export default function Board({ session }) {
                   <button onClick={() => stepChannel(s.key, -1)} title="往前看一段" className={'rounded p-0.5 transition-colors ' + arrowVis}>
                     <ChevronLeft size={14} />
                   </button>
-                  <button onClick={() => goChannel(s.key)} className="px-0.5 text-[14.5px] max-md:text-[15.5px]">
+                  <button onClick={() => goChannel(s.key)} className="px-0.5 text-[16px]">
                     {s.label}
                   </button>
                   <button
