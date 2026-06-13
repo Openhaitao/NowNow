@@ -203,7 +203,7 @@
 }
 /* 图片选中 = 蓝框（和文字选中的蓝高亮是两套） */
 .doc-img-wrap.is-selected img {
-  outline: 2px solid var(--accent);
+  outline: 1px solid var(--accent);
   outline-offset: 1px;
 }
 /* 四角缩放手柄：只在选中时随手柄一起渲染（不再 hover 常显） */
