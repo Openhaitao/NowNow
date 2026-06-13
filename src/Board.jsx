@@ -11,6 +11,7 @@ import DatePicker from './components/DatePicker'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import Section from './components/Section'
+import DocTimeline from './components/DocTimeline'
 import TeamAllView from './components/TeamAllView'
 import SettingsModal from './components/SettingsModal'
 
@@ -895,34 +896,8 @@ export default function Board({ session }) {
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
-              {(() => {
-                const sec = SECTIONS.find((s) => s.key === channel)
-                const common = {
-                  sec, me, isMyPage, profiles, allEntries, hasAnchor, baseDate, isLive,
-                  mutate: mutateEntries, pushUndo, flashId, query, allMentions,
-                  // 时间线各块互不接力（避免回车/↓ 在过去块或跨频道乱跳）；焦点都在块内
-                  editRequest: null, onEditRequest: noEditRelay,
-                }
-                // 暂存箱 或 搜索中：单块，不分时间线（搜索 allTime 显示全部命中；暂存箱无周期）
-                if (channel === 'stash' || query.trim()) {
-                  // 暂存箱：和今日/本周/本月同款写作区，但无日期抬头、无「暂存箱」字样、无时间线（顶部 tab 已标明在暂存箱），同样占满首屏
-                  return (
-                    <div className="pt-1" style={channel === 'stash' && !query.trim() && viewportH ? { minHeight: viewportH } : undefined}>
-                      <Section {...common} entries={query.trim() ? allEntries : pageEntries} allTime offset={0} isCurrentPeriod={!query.trim()} />
-                    </div>
-                  )
-                }
-                // 今日/本周/本月：往下回溯的时间线，当前周期(0)在最上，过去有内容的周期降序在下
-                return [0, ...pastOffsets].map((off) => (
-                  // 当前周期(0)块至少占满首屏：没写就是空白一页，过去的时间线沉到下面、下拉才见
-                  <div key={off} className="mb-3" style={off === 0 && viewportH ? { minHeight: viewportH } : undefined}>
-                    <div className="pb-0.5 pt-3 text-[13px] font-medium text-stone-500">
-                      {periodHeader(channel, off, baseDate)}
-                    </div>
-                    <Section {...common} entries={pageEntries} allTime={false} offset={off} isCurrentPeriod={off === 0} />
-                  </div>
-                ))
-              })()}
+              {/* 文档内核（Tiptap）：每个频道 = 往下回溯的文档时间线，一份文档 = 一个 (owner, section, period_key) */}
+              <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} />
                 </>
               )}
             </>
