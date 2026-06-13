@@ -198,7 +198,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={busy}
-              className="rounded-md bg-stone-900 py-2.5 text-[15px] text-white transition-all hover:-translate-y-px hover:bg-stone-700 hover:shadow-md disabled:opacity-60"
+              className="rounded-md bg-[var(--btn-bg)] py-2.5 text-[15px] text-[var(--btn-fg)] transition-all hover:-translate-y-px hover:bg-[var(--btn-bg-hover)] hover:shadow-md disabled:opacity-60"
             >
               {busy ? '登录中…' : onboarding ? '设置密码并进入' : '登录'}
             </button>
@@ -215,7 +215,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={busy}
-              className="rounded-md bg-stone-900 py-2.5 text-[15px] text-white transition-all hover:-translate-y-px hover:bg-stone-700 hover:shadow-md disabled:opacity-60"
+              className="rounded-md bg-[var(--btn-bg)] py-2.5 text-[15px] text-[var(--btn-fg)] transition-all hover:-translate-y-px hover:bg-[var(--btn-bg-hover)] hover:shadow-md disabled:opacity-60"
             >
               发送登录链接
             </button>

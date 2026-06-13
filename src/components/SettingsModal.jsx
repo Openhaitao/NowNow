@@ -1,15 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronDown, ChevronRight, Copy, Download, Link2, LogOut, Monitor, Moon, Settings as SettingsIcon, Sun, UserPlus, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, Copy, Download, Link2, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { friendlyDbError } from '../lib/errors'
-import { getPreference, setPreference } from '../lib/theme'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
 export default function SettingsModal({ onClose, me, email, allEntries, profiles = [], onProfileSaved, variant }) {
   const [handle, setHandle] = useState(me.display_name || me.handle)
   const [err, setErr] = useState('')
-  const [themePref, setThemePref] = useState(() => getPreference())
   const [saved, setSaved] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [allowed, setAllowed] = useState([])
@@ -166,7 +164,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
               <button
                 onClick={changePassword}
                 disabled={!newPw}
-                className="shrink-0 rounded-md bg-stone-900 px-3 py-2 text-[13px] text-white hover:bg-stone-700 max-md:text-[14.5px] disabled:opacity-30"
+                className="shrink-0 rounded-md bg-[var(--btn-bg)] px-3 py-2 text-[13px] text-[var(--btn-fg)] hover:bg-[var(--btn-bg-hover)] max-md:text-[14.5px] disabled:opacity-30"
               >
                 更新
               </button>
@@ -190,7 +188,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
             />
             <button
               onClick={addEmail}
-              className="flex shrink-0 items-center gap-1 rounded-md bg-stone-900 px-3 py-1.5 text-[13px] text-white hover:bg-stone-700 max-md:text-[14.5px]"
+              className="flex shrink-0 items-center gap-1 rounded-md bg-[var(--btn-bg)] px-3 py-1.5 text-[13px] text-[var(--btn-fg)] hover:bg-[var(--btn-bg-hover)] max-md:text-[14.5px]"
             >
               <UserPlus size={13} /> 邀请
             </button>
@@ -267,31 +265,6 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
               </div>
             )
           })()}
-        </div>
-
-        {/* 外观 */}
-        <div className="mt-5 border-t border-stone-100 pt-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">外观</div>
-          <div className="mt-2 inline-flex rounded-md border border-stone-200 p-0.5">
-            {[
-              { v: 'light', label: '亮色', icon: Sun },
-              { v: 'dark', label: '暗色', icon: Moon },
-              { v: 'system', label: '跟随系统', icon: Monitor },
-            ].map((o) => (
-              <button
-                key={o.v}
-                onClick={() => { setPreference(o.v); setThemePref(o.v) }}
-                className={
-                  'flex items-center gap-1.5 rounded px-2.5 py-1 text-[13px] transition-colors max-md:text-[14px] ' +
-                  (themePref === o.v
-                    ? 'bg-[var(--accent-soft)] font-medium text-[var(--accent)]'
-                    : 'text-stone-500 hover:text-stone-700')
-                }
-              >
-                <o.icon size={13} /> {o.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* 数据与账号 */}

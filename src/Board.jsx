@@ -10,7 +10,6 @@ import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
 import DocSearch from './components/DocSearch'
-import ThemeToggle from './components/ThemeToggle'
 import SettingsModal from './components/SettingsModal'
 
 const SECTIONS = [
@@ -138,7 +137,7 @@ function SetupCard({ user, onDone }) {
             className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 text-[15px] text-stone-900 outline-none focus:border-stone-400"
           />
         </label>
-        <button type="submit" className="mt-5 w-full rounded-md bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700">
+        <button type="submit" className="mt-5 w-full rounded-md bg-[var(--btn-bg)] py-2.5 text-[15px] text-[var(--btn-fg)] hover:bg-[var(--btn-bg-hover)]">
           进入
         </button>
         {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
@@ -578,7 +577,7 @@ export default function Board({ session }) {
     return loadTimeout ? (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-stone-600">加载有点慢，可能是网络问题</p>
-        <button onClick={() => window.location.reload()} className="rounded-md bg-stone-900 px-4 py-2 text-sm text-white">
+        <button onClick={() => window.location.reload()} className="rounded-md bg-[var(--btn-bg)] px-4 py-2 text-sm text-[var(--btn-fg)]">
           刷新重试
         </button>
       </div>
@@ -703,15 +702,12 @@ export default function Board({ session }) {
               </span>
             )}
           </button>
-          <div className="flex items-center">
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="flex flex-1 items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-stone-100"
-            >
-              <Settings size={16} /> 设置
-            </button>
-            <ThemeToggle />
-          </div>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-stone-100"
+          >
+            <Settings size={16} /> 设置
+          </button>
         </div>
     </>
   )
