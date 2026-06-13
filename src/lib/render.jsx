@@ -44,14 +44,16 @@ function hl(text, q, keyBase) {
   )
 }
 
-// 行内 Markdown：**粗体** __下划线__ ~~删除线~~ `代码` *斜体*（doc M3 的最小集）
-const INLINE = /(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|`[^`]+`|\*[^*\s][^*]*\*)/g
+// 行内 Markdown：**粗体** ==高亮== __下划线__ ~~删除线~~ `代码` *斜体*
+const INLINE = /(\*\*[^*]+\*\*|==[^=]+==|__[^_]+__|~~[^~]+~~|`[^`]+`|\*[^*\s][^*]*\*)/g
 
 function renderInline(text, keyBase, q) {
   return text.split(INLINE).map((part, i) => {
     const k = `${keyBase}-${i}`
     if (!part) return null
     if (part.startsWith('**') && part.endsWith('**')) return <b key={k}>{hl(part.slice(2, -2), q, k)}</b>
+    if (part.startsWith('==') && part.endsWith('=='))
+      return <mark key={k} className="rounded-sm bg-amber-200/70 px-0.5 text-inherit">{hl(part.slice(2, -2), q, k)}</mark>
     if (part.startsWith('__') && part.endsWith('__')) return <u key={k}>{hl(part.slice(2, -2), q, k)}</u>
     if (part.startsWith('~~') && part.endsWith('~~')) return <s key={k}>{hl(part.slice(2, -2), q, k)}</s>
     if (part.startsWith('`') && part.endsWith('`'))
@@ -78,10 +80,21 @@ export const MENTION_STATE = {
 export function renderEntryContent(content, profiles, { meHandle, highlightMe, mutedMentions, onDateClick, searchTerm, mentionStates } = {}) {
   let body = content
   let heading = 0
+  let listPrefix = null // 列表前缀：- / * → ·，  数字. 保留
   const hm = /^(#{1,3})\s+/.exec(body)
   if (hm) {
     heading = hm[1].length
     body = body.slice(hm[0].length)
+  } else {
+    const bulletM = /^[-*]\s+/.exec(body)
+    const orderM = /^(\d+)\.\s+/.exec(body)
+    if (bulletM) {
+      listPrefix = '·'
+      body = body.slice(bulletM[0].length)
+    } else if (orderM) {
+      listPrefix = orderM[1] + '.'
+      body = body.slice(orderM[0].length)
+    }
   }
 
   const splitRe = mentionSplitRegex(profiles)
@@ -106,5 +119,12 @@ export function renderEntryContent(content, profiles, { meHandle, highlightMe, m
 
   if (heading === 1) return <span className="text-[17px] font-bold">{nodes}</span>
   if (heading >= 2) return <span className="text-[15.5px] font-semibold">{nodes}</span>
+  if (listPrefix)
+    return (
+      <span>
+        <span className="mr-1.5 text-stone-400">{listPrefix}</span>
+        {nodes}
+      </span>
+    )
   return nodes
 }

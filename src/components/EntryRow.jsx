@@ -228,7 +228,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     <div
       ref={rowRef}
       className={
-        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 text-[16px] leading-relaxed transition-colors max-md:py-2 max-md:pr-0 ' +
+        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 text-[14px] leading-relaxed transition-colors max-md:py-2 max-md:pr-0 ' +
         (closing ? 'closing ' : '') +
         (editing ? '' : 'hover:bg-stone-50 ') +
         (flash ? 'bg-amber-100 ' : '') +
@@ -258,8 +258,8 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           title={entry.source_entry ? '完成（会通知发起人）' : '完成'}
         />
       ) : (
-        // 备忘和目标同级：常显 ¶ 标记（浅灰，分量低于勾选框）
-        <Pilcrow size={13} className="mt-[5px] w-[15px] shrink-0 text-stone-300" />
+        // 纯文字行：不显示 ¶ 图标，留空槽位让文字左缘和目标对齐（文档化）
+        <span className="mt-[5px] block h-[15px] w-[15px] shrink-0 max-md:h-[20px] max-md:w-[20px]" />
       )}
 
       {editing && isMine ? (
@@ -404,7 +404,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
             </button>
             <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={toggleGoal}>
               {entry.is_goal ? <Pilcrow size={13} /> : <Square size={13} />}
-              {entry.is_goal ? '转为备忘' : '转为目标'}
+              {entry.is_goal ? '转为文字' : '转为目标'}
             </button>
             {canMoveToToday && (
               <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-amber-700 outline-none hover:bg-amber-50 max-md:px-4 max-md:py-3" onClick={moveToToday}>

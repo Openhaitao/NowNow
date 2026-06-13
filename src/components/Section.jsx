@@ -9,7 +9,6 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Pilcrow, Square } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { syncMentions } from '../lib/mentions'
 import { fmtDate, inPeriod, periodRange } from '../lib/period'
@@ -21,21 +20,23 @@ const SEC_ORDER = ['today', 'week', 'month']
 // 回车新建的本地草稿行：立刻可打字，有内容才入库。默认目标，按 Tab 在 目标↔备忘 间切换
 function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, onSectionDone }) {
   const [val, setVal] = useState(draft.initial || '')
-  const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : true)
+  // 默认纯文字（不是目标）；Tab 或点击左侧切换成目标
+  const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : false)
   const d = { ...draft, is_goal: isGoal }
   return (
-    <div className="flex items-start gap-2.5 py-[5px] text-[16px] leading-relaxed">
+    <div className="flex items-start gap-2.5 py-[5px] text-[14px] leading-relaxed">
       <button
         type="button"
         tabIndex={-1}
         onMouseDown={(e) => { e.preventDefault(); setIsGoal((v) => !v) }}
-        title={isGoal ? '目标（Tab 或点击转备忘）' : '备忘（Tab 或点击转目标）'}
+        title={isGoal ? '目标（Tab 或点击转文字）' : '文字（Tab 或点击转目标）'}
         className="mt-[5px] flex h-[15px] w-[15px] shrink-0 items-center justify-center text-stone-400 hover:text-stone-600"
       >
         {isGoal ? (
           <input type="checkbox" readOnly checked={false} tabIndex={-1} className="pointer-events-none h-[15px] w-[15px] accent-stone-700" />
         ) : (
-          <Pilcrow size={13} />
+          // 纯文字行不显示备忘 ¶ 图标，只留一个空槽位让文字左缘和目标对齐
+          <span className="block h-[15px] w-[15px]" />
         )}
       </button>
       <MentionInput
@@ -210,7 +211,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     if (active.length) {
       setEditId(pos === 'last' ? active[active.length - 1].id : active[0].id)
     } else {
-      setDrafts((d) => [...d, { key: `d${Date.now()}-x`, pos: 1, is_goal: true, anchor: null }])
+      setDrafts((d) => [...d, { key: `d${Date.now()}-x`, pos: 1, is_goal: false, anchor: null }])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editRequest])
@@ -418,12 +419,12 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
               {
                 key: `d${Date.now()}-g`,
                 pos: (active.length ? Math.max(...active.map((e) => e.position)) : 0) + 1,
-                is_goal: true,
+                is_goal: false,
                 anchor: null,
               },
             ])
           }
-          className="flex cursor-text items-start gap-2.5 py-[5px] text-[16px] leading-relaxed text-stone-300 max-md:py-2"
+          className="flex cursor-text items-start gap-2.5 py-[5px] text-[14px] leading-relaxed text-stone-300 max-md:py-2"
         >
           <span className="mt-[5px] w-[15px] shrink-0 text-center leading-none">＋</span>
           <span>现在要做什么？回车存，@ 派人</span>
