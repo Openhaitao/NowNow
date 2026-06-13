@@ -291,7 +291,8 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       is_goal: isGoal,
       position: dr.pos,
     }
-    if (hasAnchor) row.anchor = range.isCurrent ? fmtDate(new Date()) : dr.anchor ?? fmtDate(range.start)
+    // 暂存箱无排期 → anchor 留空；其它频道锚到当前周期
+    if (hasAnchor && sec.key !== 'stash') row.anchor = range.isCurrent ? fmtDate(new Date()) : dr.anchor ?? fmtDate(range.start)
     const temp = {
       ...row,
       id: `tmp-${Date.now()}`,
@@ -435,16 +436,24 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         closed.map((e) => (
           <EntryRow key={e.id} entry={e} me={me} profiles={profiles} allEntries={allEntries} mutate={mutate} pushUndo={pushUndo} />
         ))}
-      {/* 空区可点：点一下直接给一行新草稿开写 */}
-      {isMyPage && !q && active.length === 0 && drafts.length === 0 && (
+      {/* 幽灵行：常驻在频道底部，点一下就地开写，回车连续新建（纸即输入，取代独立输入框） */}
+      {isMyPage && !q && (
         <div
-          onClick={() => setDrafts((d) => [...d, { key: `d${Date.now()}-e`, pos: 1, is_goal: true, anchor: null }])}
-          className="group/empty flex cursor-text items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed"
+          onClick={() =>
+            setDrafts((d) => [
+              ...d,
+              {
+                key: `d${Date.now()}-g`,
+                pos: (active.length ? Math.max(...active.map((e) => e.position)) : 0) + 1,
+                is_goal: true,
+                anchor: null,
+              },
+            ])
+          }
+          className="flex cursor-text items-start gap-2.5 py-[5px] text-[14.5px] leading-relaxed text-stone-300 max-md:py-2 max-md:text-[16.5px]"
         >
-          <span className="w-[15px] shrink-0" />
-          <span className="text-stone-200 opacity-0 transition-opacity group-hover/empty:opacity-100">
-            点击添加目标…
-          </span>
+          <span className="mt-[5px] w-[15px] shrink-0 text-center leading-none">＋</span>
+          <span>现在要做什么？回车存，@ 派人</span>
         </div>
       )}
       {!isMyPage && active.length === 0 && closed.length === 0 && (

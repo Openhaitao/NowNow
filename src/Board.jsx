@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, LayoutList, Menu, Plus, Search, Settings } from 'lucide-react'
+import { Bell, LayoutList, Menu, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -10,7 +10,6 @@ import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
 import DatePicker from './components/DatePicker'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
-import QuickCapture from './components/QuickCapture'
 import Section from './components/Section'
 import TeamAllView from './components/TeamAllView'
 import SettingsModal from './components/SettingsModal'
@@ -428,19 +427,7 @@ export default function Board({ session }) {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false) // 手机端左侧抽屉（flomo 式）
-  const [composeOpen, setComposeOpen] = useState(false) // 手机端 ➕ 记录抽屉
   const [mobileSearch, setMobileSearch] = useState(false) // 手机端搜索页模式
-  const [kbOffset, setKbOffset] = useState(0)
-  useEffect(() => {
-    // iOS 键盘不会推动 fixed 元素：用 visualViewport 实测键盘高度，把记录抽屉顶上去
-    if (!composeOpen || !window.visualViewport) return
-    const vv = window.visualViewport
-    const h = () => setKbOffset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop))
-    vv.addEventListener('resize', h)
-    vv.addEventListener('scroll', h)
-    h()
-    return () => { vv.removeEventListener('resize', h); vv.removeEventListener('scroll', h); setKbOffset(0) }
-  }, [composeOpen])
   const [view, setView] = useState('paper') // paper | notifications | all
   useEffect(() => {
     // 去了别的页面就退出搜索模式并清空关键词（必须放在 view 声明之后：deps 数组在渲染时求值）
@@ -738,38 +725,6 @@ export default function Board({ session }) {
                 {s.label}
               </button>
             ))}
-            {channel === 'today' && (
-              <span className="relative ml-1 flex items-center">
-                <button
-                  onClick={() => hasAnchor && setDateOpen((v) => !v)}
-                  className="truncate text-[12.5px] text-stone-300 hover:text-stone-500"
-                  title={hasAnchor ? '点击回看任何一天' : undefined}
-                >
-                  {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
-                  {'日一二三四五六'[(baseDate || new Date()).getDay()]}
-                  {isLive ? '' : ' ·回看'}
-                </button>
-                {dateOpen && (
-                  <DatePicker
-                    value={baseDate}
-                    onClose={() => setDateOpen(false)}
-                    onSelect={(d) => {
-                      if (!d) return setBaseDate(null)
-                      const t = new Date(); t.setHours(0, 0, 0, 0)
-                      setBaseDate(d.getTime() === t.getTime() ? null : d)
-                    }}
-                  />
-                )}
-                {!isLive && (
-                  <button
-                    onClick={() => setBaseDate(null)}
-                    className="ml-1 rounded-md bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
-                  >
-                    回到今天
-                  </button>
-                )}
-              </span>
-            )}
             <span className="relative ml-auto hidden items-center md:flex">
               <Search size={14} className="pointer-events-none absolute left-3 text-stone-300" />
               <input
@@ -813,11 +768,7 @@ export default function Board({ session }) {
               </button>
             </div>
           )}
-          {view === 'paper' && isMyPage && (
-            <div className="max-md:hidden">
-              <QuickCapture me={me} profiles={profiles} allEntries={allEntries} hasAnchor={hasAnchor} mutate={mutateEntries} forceSection={channel} />
-            </div>
-          )}
+          {/* 独立输入框已删除 → 改为纸即输入：频道底部常驻幽灵行（见 Section） */}
           {(offline || syncSlow) && (
             <div className="mt-2 rounded-md bg-stone-100 px-3 py-2 text-center text-[13px] text-stone-500">
               {offline ? '离线状态，内容已暂存本页，恢复网络后自动保存，' : '正在同步，网络有点慢，'}
@@ -892,38 +843,7 @@ export default function Board({ session }) {
         </div>
 
       </main>
-      {/* 手机端浮动记录按钮（flomo 式）：弹出底部记录抽屉 */}
-      {view === 'paper' && isMyPage && !composeOpen && (
-        <button
-          onClick={() => setComposeOpen(true)}
-          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-lg bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
-          title="记一条"
-        >
-          <Plus size={26} />
-        </button>
-      )}
-      {/* 手机端记录抽屉：flomo 同款，紧贴软键盘 */}
-      {composeOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setComposeOpen(false)} />
-          <div
-            className="absolute inset-x-0 rounded-t-lg bg-white p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl"
-            style={{ bottom: kbOffset }}
-          >
-            <QuickCapture
-              me={me}
-              profiles={profiles}
-              allEntries={allEntries}
-              hasAnchor={hasAnchor}
-              mutate={mutateEntries}
-              variant="sheet"
-              autoFocus
-              forceSection={channel}
-              onDone={() => setComposeOpen(false)}
-            />
-          </div>
-        </div>
-      )}
+      {/* 手机端创建改为：点频道底部幽灵行就地开写（纸即输入），不再有浮动 ➕ 和底部记录抽屉 */}
       {settingsOpen && (
         <SettingsModal
           onClose={() => setSettingsOpen(false)}
