@@ -130,7 +130,7 @@
   text-align: left;
 }
 .doc-prose .selectedCell {
-  background: #dbeafe66;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 .doc-prose .column-resize-handle {
   background: var(--accent);

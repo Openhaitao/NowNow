@@ -6,6 +6,7 @@
   --paper: var(--bg);        /* 兼容旧引用 */
   --surface: #f0eee6;        /* 暖灰填充：胶囊/卡片/收件箱/选中底 */
   --surface-hover: #e9e6dc;
+  --surface-elevated: #fffefa; /* 浮起卡片/弹层底（比纯白暖一点）*/
   --ink: #1f1e1c;            /* 正文 */
   --ink-muted: #6b6760;      /* 次要/日期抬头 */
   --ink-faint: #a8a39a;      /* 占位 */
@@ -87,8 +88,8 @@ body {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 /* 完成动画的过渡只在勾选瞬间生效，平时不挂 transition（避免滚动/悬停时内容跟着缓动"晃"） */
@@ -145,21 +146,3 @@ body {
   animation: float-in 0.45s ease-out both;
 }
 
-/* 透明文字输入框的选区：用半透明蓝，让垫在下面的着色层文字透出来 */
-.colored-input::selection {
-  background: rgba(59, 130, 246, 0.22);
-  color: transparent;
-}
-
-/* @token */
-.mention {
-  color: #2563eb;
-  font-weight: 600;
-}
-.mention-me {
-  color: #2563eb;
-  font-weight: 600;
-  background: #dbeafe;
-  border-radius: 4px;
-  padding: 0 3px;
-}
