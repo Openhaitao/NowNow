@@ -126,11 +126,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 选区 + 焦点统一暖色（替掉浏览器默认蓝）*/
+/* 选区：用胶囊底色（暖灰），无感不抢戏（Haitao：那样好看且无感）*/
 ::selection {
-  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  background: var(--surface-hover);
 }
-:focus-visible {
+/* 焦点框只给真正的表单输入框（input/textarea/select）。
+   按钮、可拖拽行、文档编辑区（contenteditable）都不画框——
+   否则点一下成员/日期就冒出一个琥珀色「输入框」，点别处又消失（Haitao 反馈）。*/
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
 }

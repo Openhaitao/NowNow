@@ -647,7 +647,7 @@ export default function Board({ session }) {
           <DndContext sensors={memberSensors} collisionDetection={closestCenter} onDragEnd={onMemberDragEnd}>
             {pinnedMembers.length > 0 && (
               <>
-                <div className="mb-1 px-2.5 text-[12px] font-medium uppercase tracking-wide text-stone-300">
+                <div className="mb-1 px-2.5 text-[12px] font-medium uppercase tracking-wide text-stone-500">
                   置顶成员
                 </div>
                 <SortableContext items={pinnedMembers.map((p) => p.id)} strategy={verticalListSortingStrategy}>
@@ -667,7 +667,7 @@ export default function Board({ session }) {
                 <div className="mt-3" />
               </>
             )}
-            <div className="mb-1 px-2.5 text-[12px] font-medium uppercase tracking-wide text-stone-300">
+            <div className="mb-1 px-2.5 text-[12px] font-medium uppercase tracking-wide text-stone-500">
               团队成员
             </div>
             <SortableContext items={restMembers.map((p) => p.id)} strategy={verticalListSortingStrategy}>
