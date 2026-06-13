@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, Pin, Search, Settings } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, PanelLeftClose, PanelLeftOpen, Pin, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
@@ -461,6 +461,34 @@ export default function Board({ session }) {
   const [drawerOpen, setDrawerOpen] = useState(false) // 手机端左侧抽屉（flomo 式）
   const [mobileSearch, setMobileSearch] = useState(false) // 手机端搜索页模式
   const [view, setView] = useState('paper') // paper | notifications | all
+
+  // 侧栏（桌面）：宽度可拖拽 + 可折叠，存本地个人偏好。中间那条分隔线就是拖拽手柄。
+  const asideRef = useRef(null)
+  const [sidebarW, setSidebarW] = useState(() => {
+    const v = Number(localStorage.getItem('nownow_sidebar_w'))
+    return v >= 180 && v <= 360 ? v : 240
+  })
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('nownow_sidebar_collapsed') === '1')
+  const [resizingSidebar, setResizingSidebar] = useState(false)
+  useEffect(() => { try { localStorage.setItem('nownow_sidebar_w', String(sidebarW)) } catch {} }, [sidebarW])
+  useEffect(() => { try { localStorage.setItem('nownow_sidebar_collapsed', sidebarCollapsed ? '1' : '0') } catch {} }, [sidebarCollapsed])
+  const startSidebarResize = useCallback((e) => {
+    e.preventDefault()
+    const left = asideRef.current?.getBoundingClientRect().left ?? 0
+    setResizingSidebar(true)
+    const onMove = (ev) => setSidebarW(Math.min(360, Math.max(180, Math.round(ev.clientX - left))))
+    const onUp = () => {
+      setResizingSidebar(false)
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [])
   useEffect(() => {
     // 去了别的页面就退出搜索模式并清空关键词（必须放在 view 声明之后：deps 数组在渲染时求值）
     setMobileSearch(false)
@@ -616,6 +644,14 @@ export default function Board({ session }) {
           <span className="truncate md:hidden">
             {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日
           </span>
+          {/* 桌面：折叠侧栏按钮（在用户名右侧） */}
+          <button
+            onClick={() => setSidebarCollapsed(true)}
+            className="ml-auto hidden shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 md:block"
+            title="收起侧栏"
+          >
+            <PanelLeftClose size={18} />
+          </button>
           {/* 手机：通知/设置收进右侧（flomo 式抽屉头），点击进对应整页 */}
           <span className="-mr-2.5 ml-auto flex items-center gap-0.5 md:hidden">
             <button onClick={() => setView('notifications')} className="relative p-1.5 text-stone-500" title="通知">
@@ -715,10 +751,27 @@ export default function Board({ session }) {
   return (
     // 桌面：app 不画左右外边框（按 Haitao 去掉两边的线）；侧栏右边框仍做内部分界
     <div className="mx-auto flex h-dvh max-w-[970px] overflow-hidden">
-      {/* 左栏：人员列表（固定不随内容滚动） */}
-      <aside className="hidden h-full w-60 shrink-0 flex-col overflow-hidden border-r border-stone-100 px-2 pb-5 pt-3 md:flex">
+      {/* 左栏：人员列表（固定不随内容滚动）。宽度可拖拽、可折叠（桌面） */}
+      <aside
+        ref={asideRef}
+        style={{ width: sidebarCollapsed ? 0 : sidebarW }}
+        className={
+          'hidden h-full shrink-0 flex-col overflow-hidden px-2 pb-5 pt-3 md:flex ' +
+          (resizingSidebar ? '' : 'transition-[width] duration-200')
+        }
+      >
         {sidebarContent}
       </aside>
+      {/* 中间那条分隔线 = 拖拽手柄：拖动改侧栏宽度（折叠时收起）。1px 实线 + 左右各 4px 透明热区 */}
+      {!sidebarCollapsed && (
+        <div
+          onMouseDown={startSidebarResize}
+          className="group/resize relative hidden w-px shrink-0 cursor-col-resize bg-stone-100 md:block"
+          title="拖动调整侧栏宽度"
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1 group-hover/resize:bg-stone-300" />
+        </div>
+      )}
 
       {/* 手机端：flomo 式左侧抽屉，滑入滑出带过渡（常驻挂载，开关只切 transform/opacity） */}
       <div className={'fixed inset-0 z-50 md:hidden ' + (drawerOpen ? '' : 'pointer-events-none')}>
@@ -779,6 +832,16 @@ export default function Board({ session }) {
           {/* 顶部 今日/本周/本月/暂存箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
           {view === 'paper' && (
           <div className="flex items-center gap-1.5">
+            {/* 侧栏折叠时，tab 行最左给一个展开入口（桌面） */}
+            {sidebarCollapsed && (
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="hidden shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 md:block"
+                title="展开侧栏"
+              >
+                <PanelLeftOpen size={18} />
+              </button>
+            )}
             {SECTIONS.map((s) => (
               <button
                 key={s.key}
