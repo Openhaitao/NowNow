@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, LayoutList, Menu, Plus, Search, Settings } from 'lucide-react'
+import { Bell, CalendarDays, LayoutList, Menu, Plus, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -570,42 +570,13 @@ export default function Board({ session }) {
   // 侧栏内容：桌面常驻左栏 + 手机左侧抽屉（flomo 式）共用一份
   const sidebarContent = (
     <>
-        {/* 顶部：日期锚（Web 可点回看任意一天，手机纯展示）。原 logo + 用户名已删 */}
-        <div className="relative mb-4 flex items-center gap-1.5 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[21px]">
-          {/* 桌面：可点日期，弹日历回看 */}
-          <button
-            onClick={() => hasAnchor && setDateOpen((v) => !v)}
-            className="hidden min-w-0 items-center truncate md:flex"
-            title={hasAnchor ? '点击回看任何一天' : undefined}
-          >
-            {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
-            {'日一二三四五六'[(baseDate || new Date()).getDay()]}
-            {isLive ? ' · 今天' : ''}
-          </button>
-          {/* 手机：纯展示日期（回看用各分区的 ‹ ›） */}
+        {/* 顶部：logo + 用户名（桌面）／日期（手机抽屉头） */}
+        <div className="mb-4 flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[21px]">
+          <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
+          <span className="truncate max-md:hidden">{me.display_name}</span>
           <span className="truncate md:hidden">
-            {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
-            {'日一二三四五六'[(baseDate || new Date()).getDay()]}
+            {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日
           </span>
-          {hasAnchor && !isLive && (
-            <button
-              onClick={() => setBaseDate(null)}
-              className="hidden shrink-0 rounded-full bg-stone-100 px-2 py-px text-[11px] font-normal text-stone-500 hover:bg-stone-200 md:inline"
-            >
-              回到今天
-            </button>
-          )}
-          {dateOpen && (
-            <DatePicker
-              value={baseDate}
-              onClose={() => setDateOpen(false)}
-              onSelect={(d) => {
-                if (!d) return setBaseDate(null)
-                const t = new Date(); t.setHours(0, 0, 0, 0)
-                setBaseDate(d.getTime() === t.getTime() ? null : d)
-              }}
-            />
-          )}
           {/* 手机：通知/设置收进右侧（flomo 式抽屉头），点击进对应整页 */}
           <span className="-mr-2.5 ml-auto flex items-center gap-0.5 md:hidden">
             <button onClick={() => setView('notifications')} className="relative p-1.5 text-stone-500" title="通知">
@@ -744,8 +715,42 @@ export default function Board({ session }) {
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
           {/* 顶栏：左=日期锚（点了整张纸拨回任意一天），右=搜索（flomo 位）。手机端隐藏：日期在顶栏中间、搜索是独立页 */}
           <div className="flex items-center justify-between gap-2 max-md:hidden">
-            {/* 日期锚已移到侧栏顶部；这里留空占位让搜索保持靠右 */}
-            <span />
+            <span className="relative flex items-center gap-1.5">
+              {hasAnchor ? (
+                <>
+                  <button
+                    onClick={() => setDateOpen((v) => !v)}
+                    className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[15px] font-semibold text-stone-900 hover:bg-stone-100"
+                    title="点击回看任何一天"
+                  >
+                    <CalendarDays size={16} /> {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
+                    {'日一二三四五六'[(baseDate || new Date()).getDay()]}
+                    {isLive ? ' · 今天' : ''}
+                  </button>
+                  {dateOpen && (
+                    <DatePicker
+                      value={baseDate}
+                      onClose={() => setDateOpen(false)}
+                      onSelect={(d) => {
+                        if (!d) return setBaseDate(null)
+                        const t = new Date(); t.setHours(0, 0, 0, 0)
+                        setBaseDate(d.getTime() === t.getTime() ? null : d)
+                      }}
+                    />
+                  )}
+                  {!isLive && (
+                    <button
+                      onClick={() => setBaseDate(null)}
+                      className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+                    >
+                      回到今天
+                    </button>
+                  )}
+                </>
+              ) : (
+                <span />
+              )}
+            </span>
             <span className="relative flex items-center">
               <Search size={14} className="pointer-events-none absolute left-3 text-stone-300" />
               <input
