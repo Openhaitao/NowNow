@@ -872,8 +872,8 @@ export default function Board({ session }) {
                 className="w-40 rounded-md bg-stone-200/80 py-2.5 pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200 md:w-56"
               />
               {!query && (
-                {/* ⌘ 字形天生比字母小（字体度量问题），单独放大让它和 K 视觉等大 */}
                 <kbd className="pointer-events-none absolute left-9 flex items-center font-medium text-stone-400">
+                  {/* ⌘ 字形天生比字母小（字体度量问题），单独放大让它和 K 视觉等大 */}
                   <span className="text-[20px] leading-none">⌘</span>
                   <span className="text-[15px]">+K</span>
                 </kbd>
