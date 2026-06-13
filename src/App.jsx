@@ -41,7 +41,19 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    supabase.auth.getSession().then(async ({ data }) => {
+      // 本地缓存的 session 可能是已删除/已吊销的用户（如清库后）。
+      // 向服务器校验一次，失效就登出，回到登录页（而不是卡在「起个名字」）。
+      if (data.session) {
+        const { data: u, error } = await supabase.auth.getUser()
+        if (error || !u?.user) {
+          await supabase.auth.signOut()
+          setSession(null)
+          return
+        }
+      }
+      setSession(data.session)
+    })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
     return () => sub.subscription.unsubscribe()
   }, [])
