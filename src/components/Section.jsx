@@ -340,7 +340,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
         {offset !== 0 && (
           <button
             onClick={() => setOffset(0)}
-            className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200 max-md:text-[13px]"
+            className="rounded-lg bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200 max-md:text-[13px]"
           >
             {BACK_LABEL[sec.key]}
           </button>
@@ -350,7 +350,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
           <span className="ml-auto flex items-center gap-0.5">
             <button
               onClick={() => setOffset((o) => o - 1)}
-              className="rounded px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500"
+              className="rounded-lg px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500"
               title="往回看"
             >
               <ChevronLeft size={13} />
@@ -358,7 +358,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             <button
               onClick={() => setOffset((o) => o + 1)}
               disabled={offset >= 0}
-              className="rounded px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500 disabled:opacity-30"
+              className="rounded-lg px-1 py-0.5 text-stone-300 hover:bg-stone-100 hover:text-stone-500 disabled:opacity-30"
               title="往后翻"
             >
               <ChevronRight size={13} />
@@ -370,7 +370,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       {prevUnfinished.length > 0 && !q && (
         <button
           onClick={carryOver}
-          className="mb-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs text-amber-700 hover:bg-amber-100"
+          className="mb-1 rounded-lg bg-amber-50 px-2.5 py-0.5 text-xs text-amber-700 hover:bg-amber-100"
         >
           {sec.key === 'today' ? '昨天' : sec.key === 'week' ? '上周' : '上月'}还有 {prevUnfinished.length} 条未完成 → 挪过来
         </button>
@@ -426,7 +426,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
       {closed.length > 0 && (
         <button
           onClick={() => setShowClosed((v) => !v)}
-          className="mt-1.5 flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 max-md:py-1 max-md:text-[14px]"
+          className="mt-1.5 flex items-center gap-1 rounded-lg bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 max-md:py-1 max-md:text-[14px]"
         >
           {showClosed ? <ChevronDown size={12} /> : <ChevronRight size={12} />} 已完成 {closed.length}
         </button>

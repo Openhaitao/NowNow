@@ -33,9 +33,9 @@ export default function DatePicker({ value, onSelect, onClose, onDelete }) {
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-stone-200 bg-white p-3 shadow-xl">
         <div className="mb-2 flex items-center justify-between">
-          <button onClick={() => shift(-1)} className="rounded px-2 py-0.5 text-stone-400 hover:bg-stone-100">‹</button>
+          <button onClick={() => shift(-1)} className="rounded-lg px-2 py-0.5 text-stone-400 hover:bg-stone-100">‹</button>
           <span className="text-[13px] font-medium">{ym.y}年{ym.m + 1}月</span>
-          <button onClick={() => shift(1)} className="rounded px-2 py-0.5 text-stone-400 hover:bg-stone-100">›</button>
+          <button onClick={() => shift(1)} className="rounded-lg px-2 py-0.5 text-stone-400 hover:bg-stone-100">›</button>
         </div>
         <div className="grid grid-cols-7 gap-y-0.5 text-center">
           {WEEK_HEAD.map((w) => (
@@ -47,7 +47,7 @@ export default function DatePicker({ value, onSelect, onClose, onDelete }) {
                 key={i}
                 onClick={() => { onSelect(d); onClose() }}
                 className={
-                  'mx-auto flex h-7 w-7 items-center justify-center rounded-full text-[12.5px] ' +
+                  'mx-auto flex h-7 w-7 items-center justify-center rounded-lg text-[12.5px] ' +
                   (sameDay(d, value || today)
                     ? 'bg-stone-900 text-white'
                     : sameDay(d, today)

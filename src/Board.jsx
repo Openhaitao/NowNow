@@ -545,20 +545,20 @@ export default function Board({ session }) {
     ) : (
       <div className="mx-auto flex h-screen max-w-4xl animate-pulse">
         <div className="hidden w-52 shrink-0 px-4 py-6 md:block">
-          <div className="h-5 w-24 rounded bg-stone-100" />
-          <div className="mt-6 h-10 rounded bg-stone-100" />
+          <div className="h-5 w-24 rounded-lg bg-stone-100" />
+          <div className="mt-6 h-10 rounded-lg bg-stone-100" />
           <div className="mt-6 space-y-2">
-            <div className="h-6 rounded bg-stone-100" />
-            <div className="h-6 rounded bg-stone-100" />
+            <div className="h-6 rounded-lg bg-stone-100" />
+            <div className="h-6 rounded-lg bg-stone-100" />
           </div>
         </div>
         <div className="flex-1 px-6 py-6">
           <div className="h-20 rounded-xl bg-stone-100" />
           <div className="mt-8 space-y-3">
-            <div className="h-4 w-12 rounded bg-stone-100" />
-            <div className="h-5 w-3/4 rounded bg-stone-100" />
-            <div className="h-5 w-2/3 rounded bg-stone-100" />
-            <div className="h-5 w-1/2 rounded bg-stone-100" />
+            <div className="h-4 w-12 rounded-lg bg-stone-100" />
+            <div className="h-5 w-3/4 rounded-lg bg-stone-100" />
+            <div className="h-5 w-2/3 rounded-lg bg-stone-100" />
+            <div className="h-5 w-1/2 rounded-lg bg-stone-100" />
           </div>
         </div>
       </div>
@@ -741,7 +741,7 @@ export default function Board({ session }) {
                   {!isLive && (
                     <button
                       onClick={() => setBaseDate(null)}
-                      className="rounded-full bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+                      className="rounded-lg bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
                     >
                       回到今天
                     </button>
@@ -875,7 +875,7 @@ export default function Board({ session }) {
       {view === 'paper' && isMyPage && !composeOpen && (
         <button
           onClick={() => setComposeOpen(true)}
-          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-2xl bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
+          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-xl bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
           title="记一条"
         >
           <Plus size={26} />
@@ -886,7 +886,7 @@ export default function Board({ session }) {
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setComposeOpen(false)} />
           <div
-            className="absolute inset-x-0 rounded-t-2xl bg-white p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl"
+            className="absolute inset-x-0 rounded-t-xl bg-white p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl"
             style={{ bottom: kbOffset }}
           >
             <QuickCapture

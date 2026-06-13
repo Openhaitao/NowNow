@@ -130,7 +130,7 @@ export default function Login() {
 
   return (
     <div className="login-paper relative flex min-h-dvh flex-col items-center justify-center px-4 max-md:justify-start max-md:pt-[12vh]">
-      <div className="float-in w-full max-w-sm rounded-2xl border border-stone-200/80 bg-white px-8 py-10 text-center shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
+      <div className="float-in w-full max-w-sm rounded-xl border border-stone-200/80 bg-white px-8 py-10 text-center shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
         <img src="/logo.png" alt="NowNow" className="mx-auto w-20" />
         {onboarding ? (
           <h1 className="mt-5 flex items-baseline justify-center text-xl font-bold">

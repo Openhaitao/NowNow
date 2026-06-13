@@ -4,9 +4,9 @@ import { DATE_TOKEN_RE, dateTokenState, resolveDateToken } from './dates'
 // 日期高亮：背景紧贴文字、零横向内边距、字号同正文——编辑态着色层用同一套，
 // 显示↔编辑切换时宽度一个像素都不变
 export const DATE_CHIP_CLS = {
-  overdue: 'rounded bg-red-100 text-red-700',
-  today: 'rounded bg-amber-200 text-amber-900',
-  future: 'rounded bg-amber-100 text-amber-700',
+  overdue: 'rounded-lg bg-red-100 text-red-700',
+  today: 'rounded-lg bg-amber-200 text-amber-900',
+  future: 'rounded-lg bg-amber-100 text-amber-700',
 }
 
 // 日期 token → 黄色 chip（过期红 / 今天深黄 / 未来浅黄）；可点击改/删
@@ -37,7 +37,7 @@ function hl(text, q, keyBase) {
   const re = new RegExp(`(${esc})`, 'gi')
   return text.split(re).map((seg, i) =>
     seg.toLowerCase() === q.toLowerCase() ? (
-      <mark key={`${keyBase}h${i}`} className="rounded-sm bg-yellow-200">{seg}</mark>
+      <mark key={`${keyBase}h${i}`} className="rounded-lg bg-yellow-200">{seg}</mark>
     ) : (
       seg
     ),
@@ -56,7 +56,7 @@ function renderInline(text, keyBase, q) {
     if (part.startsWith('~~') && part.endsWith('~~')) return <s key={k}>{hl(part.slice(2, -2), q, k)}</s>
     if (part.startsWith('`') && part.endsWith('`'))
       return (
-        <code key={k} className="rounded bg-stone-100 px-1 text-[13px]">
+        <code key={k} className="rounded-lg bg-stone-100 px-1 text-[13px]">
           {hl(part.slice(1, -1), q, k)}
         </code>
       )

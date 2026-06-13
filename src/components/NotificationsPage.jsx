@@ -45,13 +45,13 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
               </span>
               <button
                 onClick={() => approve(p, true)}
-                className="shrink-0 rounded-md border border-emerald-600 bg-white px-2.5 py-0.5 text-xs text-emerald-700 max-md:py-1 max-md:text-[13px] hover:bg-emerald-600 hover:text-white"
+                className="shrink-0 rounded-lg border border-emerald-600 bg-white px-2.5 py-0.5 text-xs text-emerald-700 max-md:py-1 max-md:text-[13px] hover:bg-emerald-600 hover:text-white"
               >
                 通过
               </button>
               <button
                 onClick={() => approve(p, false)}
-                className="shrink-0 rounded-md px-2 py-0.5 text-xs text-stone-400 hover:text-red-600"
+                className="shrink-0 rounded-lg px-2 py-0.5 text-xs text-stone-400 hover:text-red-600"
               >
                 拒绝
               </button>
@@ -95,7 +95,7 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
               </span>
               <button
                 onClick={() => closeEntry(e)}
-                className="shrink-0 rounded-md border border-amber-600 bg-white px-2.5 py-0.5 text-xs text-amber-700 max-md:py-1 max-md:text-[13px] hover:bg-amber-600 hover:text-white"
+                className="shrink-0 rounded-lg border border-amber-600 bg-white px-2.5 py-0.5 text-xs text-amber-700 max-md:py-1 max-md:text-[13px] hover:bg-amber-600 hover:text-white"
               >
                 验收关闭
               </button>
