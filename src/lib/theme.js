@@ -57,12 +57,10 @@ export function toggleTheme() {
   return next
 }
 
-// 启动即应用（main.jsx 顶部调用），并跟随系统切换（仅当用户没手动设过）。
+// 启动即应用。暗色暂不开放（Haitao：先不做暗色、别太复杂）——强制 light，
+// 不跟随系统、不读旧的 'dark' 记忆，避免漏进未完成的暗色。
+// 暗色代码（toggle/setPreference）+ styles.css 的 [data-theme="dark"] token 都保留，
+// 将来恢复只需把这里改回 applyTheme(resolveTheme()) + 系统监听。
 export function initTheme() {
-  applyTheme(resolveTheme())
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', (e) => {
-      if (!stored()) applyTheme(e.matches ? 'dark' : 'light')
-    })
-  }
+  applyTheme('light')
 }
