@@ -3,6 +3,7 @@
   font-size: var(--text-body, 16px);
   line-height: var(--leading-body, 1.7);
   color: var(--ink, #1f1e1c);
+  caret-color: var(--accent); /* 光标用主题色（蓝）*/
 }
 .doc-prose > * + * {
   margin-top: 0.4em;
