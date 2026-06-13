@@ -220,47 +220,19 @@
 .doc-img-handle.tr { right: -6px; top: -6px; cursor: nesw-resize; }
 .doc-img-handle.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
 .doc-img-handle.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
-/* 选中浮出的对齐工具条（飞书式，悬在图片上方居中） */
+/* 图片浮层工具条：视觉用和文字气泡同一套 Tailwind 类，这里只管定位 */
 .doc-img-toolbar {
   position: absolute;
-  top: -42px;
+  top: -44px;
   left: 50%;
   transform: translateX(-50%);
-  display: inline-flex;
-  gap: 2px;
-  padding: 4px;
-  line-height: normal;
-  background: var(--surface-elevated);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   z-index: 20;
+  line-height: normal;
   white-space: nowrap;
+  cursor: default;
 }
 .doc-img-toolbar button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--ink-muted);
   cursor: pointer;
-}
-.doc-img-toolbar button:hover {
-  background: var(--surface-hover);
-}
-.doc-img-toolbar button.on {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-.doc-img-tbsep {
-  width: 1px;
-  height: 18px;
-  margin: 0 2px;
-  background: var(--line);
 }
 /* 裁剪模式：工作台显示整图，裁剪框外用 box-shadow 罩暗 */
 .doc-crop-stage {

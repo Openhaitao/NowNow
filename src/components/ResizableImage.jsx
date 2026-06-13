@@ -19,6 +19,10 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
 
   const ratio = nat ? nat.h / nat.w : null // 自然高/宽
 
+  // 和文字气泡 / Slash 菜单同一套浮层 UI（定位由 .doc-img-toolbar 负责）
+  const TB = 'doc-img-toolbar flex items-center gap-0.5 rounded-lg border border-stone-200 bg-[var(--surface-elevated)] p-1 text-stone-600 shadow-[0_8px_24px_rgba(0,0,0,0.06)]'
+  const tbtn = (on) => 'flex h-7 w-7 items-center justify-center rounded-md hover:bg-stone-100 hover:text-stone-900 ' + (on ? 'bg-stone-200 text-stone-900' : '')
+
   const onImgLoad = (e) => {
     if (!nat) setNat({ w: e.target.naturalWidth, h: e.target.naturalHeight })
   }
@@ -134,9 +138,9 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
               <span className="doc-crop-h se" onPointerDown={dragRect('se')} />
             </span>
           </span>
-          <span className="doc-img-toolbar" contentEditable={false}>
-            <button type="button" className="on" onMouseDown={applyCrop} title="完成裁剪"><Check size={15} /></button>
-            <button type="button" onMouseDown={cancelCrop} title="取消"><X size={15} /></button>
+          <span className={TB} contentEditable={false}>
+            <button type="button" className={tbtn(true)} onMouseDown={applyCrop} title="完成裁剪"><Check size={15} strokeWidth={2.2} /></button>
+            <button type="button" className={tbtn(false)} onMouseDown={cancelCrop} title="取消"><X size={15} strokeWidth={2.2} /></button>
           </span>
         </span>
       </NodeViewWrapper>
@@ -161,12 +165,12 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
         </span>
         {editable && selected && (
           <>
-            <span className="doc-img-toolbar" contentEditable={false}>
-              <button type="button" className={align === 'left' ? 'on' : ''} onMouseDown={setAlign('left')} title="左对齐"><AlignLeft size={15} /></button>
-              <button type="button" className={align === 'center' ? 'on' : ''} onMouseDown={setAlign('center')} title="居中"><AlignCenter size={15} /></button>
-              <button type="button" className={align === 'right' ? 'on' : ''} onMouseDown={setAlign('right')} title="右对齐"><AlignRight size={15} /></button>
-              <span className="doc-img-tbsep" />
-              <button type="button" className={crop ? 'on' : ''} onMouseDown={enterCrop} title="裁剪"><Crop size={15} /></button>
+            <span className={TB} contentEditable={false}>
+              <button type="button" className={tbtn(align === 'left')} onMouseDown={setAlign('left')} title="左对齐"><AlignLeft size={15} strokeWidth={2.2} /></button>
+              <button type="button" className={tbtn(align === 'center')} onMouseDown={setAlign('center')} title="居中"><AlignCenter size={15} strokeWidth={2.2} /></button>
+              <button type="button" className={tbtn(align === 'right')} onMouseDown={setAlign('right')} title="右对齐"><AlignRight size={15} strokeWidth={2.2} /></button>
+              <span className="mx-0.5 h-4 w-px bg-stone-200" />
+              <button type="button" className={tbtn(!!crop)} onMouseDown={enterCrop} title="裁剪"><Crop size={15} strokeWidth={2.2} /></button>
             </span>
             <span className="doc-img-handle tl" onPointerDown={startResize(-1)} title="拖拽缩放" />
             <span className="doc-img-handle tr" onPointerDown={startResize(1)} title="拖拽缩放" />
