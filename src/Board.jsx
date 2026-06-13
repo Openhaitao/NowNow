@@ -870,7 +870,7 @@ export default function Board({ session }) {
           )}
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
-        <div ref={scrollRef} className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-24 pl-6 pr-1">
+        <div ref={scrollRef} className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-2 pl-6 pr-1">
           {view === 'settings' ? (
             <SettingsModal
               variant="page"
