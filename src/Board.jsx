@@ -498,21 +498,6 @@ export default function Board({ session }) {
   const notifCount = mentions.length + resolvedMine.length + dueMine.length + pendingMembers.length
 
   // 三格：今日未完成 / 本周未完成（今天还要干啥）+ 累计已完成（成就感，flomo 的"863 笔记"对应物）
-  const stats = useMemo(() => {
-    if (!me) return { today: 0, week: 0, done: 0 }
-    const mineGoals = allEntries.filter((e) => e.owner === me.id && e.is_goal)
-    const open = mineGoals.filter((e) => e.status !== 'closed')
-    const count = (key) => {
-      const range = periodRange(key, 0)
-      return open.filter((e) => e.section === key && inPeriod(e.anchor ?? null, range)).length
-    }
-    return {
-      today: count('today'),
-      week: count('week'),
-      done: mineGoals.filter((e) => e.status === 'closed').length,
-    }
-  }, [me, allEntries])
-
   // 搜索跳转：纸拨回那条所在的日期 + 高亮闪烁定位
   const jumpToEntry = useCallback(
     (e) => {
@@ -585,15 +570,12 @@ export default function Board({ session }) {
   // 侧栏内容：桌面常驻左栏 + 手机左侧抽屉（flomo 式）共用一份
   const sidebarContent = (
     <>
-        {/* 顶部：当前用户（和右侧日期行同一水平线、同级分量） */}
-        <div className="flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[21px]">
-          <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
-          {/* 手机抽屉头=日期，桌面左栏=用户名 */}
-          <span className="truncate max-md:hidden">{me.display_name}</span>
-          <span className="truncate md:hidden">
+        {/* 顶部：日期（Web 和手机一致，原 logo + 用户名已删） */}
+        <div className="mb-4 flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[21px]">
+          <span className="truncate">
             {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日
           </span>
-          {/* 手机：通知/设置收进名字右侧（flomo 式抽屉头），点击进对应整页 */}
+          {/* 手机：通知/设置收进右侧（flomo 式抽屉头），点击进对应整页 */}
           <span className="-mr-2.5 ml-auto flex items-center gap-0.5 md:hidden">
             <button onClick={() => setView('notifications')} className="relative p-1.5 text-stone-500" title="通知">
               <Bell size={22} />
@@ -605,19 +587,6 @@ export default function Board({ session }) {
               <Settings size={22} />
             </button>
           </span>
-        </div>
-        {/* flomo 式三格统计：左中右铺开（首格贴左、末格贴右），数字行与右侧输入框平齐 */}
-        <div className="mb-4 mt-5 flex justify-between px-2.5">
-          {[
-            ['today', '今日', 'items-start'],
-            ['week', '本周', 'items-center'],
-            ['done', '已完成', 'items-end'],
-          ].map(([k, label, align]) => (
-            <div key={k} className={`flex flex-col ${align}`}>
-              <div className="text-[24px] font-bold leading-tight">{stats[k]}</div>
-              <div className="mt-0.5 text-xs text-stone-300">{label}</div>
-            </div>
-          ))}
         </div>
         {/* 视图入口与人员列表分组：全部目标在上，团队成员单独一组 */}
         {hasAnchor && (
