@@ -791,25 +791,24 @@ export default function Board({ session }) {
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
           {/* 四频道切换器（替代日期标题）：今日/本周/本月/暂存箱，一次看一个。日期只在「今日」旁淡灰小字。右侧=搜索（桌面） */}
           {view === 'paper' && (
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1.5">
             {SECTIONS.map((s) => {
               const stepper = s.key !== 'stash' && hasAnchor // 暂存箱无周期，不带 ‹ ›
               const activeTab = channel === s.key
               const off = offsets[s.key] || 0
-              // 滑入式箭头：默认 w-0 opacity-0，hover 到这个标签才展开；每个箭头各自 hover 高亮
-              const arrowCls =
-                'flex w-0 items-center justify-center overflow-hidden text-stone-300 opacity-0 transition-all duration-150 hover:text-stone-700 group-hover/tab:w-[18px] group-hover/tab:opacity-100'
+              // ‹ › 固定常显（不随 hover 滑动，标签不动）；各自 hover 高亮；› 到当前周期变灰不可点
+              const arrowCls = 'rounded p-0.5 text-stone-300 transition-colors hover:bg-stone-100 hover:text-stone-700'
               return (
-                <span key={s.key} className="group/tab flex items-center">
+                <span key={s.key} className="flex items-center">
                   {stepper && (
                     <button onClick={() => stepChannel(s.key, -1)} title="往前看一段" className={arrowCls}>
-                      <ChevronLeft size={15} />
+                      <ChevronLeft size={14} />
                     </button>
                   )}
                   <button
                     onClick={() => goChannel(s.key)}
                     className={
-                      'rounded-md px-2 py-1 text-[14.5px] max-md:text-[15.5px] ' +
+                      'rounded-md px-1.5 py-1 text-[14.5px] max-md:text-[15.5px] ' +
                       (activeTab ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-400 hover:bg-stone-100')
                     }
                   >
@@ -820,9 +819,9 @@ export default function Board({ session }) {
                       onClick={() => stepChannel(s.key, 1)}
                       disabled={off >= 0}
                       title="往后看一段"
-                      className={arrowCls + ' disabled:!w-0 disabled:!opacity-0'}
+                      className={arrowCls + ' disabled:cursor-default disabled:text-stone-200 disabled:hover:bg-transparent'}
                     >
-                      <ChevronRight size={15} />
+                      <ChevronRight size={14} />
                     </button>
                   )}
                 </span>
