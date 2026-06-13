@@ -76,8 +76,15 @@
   gap: 0.5em;
   margin: 0.1em 0;
 }
+/* 复选框在首行行高内垂直居中，和文字对齐（不靠 magic margin）*/
 .doc-prose ul[data-type='taskList'] li > label {
-  margin-top: 0.35em;
+  display: inline-flex;
+  align-items: center;
+  height: var(--leading-body, 24px);
+  margin: 0;
+}
+.doc-prose ul[data-type='taskList'] li > label input {
+  margin: 0;
 }
 .doc-prose ul[data-type='taskList'] li > div {
   flex: 1 1 auto;
