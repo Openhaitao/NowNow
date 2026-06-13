@@ -73,17 +73,24 @@ const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 // 今日 → 6月13日 星期六；本周 → 日期范围；本月 → 年月。
 export function periodHeader(section, offset = 0, base) {
   const r = periodRange(section, offset, base)
-  // 统一样式，不区分今天/过去：日 → 2026年6月13日 · 星期六；周 → 日期范围；月 → 年月
+  const curYear = new Date().getFullYear()
+  // 干净优先：同年省略年份，跨年才补「YYYY年」；星期用「周六」不用「星期六」。
+  // 日 → 6月13日 周六；周 → 6月9日 – 15日（同月省末端月）；月 → 6月
+  const y = (year) => (year === curYear ? '' : `${year}年`)
   if (section === 'today') {
     const d = r.start
-    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 · 星期${WEEKDAYS[d.getDay()]}`
+    return `${y(d.getFullYear())}${d.getMonth() + 1}月${d.getDate()}日 周${WEEKDAYS[d.getDay()]}`
   }
   if (section === 'week') {
-    const endShow = new Date(r.end.getTime() - DAY)
-    return `${r.start.getFullYear()}年${r.start.getMonth() + 1}月${r.start.getDate()}日 – ${endShow.getMonth() + 1}月${endShow.getDate()}日`
+    const s = r.start
+    const e = new Date(r.end.getTime() - DAY)
+    const sameMonth = s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()
+    const startPart = `${y(s.getFullYear())}${s.getMonth() + 1}月${s.getDate()}日`
+    const endPart = sameMonth ? `${e.getDate()}日` : `${y(e.getFullYear())}${e.getMonth() + 1}月${e.getDate()}日`
+    return `${startPart} – ${endPart}`
   }
   // month
-  return `${r.start.getFullYear()}年${r.start.getMonth() + 1}月`
+  return `${y(r.start.getFullYear())}${r.start.getMonth() + 1}月`
 }
 
 // 某条目的 anchor 落在该频道的第几个 offset（0=当前周期，负=过去）。null=无 anchor。
