@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { loadMyMentions, markMentionRead } from '../lib/docMentionsApi'
 import { periodHeaderFromKey } from '../lib/periodKey'
 
-const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存箱' }
+const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存' }
 
 // docs 世界的通知中心：① @我的（别人在文档里 @ 我）② 待确认成员。
 // 旧的「已解决 / 待认领」任务流随目标模型删除。
@@ -74,26 +74,24 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
       )}
 
       {mentions.length > 0 && (
-        <div className="mt-5 rounded-lg bg-blue-50 px-4 py-3">
-          <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-blue-700 max-md:text-[13px]">
+        <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--surface)' }}>
+          <div className="mb-1.5 flex items-center gap-1 text-xs font-medium max-md:text-[13px]" style={{ color: 'var(--accent)' }}>
             <AtSign size={13} /> @我的 · {mentions.length}
           </div>
           {mentions.map((m) => {
             const from = profiles?.find((p) => p.id === m.author)
-            const ctx = m.section === 'stash' ? '暂存箱' : periodHeaderFromKey(m.section, m.periodKey)
+            const ctx = m.section === 'stash' ? '暂存' : periodHeaderFromKey(m.section, m.periodKey)
             return (
               <button
                 key={m.id}
                 onClick={() => openMention(m)}
-                className={
-                  'flex w-full items-center gap-2 py-1 text-left text-[13.5px] max-md:py-1.5 max-md:text-[15.5px] hover:underline ' +
-                  (m.read_at ? 'text-stone-400' : 'text-blue-900')
-                }
+                className="flex w-full items-center gap-2 py-1 text-left text-[13.5px] max-md:py-1.5 max-md:text-[15.5px] hover:underline"
+                style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--ink-muted)' }}
               >
                 <span className="min-w-0 flex-1 truncate">
-                  <b>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section]}」@了你
+                  <b style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--ink)' }}>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section]}」@了你
                 </span>
-                <span className="shrink-0 text-[11.5px] text-blue-500">{ctx} · 去看看</span>
+                <span className="shrink-0 text-[11.5px]" style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--accent)' }}>{ctx} · 去看看</span>
               </button>
             )
           })}
