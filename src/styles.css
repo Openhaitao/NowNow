@@ -126,9 +126,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 选区：用胶囊底色（暖灰），无感不抢戏（Haitao：那样好看且无感）*/
+/* 选区：用主题蓝的淡色（Haitao：滑动用主题蓝），标准好看的浅蓝 */
 ::selection {
-  background: var(--surface-hover);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 /* 焦点框只给真正的表单输入框（input/textarea/select）。
    按钮、可拖拽行、文档编辑区（contenteditable）都不画框——
