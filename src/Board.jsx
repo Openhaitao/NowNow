@@ -24,6 +24,18 @@ const SECTIONS = [
 const LAST_VIEWED_KEY = 'nownow_last_viewed'
 const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) || '{}')
 
+// 待我处理的唯一查询口径（fail-closed）：@我未认领未拒绝 + 源条目仍 open + 非我自己创建。
+// fetchAll 和 realtime reloadMentions 共用这一个 builder，杜绝双路径漂移（Kent gate）。
+const inboxMentionsQuery = (uid) =>
+  supabase
+    .from('mentions')
+    .select('*, entries!mentions_entry_id_fkey!inner(content, creator, status)')
+    .eq('mentioned', uid)
+    .is('claimed_entry', null)
+    .is('rejected_at', null)
+    .eq('entries.status', 'open')
+    .neq('entries.creator', uid)
+
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
 // 侧栏成员行：直接按住名字拖动排序（顺序存本地，纯个人视图偏好，不进数据库）
 // 拖动中的那一行用选中同款的蓝色高亮
@@ -189,16 +201,7 @@ export default function Board({ session }) {
   const fetchAll = useCallback(async () => {
     const [{ data: es }, { data: ms }, { data: am }] = await Promise.all([
       supabase.from('entries').select('*'),
-      // 待我处理（Kent fail-closed gate）：!inner 把"源条目仍 open 且不是我自己创建的"焊进查询，
-      // 源条目一旦 closed/resolved，旧 mention 不再赖在「待我处理」里
-      supabase
-        .from('mentions')
-        .select('*, entries!mentions_entry_id_fkey!inner(content, creator, status)')
-        .eq('mentioned', user.id)
-        .is('claimed_entry', null)
-        .is('rejected_at', null)
-        .eq('entries.status', 'open')
-        .neq('entries.creator', user.id),
+      inboxMentionsQuery(user.id),
       supabase.from('mentions').select('entry_id, mentioned, claimed_entry, rejected_at'),
     ])
     return { es: es || [], ms: ms || [], am: am || [] }
@@ -371,12 +374,7 @@ export default function Board({ session }) {
   }, [])
 
   const reloadMentions = useCallback(async () => {
-    const { data: ms } = await supabase
-      .from('mentions')
-      .select('*, entries!mentions_entry_id_fkey(content, creator)')
-      .eq('mentioned', user.id)
-      .is('claimed_entry', null)
-      .is('rejected_at', null)
+    const { data: ms } = await inboxMentionsQuery(user.id)
     setMentions(ms || [])
   }, [user.id])
 
