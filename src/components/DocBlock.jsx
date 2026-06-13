@@ -11,11 +11,11 @@ export default function DocBlock({ owner, section, periodKey, editable, placehol
   const saveTimer = useRef(null)
   const savedClear = useRef(null)
 
-  // saved 低干扰：显示一下就淡出，不长驻
+  // 成功路径全静默（保存中/已保存都不显示）——海涛嫌「已保存」打扰书写。
+  // 只在离线/失败时提示（永不丢字仍兜底，真出问题才出声）。
   const onSaveState = (s) => {
-    setSaveState(s)
     clearTimeout(savedClear.current)
-    if (s === 'saved') savedClear.current = setTimeout(() => setSaveState(null), 2000)
+    setSaveState(s === 'saving' || s === 'saved' ? null : s)
   }
 
   useEffect(() => {
