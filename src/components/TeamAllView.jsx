@@ -3,9 +3,9 @@ import { ChevronDown, ChevronLeft, ChevronRight, LayoutList, Pin } from 'lucide-
 import { inPeriod, periodRange } from '../lib/period'
 import EntryRow from './EntryRow'
 
-// 全部目标 = 站会页：每个人「今日进行中 + 过期欠账（红）」常显，
+// 团队目标 = 站会页：每个人「今日进行中 + 过期欠账（红）」常显，
 // 本周/本月/已完成折叠成一行小计；每条活带"谁派的、认领没、办得怎么样"
-export default function TeamAllView({ allEntries, allMentions = [], profiles, orderedPeople, me, mutate, pushUndo, foldAt = Infinity, baseDate = null, onPin }) {
+export default function TeamAllView({ allEntries, allMentions = [], profiles, orderedPeople, me, mutate, pushUndo, foldAt = Infinity, baseDate = null, onPin, pinnedIds }) {
   const [expanded, setExpanded] = useState({}) // personId -> bool（本周/本月/已完成小计）
   const [foldOpen, setFoldOpen] = useState({}) // personId -> bool（折叠区成员展开整块）
   const [dayOff, setDayOff] = useState({}) // personId -> 天数偏移（负=往回看这个人前几天的目标）
@@ -81,15 +81,21 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
           <section key={p.id} className="group/person border-b border-stone-100 py-5 last:border-0">
             <div className="flex items-center gap-2">
               <span className="text-[15px] font-semibold max-md:text-[17px]">{p.display_name}</span>
-              {onPin && (
-                <button
-                  onClick={() => onPin(p.id)}
-                  title="置顶到团队成员靠前"
-                  className="rounded p-0.5 text-stone-300 opacity-0 transition-opacity hover:text-stone-600 group-hover/person:opacity-100 max-md:opacity-60"
-                >
-                  <Pin size={13} />
-                </button>
-              )}
+              {onPin && (() => {
+                const isPinned = pinnedIds?.has(p.id)
+                return (
+                  <button
+                    onClick={() => onPin(p.id)}
+                    title={isPinned ? '取消置顶' : '置顶成员'}
+                    className={
+                      'rounded p-0.5 transition-opacity hover:text-stone-600 ' +
+                      (isPinned ? 'text-stone-500 opacity-100' : 'text-stone-300 opacity-0 group-hover/person:opacity-100 max-md:opacity-60')
+                    }
+                  >
+                    <Pin size={13} className={isPinned ? 'fill-current' : ''} />
+                  </button>
+                )
+              })()}
               <span className="text-xs text-stone-300 max-md:text-[13px]">
                 {r.now.length ? `${dayLabel} ${r.now.length} 条进行中` : `${dayLabel}暂无进行中`}
               </span>

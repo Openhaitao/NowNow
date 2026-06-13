@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, Home, LayoutList, Menu, Search, Settings } from 'lucide-react'
+import { Bell, Home, LayoutList, Menu, Pin, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, periodRange } from './lib/period'
@@ -39,31 +39,43 @@ const inboxMentionsQuery = (uid) =>
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
 // 侧栏成员行：直接按住名字拖动排序（顺序存本地，纯个人视图偏好，不进数据库）
 // 拖动中的那一行用选中同款的蓝色高亮
-function SortableMemberRow({ p, isMe, active, news, onClick }) {
+function SortableMemberRow({ p, isMe, active, news, pinned, onClick, onTogglePin }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
   return (
-    <button
+    <div
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      onClick={onClick}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={
-        'flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
+        'group/mem flex w-full items-center rounded-md px-2.5 py-1.5 text-[14px] max-md:py-2 ' +
         (isDragging ? 'z-10 ' : '') +
         (active || isDragging ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
       }
     >
-      <span className="truncate">
-        {p.display_name}
-        {isMe ? '（我）' : ''}
-      </span>
-      {news && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500" title="有新动态" />}
-    </button>
+      {/* 按住名字拖动排序；点击进主页 */}
+      <button {...attributes} {...listeners} onClick={onClick} className="flex min-w-0 flex-1 items-center text-left">
+        <span className="truncate">
+          {p.display_name}
+          {isMe ? '（我）' : ''}
+        </span>
+      </button>
+      {news && <span className="ml-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" title="有新动态" />}
+      {/* 📌 默认隐藏，hover 出现；点击置顶/取消置顶（个人偏好，存本地） */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onTogglePin(p.id) }}
+        title={pinned ? '取消置顶' : '置顶'}
+        className={
+          'ml-1 shrink-0 rounded p-0.5 hover:text-stone-600 ' +
+          (pinned ? 'text-stone-500 opacity-100' : 'text-stone-300 opacity-0 group-hover/mem:opacity-100 max-md:opacity-60')
+        }
+      >
+        <Pin size={12} className={pinned ? 'fill-current' : ''} />
+      </button>
+    </div>
   )
 }
 
 const MEMBER_ORDER_KEY = 'nownow_member_order'
+const PINNED_KEY = 'nownow_pinned_members'
 
 function SetupCard({ user, onDone }) {
   // 邀请页已经填过名字的话直接自动认领进入，不再问一遍
@@ -466,18 +478,21 @@ export default function Board({ session }) {
   }, [activeProfiles, memberOrder, user.id])
   // 团队成员列表 = 排除本人（本人入口走「我的目标」）；团队目标也用它，沿用同一排序
   const teamMembers = useMemo(() => orderedProfiles.filter((p) => p.id !== user.id), [orderedProfiles, user.id])
-  // 从「团队目标」点 📌 把某人置顶到团队成员靠前（紧跟本人之后）。个人偏好，存 localStorage，不进库、不影响别人
-  const pinMember = useCallback(
-    (id) => {
-      const ids = orderedProfiles.map((p) => p.id).filter((x) => x !== id)
-      const meIdx = ids.indexOf(user.id)
-      const at = meIdx === -1 ? 0 : meIdx + 1
-      const next = [...ids.slice(0, at), id, ...ids.slice(at)]
-      setMemberOrder(next)
-      localStorage.setItem(MEMBER_ORDER_KEY, JSON.stringify(next))
-    },
-    [orderedProfiles, user.id],
-  )
+
+  // 置顶成员：个人偏好，存 localStorage，不进库、不影响别人。点 📌 切换某人是否置顶
+  const [pinnedIds, setPinnedIds] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(PINNED_KEY) || '[]')) } catch { return new Set() }
+  })
+  const togglePin = useCallback((id) => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      localStorage.setItem(PINNED_KEY, JSON.stringify([...next]))
+      return next
+    })
+  }, [])
+  const pinnedMembers = useMemo(() => teamMembers.filter((p) => pinnedIds.has(p.id)), [teamMembers, pinnedIds])
+  const restMembers = useMemo(() => teamMembers.filter((p) => !pinnedIds.has(p.id)), [teamMembers, pinnedIds])
   const memberSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   function onMemberDragEnd({ active, over }) {
     if (!over || active.id === over.id) return
@@ -625,20 +640,47 @@ export default function Board({ session }) {
           <LayoutList size={14} /> 团队目标
         </button>
 
-        {/* 段2 · 团队成员（不含本人；本人入口是上面的「我的目标」） */}
+        {/* 段2 · 置顶成员 + 团队成员（都不含本人；📌 切换置顶，存本地个人偏好） */}
         <div className="my-2 border-t border-stone-100" />
         {/* 成员多到放不下时这一段自己滚动（细灰滚动条），通知/设置钉在底部不动 */}
         <div className="paper-scroll min-h-0 flex-1 overflow-y-auto">
           <DndContext sensors={memberSensors} collisionDetection={closestCenter} onDragEnd={onMemberDragEnd}>
-            <SortableContext items={teamMembers.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-              {teamMembers.map((p) => (
+            {pinnedMembers.length > 0 && (
+              <>
+                <div className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">
+                  置顶成员
+                </div>
+                <SortableContext items={pinnedMembers.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                  {pinnedMembers.map((p) => (
+                    <SortableMemberRow
+                      key={p.id}
+                      p={p}
+                      isMe={p.id === me.id}
+                      active={p.id === pageUserId && view === 'paper'}
+                      news={hasNews(p)}
+                      pinned
+                      onClick={() => viewPage(p.id)}
+                      onTogglePin={togglePin}
+                    />
+                  ))}
+                </SortableContext>
+                <div className="mt-3" />
+              </>
+            )}
+            <div className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">
+              团队成员
+            </div>
+            <SortableContext items={restMembers.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              {restMembers.map((p) => (
                 <SortableMemberRow
                   key={p.id}
                   p={p}
                   isMe={p.id === me.id}
                   active={p.id === pageUserId && view === 'paper'}
                   news={hasNews(p)}
+                  pinned={false}
                   onClick={() => viewPage(p.id)}
+                  onTogglePin={togglePin}
                 />
               ))}
             </SortableContext>
@@ -819,7 +861,7 @@ export default function Board({ session }) {
           ) : (
             <>
               {view === 'all' ? (
-                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={teamMembers} me={me} mutate={mutateEntries} pushUndo={pushUndo} baseDate={baseDate} onPin={pinMember} />
+                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={[...pinnedMembers, ...restMembers]} me={me} mutate={mutateEntries} pushUndo={pushUndo} baseDate={baseDate} onPin={togglePin} pinnedIds={pinnedIds} />
               ) : (
                 <>
               {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} />}
