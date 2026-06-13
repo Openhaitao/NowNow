@@ -189,12 +189,16 @@ export default function Board({ session }) {
   const fetchAll = useCallback(async () => {
     const [{ data: es }, { data: ms }, { data: am }] = await Promise.all([
       supabase.from('entries').select('*'),
+      // 待我处理（Kent fail-closed gate）：!inner 把"源条目仍 open 且不是我自己创建的"焊进查询，
+      // 源条目一旦 closed/resolved，旧 mention 不再赖在「待我处理」里
       supabase
         .from('mentions')
-        .select('*, entries!mentions_entry_id_fkey(content, creator)')
+        .select('*, entries!mentions_entry_id_fkey!inner(content, creator, status)')
         .eq('mentioned', user.id)
         .is('claimed_entry', null)
-        .is('rejected_at', null),
+        .is('rejected_at', null)
+        .eq('entries.status', 'open')
+        .neq('entries.creator', user.id),
       supabase.from('mentions').select('entry_id, mentioned, claimed_entry, rejected_at'),
     ])
     return { es: es || [], ms: ms || [], am: am || [] }
