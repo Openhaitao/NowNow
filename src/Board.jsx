@@ -641,15 +641,18 @@ export default function Board({ session }) {
         >
           <CircleCheck size={16} /> 我的目标
         </button>
-        <button
-          onClick={() => setView('all')}
-          className={
-            'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
-            (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
-          }
-        >
-          <LayoutList size={16} /> 团队目标
-        </button>
+        {/* 团队目标入口先按 Haitao 隐藏（保留代码，改 false 即可恢复） */}
+        {false && (
+          <button
+            onClick={() => setView('all')}
+            className={
+              'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
+              (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
+            }
+          >
+            <LayoutList size={16} /> 团队目标
+          </button>
+        )}
 
         {/* 段2 · 置顶成员 + 团队成员（都不含本人；📌 切换置顶，存本地个人偏好）。置顶成员上方不再画分隔线 */}
         <div className="mt-3" />
