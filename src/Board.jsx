@@ -869,10 +869,10 @@ export default function Board({ session }) {
                     e.target.blur()
                   }
                 }}
-                className="w-40 rounded-md bg-stone-200/80 py-1.5 pl-9 pr-2 text-[13px] outline-none focus:bg-stone-200 md:w-56"
+                className="w-40 rounded-md bg-stone-200/80 py-2.5 pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200 md:w-56"
               />
               {!query && (
-                <kbd className="pointer-events-none absolute left-9 text-[15px] font-medium text-stone-400">⌘+K</kbd>
+                <kbd className="pointer-events-none absolute left-9 text-[16px] font-medium text-stone-400">⌘+K</kbd>
               )}
             </span>
           </div>
