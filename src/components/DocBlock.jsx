@@ -30,6 +30,7 @@ export default function DocBlock({ owner, section, periodKey, editable, placehol
       editable={editable}
       placeholder={placeholder}
       profiles={profiles}
+      uploaderId={owner}
       onChange={({ json, text }) => {
         if (!editable) return
         clearTimeout(saveTimer.current)
