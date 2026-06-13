@@ -163,9 +163,12 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
     const idx = active.findIndex((e) => e.id === entry.id)
     const neighbor = (idx > 0 ? active[idx - 1] : null) || active[idx + 1]
     if (neighbor) { setEditId(neighbor.id); return }
-    // 本区被删空：原地留一行空草稿并聚焦，绝不丢光标。
-    // 删除不跨区（跨区只走 ↑↓ / 回车这种主动导航），否则空区之间会来回生成草稿=反复横跳
-    setDrafts((d) => [...d, { key: `d${Date.now()}-r`, pos: entry.position, is_goal: false, anchor: entry.anchor ?? null }])
+    // 本区被删空：只在当前周期（offset 0）原地补一行空草稿聚焦（新建只发生在今天）。
+    // 删除不跨区（跨区只走 ↑↓ / 回车这种主动导航），否则空区之间会来回生成草稿=反复横跳。
+    // 过去的时间块删空就不补新行（保持"过去不新建"）。
+    if (range.isCurrent) {
+      setDrafts((d) => [...d, { key: `d${Date.now()}-r`, pos: entry.position, is_goal: false, anchor: entry.anchor ?? null }])
+    }
   }
 
   // 退格删空一条 → 删掉它，光标按统一规则落位
@@ -321,7 +324,7 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             .sort((a, b) => a.pos - b.pos)
             .map((item) =>
               item.t === 'e' ? (
-                <SortableRow key={item.v.id} entry={item.v} draggable={isMyPage && !q && (allTime || range.isCurrent)}>
+                <SortableRow key={item.v.id} entry={item.v} draggable={isMyPage && !q}>
                   <EntryRow
                     entry={item.v}
                     me={me}
@@ -331,11 +334,11 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
                     forceEdit={editId === item.v.id}
                     onEditHandled={() => setEditId(null)}
                     onDeleteEmpty={isMyPage ? deleteEmpty : undefined}
-                    onEditNext={isMyPage ? editNext : undefined}
+                    onEditNext={isMyPage && range.isCurrent ? editNext : undefined}
                     onNavUp={isMyPage ? navUp : undefined}
                     onNavDown={isMyPage ? navDown : undefined}
-                    onSplit={isMyPage ? splitEntry : undefined}
-                    onInsertAbove={isMyPage ? insertAbove : undefined}
+                    onSplit={isMyPage && range.isCurrent ? splitEntry : undefined}
+                    onInsertAbove={isMyPage && range.isCurrent ? insertAbove : undefined}
                     onDeleted={isMyPage ? focusAfterRemoval : undefined}
                     pushUndo={pushUndo}
                     flash={flashId === item.v.id}
@@ -373,8 +376,8 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             )}
         </SortableContext>
       </DndContext>
-      {/* 幽灵行：常驻在频道底部，点一下就地开写，回车连续新建（纸即输入，取代独立输入框） */}
-      {isMyPage && !q && (
+      {/* 幽灵行：只在当前周期（offset 0）出现——新建只发生在今天/本周/本月，过去的时间块不出「＋」 */}
+      {isMyPage && !q && range.isCurrent && (
         <div
           onClick={() =>
             setDrafts((d) => [
