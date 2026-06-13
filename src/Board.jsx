@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, ChevronLeft, ChevronRight, CircleCheck, LayoutList, Menu, Pin, Search, Settings } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, Pin, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
@@ -10,10 +10,8 @@ import { DATE_TOKEN_RE, dateTokenState } from './lib/dates'
 import DatePicker from './components/DatePicker'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
-import Section from './components/Section'
 import DocTimeline from './components/DocTimeline'
 import DocSearch from './components/DocSearch'
-import TeamAllView from './components/TeamAllView'
 import SettingsModal from './components/SettingsModal'
 
 const SECTIONS = [
@@ -676,18 +674,6 @@ export default function Board({ session }) {
         >
           <CircleCheck size={16} /> 我的目标
         </button>
-        {/* 团队目标入口先按 Haitao 隐藏（保留代码，改 false 即可恢复） */}
-        {false && (
-          <button
-            onClick={() => setView('all')}
-            className={
-              'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
-              (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
-            }
-          >
-            <LayoutList size={16} /> 团队目标
-          </button>
-        )}
 
         {/* 段2 · 置顶成员 + 团队成员（都不含本人；📌 切换置顶，存本地个人偏好）。置顶成员上方不再画分隔线 */}
         <div className="mt-3" />
@@ -810,13 +796,11 @@ export default function Board({ session }) {
                 onClick={() => viewPage(me.id)}
                 className={'min-w-0 flex-1 truncate text-center text-[17.5px] font-semibold ' + (view === 'paper' && !isMyPage ? 'text-stone-400' : '')}
               >
-                {view === 'all'
-                  ? '团队目标'
-                  : view === 'notifications'
-                    ? '通知'
-                    : view === 'settings'
-                      ? '设置'
-                      : pageUser.display_name}
+                {view === 'notifications'
+                  ? '通知'
+                  : view === 'settings'
+                    ? '设置'
+                    : pageUser.display_name}
               </button>
               <button onClick={() => setMobileSearch(true)} className="p-1.5 text-stone-400">
                 <Search size={20} />
@@ -895,20 +879,14 @@ export default function Board({ session }) {
             />
           ) : view === 'notifications' ? (
             <NotificationsPage
-              resolvedMine={resolvedMine}
               pendingMembers={pendingMembers}
               profiles={profiles}
               onMembersChanged={loadProfiles}
-              onJump={jumpToEntry}
               onJumpDoc={jumpToDoc}
             />
           ) : (
             <>
-              {view === 'all' ? (
-                <TeamAllView allEntries={allEntries} allMentions={allMentions} profiles={profiles} orderedPeople={[...pinnedMembers, ...restMembers]} me={me} mutate={mutateEntries} pushUndo={pushUndo} baseDate={baseDate} onPin={togglePin} pinnedIds={pinnedIds} />
-              ) : (
-                <>
-              {isMyPage && view === 'paper' && <Inbox mentions={mentions} profiles={profiles} onChanged={loadData} onJumpDoc={jumpToDoc} />}
+              {isMyPage && view === 'paper' && <Inbox profiles={profiles} onJumpDoc={jumpToDoc} />}
               {/* 文档内核（Tiptap）：搜索时出全文结果，否则每个频道 = 往下回溯的文档时间线 */}
               {query.trim() ? (
                 <DocSearch
@@ -918,8 +896,6 @@ export default function Board({ session }) {
                 />
               ) : (
                 <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} />
-              )}
-                </>
               )}
             </>
           )}
