@@ -126,11 +126,11 @@ export default function Login() {
   }
 
   const inputCls =
-    'rounded-lg border border-stone-200 bg-white px-3.5 py-2.5 text-[15px] outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+    'rounded-md border border-stone-200 bg-white px-3.5 py-2.5 text-[15px] outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
 
   return (
     <div className="login-paper relative flex min-h-dvh flex-col items-center justify-center px-4 max-md:justify-start max-md:pt-[12vh]">
-      <div className="float-in w-full max-w-sm rounded-xl border border-stone-200/80 bg-white px-8 py-10 text-center shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
+      <div className="float-in w-full max-w-sm rounded-lg border border-stone-200/80 bg-white px-8 py-10 text-center shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
         <img src="/logo.png" alt="NowNow" className="mx-auto w-20" />
         {onboarding ? (
           <h1 className="mt-5 flex items-baseline justify-center text-xl font-bold">
@@ -198,7 +198,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={busy}
-              className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white transition-all hover:-translate-y-px hover:bg-stone-700 hover:shadow-md disabled:opacity-60"
+              className="rounded-md bg-stone-900 py-2.5 text-[15px] text-white transition-all hover:-translate-y-px hover:bg-stone-700 hover:shadow-md disabled:opacity-60"
             >
               {busy ? '登录中…' : onboarding ? '设置密码并进入' : '登录'}
             </button>
@@ -215,7 +215,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={busy}
-              className="rounded-lg bg-stone-900 py-2.5 text-[15px] text-white transition-all hover:-translate-y-px hover:bg-stone-700 hover:shadow-md disabled:opacity-60"
+              className="rounded-md bg-stone-900 py-2.5 text-[15px] text-white transition-all hover:-translate-y-px hover:bg-stone-700 hover:shadow-md disabled:opacity-60"
             >
               发送登录链接
             </button>

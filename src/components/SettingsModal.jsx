@@ -135,7 +135,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
                 value={handle}
                 onChange={(e) => handleNameChange(e.target.value)}
                 onBlur={() => { clearTimeout(saveTimer.current); persistName(handle) }}
-                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 max-md:text-[16px] outline-none focus:border-stone-400"
+                className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 text-[14px] text-stone-900 max-md:text-[16px] outline-none focus:border-stone-400"
               />
               {saved && (
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-emerald-600">已保存 ✓</span>
@@ -147,7 +147,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
             <input
               value={email}
               disabled
-              className="mt-1 w-full cursor-not-allowed rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-[14px] text-stone-400 max-md:text-[16px] outline-none"
+              className="mt-1 w-full cursor-not-allowed rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-[14px] text-stone-400 max-md:text-[16px] outline-none"
             />
           </label>
           <label className="mt-3 block text-xs text-stone-500 max-md:text-[13px]">
@@ -159,12 +159,12 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
                 onChange={(e) => { setNewPw(e.target.value); setPwMsg('') }}
                 onKeyDown={(e) => e.key === 'Enter' && changePassword()}
                 placeholder="输入新密码（至少 6 位）"
-                className="min-w-0 flex-1 rounded-lg border border-stone-200 px-3 py-2 text-[14px] text-stone-900 max-md:text-[16px] outline-none focus:border-stone-400"
+                className="min-w-0 flex-1 rounded-md border border-stone-200 px-3 py-2 text-[14px] text-stone-900 max-md:text-[16px] outline-none focus:border-stone-400"
               />
               <button
                 onClick={changePassword}
                 disabled={!newPw}
-                className="shrink-0 rounded-lg bg-stone-900 px-3 py-2 text-[13px] text-white hover:bg-stone-700 max-md:text-[14.5px] disabled:opacity-30"
+                className="shrink-0 rounded-md bg-stone-900 px-3 py-2 text-[13px] text-white hover:bg-stone-700 max-md:text-[14.5px] disabled:opacity-30"
               >
                 更新
               </button>
@@ -184,18 +184,18 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
               onChange={(e) => { setInviteEmail(e.target.value); setInviteMsg(''); setInviteErr('') }}
               onKeyDown={(e) => e.key === 'Enter' && addEmail()}
               placeholder="对方邮箱"
-              className="min-w-0 flex-1 rounded-lg border border-stone-200 px-3 py-1.5 text-[13px] outline-none focus:border-stone-400 max-md:text-[16px]"
+              className="min-w-0 flex-1 rounded-md border border-stone-200 px-3 py-1.5 text-[13px] outline-none focus:border-stone-400 max-md:text-[16px]"
             />
             <button
               onClick={addEmail}
-              className="flex shrink-0 items-center gap-1 rounded-lg bg-stone-900 px-3 py-1.5 text-[13px] text-white hover:bg-stone-700 max-md:text-[14.5px]"
+              className="flex shrink-0 items-center gap-1 rounded-md bg-stone-900 px-3 py-1.5 text-[13px] text-white hover:bg-stone-700 max-md:text-[14.5px]"
             >
               <UserPlus size={13} /> 邀请
             </button>
           </div>
           {inviteErr && <p className="mt-1.5 text-xs text-red-500">{inviteErr}</p>}
           {inviteLink && (
-            <div className="mt-2 flex items-center gap-2 rounded-lg bg-stone-50 px-2.5 py-2">
+            <div className="mt-2 flex items-center gap-2 rounded-md bg-stone-50 px-2.5 py-2">
               <span className="min-w-0 flex-1 select-all break-all text-xs text-stone-600">{inviteLink}</span>
               <button
                 onClick={async () => {
@@ -231,7 +231,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
                 {membersOpen && (
                   <div className="mt-1.5 space-y-1">
                     {joined.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-stone-50 px-2.5 py-1.5 text-xs max-md:py-2 max-md:text-[14px]">
+                      <div key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-stone-50 px-2.5 py-1.5 text-xs max-md:py-2 max-md:text-[14px]">
                         <span className="text-stone-700">
                           {p.display_name}
                           {p.id === me.id ? '（我）' : ''}
@@ -247,7 +247,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
                       </div>
                     ))}
                     {waiting.map((a) => (
-                      <div key={a.email} className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs max-md:py-2 max-md:text-[14px]">
+                      <div key={a.email} className="flex items-center justify-between gap-2 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs max-md:py-2 max-md:text-[14px]">
                         <span className="text-amber-400">已邀请 · 未加入</span>
                         <span className="flex items-center gap-1.5 text-amber-700">
                           {a.email}
@@ -293,7 +293,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={onClose}>
       <div
-        className="paper-scroll max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-xl border border-stone-200 bg-white p-6 shadow-2xl"
+        className="paper-scroll max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-lg border border-stone-200 bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {body}

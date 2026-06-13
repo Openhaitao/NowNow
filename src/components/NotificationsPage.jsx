@@ -34,7 +34,7 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
       )}
 
       {pendingMembers.length > 0 && (
-        <div className="mt-5 rounded-xl bg-emerald-50 px-4 py-3">
+        <div className="mt-5 rounded-lg bg-emerald-50 px-4 py-3">
           <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-emerald-700 max-md:text-[13px]">
             <UserPlus size={13} /> 待确认成员 · {pendingMembers.length}
           </div>
@@ -45,13 +45,13 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
               </span>
               <button
                 onClick={() => approve(p, true)}
-                className="shrink-0 rounded-lg border border-emerald-600 bg-white px-2.5 py-0.5 text-xs text-emerald-700 max-md:py-1 max-md:text-[13px] hover:bg-emerald-600 hover:text-white"
+                className="shrink-0 rounded-md border border-emerald-600 bg-white px-2.5 py-0.5 text-xs text-emerald-700 max-md:py-1 max-md:text-[13px] hover:bg-emerald-600 hover:text-white"
               >
                 通过
               </button>
               <button
                 onClick={() => approve(p, false)}
-                className="shrink-0 rounded-lg px-2 py-0.5 text-xs text-stone-400 hover:text-red-600"
+                className="shrink-0 rounded-md px-2 py-0.5 text-xs text-stone-400 hover:text-red-600"
               >
                 拒绝
               </button>
@@ -61,7 +61,7 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
       )}
 
       {dueMine.length > 0 && (
-        <div className="mt-5 rounded-xl bg-red-50 px-4 py-3">
+        <div className="mt-5 rounded-lg bg-red-50 px-4 py-3">
           <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-red-700 max-md:text-[13px]">
             <AlarmClock size={13} /> 到期 · {dueMine.length} 条今天到期或已过期
           </div>
@@ -81,7 +81,7 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
       <Inbox mentions={mentions} profiles={profiles} onChanged={onChanged} />
 
       {resolvedMine.length > 0 && (
-        <div className="mt-5 rounded-xl bg-amber-50 px-4 py-3">
+        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3">
           <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-amber-700 max-md:text-[13px]">
             <CheckCircle2 size={13} /> 已解决 · {resolvedMine.length} 条等你验收关闭
           </div>
@@ -95,7 +95,7 @@ export default function NotificationsPage({ mentions, resolvedMine, dueMine = []
               </span>
               <button
                 onClick={() => closeEntry(e)}
-                className="shrink-0 rounded-lg border border-amber-600 bg-white px-2.5 py-0.5 text-xs text-amber-700 max-md:py-1 max-md:text-[13px] hover:bg-amber-600 hover:text-white"
+                className="shrink-0 rounded-md border border-amber-600 bg-white px-2.5 py-0.5 text-xs text-amber-700 max-md:py-1 max-md:text-[13px] hover:bg-amber-600 hover:text-white"
               >
                 验收关闭
               </button>

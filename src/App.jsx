@@ -16,7 +16,7 @@ class ErrorBoundary extends Component {
         <p className="text-stone-600">页面出错了：{String(this.state.err?.message || this.state.err)}</p>
         <button
           onClick={() => window.location.reload()}
-          className="rounded-lg bg-stone-900 px-4 py-2 text-sm text-white"
+          className="rounded-md bg-stone-900 px-4 py-2 text-sm text-white"
         >
           刷新重试
         </button>

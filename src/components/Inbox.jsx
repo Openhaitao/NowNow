@@ -27,7 +27,7 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
   }
 
   return (
-    <div className="mt-5 rounded-xl bg-blue-50 px-4 py-3">
+    <div className="mt-5 rounded-lg bg-blue-50 px-4 py-3">
       <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-blue-700">
         <InboxIcon size={13} /> @我的 · {mentions.length} 条待认领
       </div>
@@ -44,7 +44,7 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
               <button
                 onClick={() => setExpandedId(expanded ? null : m.id)}
                 className={
-                  'shrink-0 rounded-lg border border-blue-600 px-2.5 py-0.5 text-xs ' +
+                  'shrink-0 rounded-md border border-blue-600 px-2.5 py-0.5 text-xs ' +
                   (expanded ? 'bg-blue-600 text-white' : 'bg-white text-blue-700 hover:bg-blue-600 hover:text-white')
                 }
               >
@@ -53,7 +53,7 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
               <button
                 onClick={() => reject(m)}
                 title="拒绝这个活"
-                className="shrink-0 rounded-lg px-1 py-0.5 text-stone-300 outline-none hover:text-red-600"
+                className="shrink-0 rounded-md px-1 py-0.5 text-stone-300 outline-none hover:text-red-600"
               >
                 <X size={13} />
               </button>
@@ -64,7 +64,7 @@ export default function Inbox({ mentions: rawMentions, profiles, onChanged }) {
                   <button
                     key={s.key}
                     onClick={() => claim(m, s.key)}
-                    className="rounded-lg bg-white px-2.5 py-1 text-xs text-blue-700 shadow-sm hover:bg-blue-600 hover:text-white"
+                    className="rounded-md bg-white px-2.5 py-1 text-xs text-blue-700 shadow-sm hover:bg-blue-600 hover:text-white"
                   >
                     认领到{s.label}
                   </button>

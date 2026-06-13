@@ -227,7 +227,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
     <div
       ref={rowRef}
       className={
-        'entry-row group flex items-start gap-2.5 rounded-lg py-[5px] pr-1.5 text-[14.5px] leading-relaxed transition-colors max-md:py-2 max-md:pr-0 max-md:text-[16.5px] ' +
+        'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 text-[14.5px] leading-relaxed transition-colors max-md:py-2 max-md:pr-0 max-md:text-[16.5px] ' +
         (closing ? 'closing ' : '') +
         (editing ? '' : 'hover:bg-stone-50 ') +
         (flash ? 'bg-amber-100 ' : '') +
@@ -304,13 +304,13 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
 
       <span className="flex shrink-0 items-center gap-1.5">
         {notified && (
-          <span className="rounded-lg bg-emerald-100 px-2 py-px text-xs text-emerald-700 max-md:text-[13px]">
+          <span className="rounded-md bg-emerald-100 px-2 py-px text-xs text-emerald-700 max-md:text-[13px]">
             已通知 {originalCreator?.display_name}
           </span>
         )}
         {!notified && originalCreator && !closed && (
           <span
-            className="rounded-lg bg-stone-100 px-1.5 py-px text-[11px] text-stone-500 max-md:text-[13px]"
+            className="rounded-md bg-stone-100 px-1.5 py-px text-[11px] text-stone-500 max-md:text-[13px]"
             title="认领来的活，完成后会自动通知对方验收"
           >
             来自{originalCreator.display_name}
@@ -325,20 +325,20 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
               const r = e.currentTarget.getBoundingClientRect()
               openMenu(Math.min(r.left, window.innerWidth - 170), r.bottom + 4)
             }}
-            className="flex h-[20px] items-center self-center rounded-lg px-1 text-stone-400 opacity-0 outline-none hover:bg-stone-100 hover:text-stone-600 group-hover:opacity-100 max-md:h-[32px] max-md:px-2 max-md:opacity-60"
+            className="flex h-[20px] items-center self-center rounded-md px-1 text-stone-400 opacity-0 outline-none hover:bg-stone-100 hover:text-stone-600 group-hover:opacity-100 max-md:h-[32px] max-md:px-2 max-md:opacity-60"
           >
             ⋯
           </button>
         )}
         {resolved && (
-          <span className="rounded-lg bg-blue-100 px-2 py-px text-xs text-blue-700">
+          <span className="rounded-md bg-blue-100 px-2 py-px text-xs text-blue-700">
             已解决
           </span>
         )}
         {resolved && isCreator && (
           <button
             onClick={closeSelf}
-            className="rounded-lg border border-blue-600 px-2 py-px text-xs text-blue-700 hover:bg-blue-600 hover:text-white"
+            className="rounded-md border border-blue-600 px-2 py-px text-xs text-blue-700 hover:bg-blue-600 hover:text-white"
           >
             关闭
           </button>
@@ -347,7 +347,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           <button
             onClick={closeOriginal}
             title="你派的事已解决，确认关闭"
-            className="rounded-lg border border-blue-600 px-2 py-px text-xs text-blue-700 opacity-0 group-hover:opacity-100 hover:bg-blue-600 hover:text-white max-md:opacity-100 max-md:py-1"
+            className="rounded-md border border-blue-600 px-2 py-px text-xs text-blue-700 opacity-0 group-hover:opacity-100 hover:bg-blue-600 hover:text-white max-md:opacity-100 max-md:py-1"
           >
             关闭我派的原件
           </button>
@@ -386,39 +386,39 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           <div
             className={
               menu.sheet
-                ? 'fixed inset-x-0 bottom-0 z-50 rounded-t-xl border-t border-stone-200 bg-white p-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-[15px] shadow-2xl'
-                : 'fixed z-50 w-40 rounded-xl border border-stone-200 bg-white p-1 text-sm shadow-xl'
+                ? 'fixed inset-x-0 bottom-0 z-50 rounded-t-lg border-t border-stone-200 bg-white p-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-[15px] shadow-2xl'
+                : 'fixed z-50 w-40 rounded-lg border border-stone-200 bg-white p-1 text-sm shadow-xl'
             }
             style={menu.sheet ? undefined : { left: menu.x, top: menu.y }}
           >
             <button
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3"
               onClick={() => { setMenu(null); setText(entry.content); setEditing(true) }}
             >
               <Pencil size={13} /> 编辑
             </button>
-            <button className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={togglePrivate}>
+            <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={togglePrivate}>
               {entry.is_private ? <Eye size={13} /> : <Lock size={13} />}
               {entry.is_private ? '设为公开' : '仅自己可见'}
             </button>
-            <button className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={toggleGoal}>
+            <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={toggleGoal}>
               {entry.is_goal ? <Pilcrow size={13} /> : <Square size={13} />}
               {entry.is_goal ? '转为备忘' : '转为目标'}
             </button>
             {canMoveToToday && (
-              <button className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-amber-700 outline-none hover:bg-amber-50 max-md:px-4 max-md:py-3" onClick={moveToToday}>
+              <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-amber-700 outline-none hover:bg-amber-50 max-md:px-4 max-md:py-3" onClick={moveToToday}>
                 <CalendarArrowUp size={13} /> 挪到今天
               </button>
             )}
             {Object.keys(SECTION_LABELS)
               .filter((s) => s !== entry.section)
               .map((s) => (
-                <button key={s} className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={() => moveTo(s)}>
+                <button key={s} className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left outline-none hover:bg-stone-100 max-md:px-4 max-md:py-3" onClick={() => moveTo(s)}>
                   <MoveRight size={13} /> 移到{SECTION_LABELS[s]}
                 </button>
               ))}
             {isCreator && (
-              <button className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-red-600 outline-none hover:bg-red-50 max-md:px-4 max-md:py-3" onClick={remove}>
+              <button className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-red-600 outline-none hover:bg-red-50 max-md:px-4 max-md:py-3" onClick={remove}>
                 <Trash2 size={13} /> 删除
               </button>
             )}

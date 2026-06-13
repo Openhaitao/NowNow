@@ -37,7 +37,7 @@ function SortableMemberRow({ p, isMe, active, news, onClick }) {
       onClick={onClick}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={
-        'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+        'flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
         (isDragging ? 'z-10 ' : '') +
         (active || isDragging ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
       }
@@ -104,7 +104,7 @@ function SetupCard({ user, onDone }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <form onSubmit={save} className="w-full max-w-xs rounded-xl border border-stone-200 bg-white p-7">
+      <form onSubmit={save} className="w-full max-w-xs rounded-lg border border-stone-200 bg-white p-7">
         <h2 className="text-lg font-semibold">第一次来，起个名字</h2>
         <label className="mt-4 block text-xs text-stone-500">
           名字（显示用它，@你 也用它；中英文都行，如 海涛）
@@ -112,10 +112,10 @@ function SetupCard({ user, onDone }) {
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
             required
-            className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-[15px] text-stone-900 outline-none focus:border-stone-400"
+            className="mt-1 w-full rounded-md border border-stone-200 px-3 py-2 text-[15px] text-stone-900 outline-none focus:border-stone-400"
           />
         </label>
-        <button type="submit" className="mt-5 w-full rounded-lg bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700">
+        <button type="submit" className="mt-5 w-full rounded-md bg-stone-900 py-2.5 text-[15px] text-white hover:bg-stone-700">
           进入
         </button>
         {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
@@ -525,7 +525,7 @@ export default function Board({ session }) {
   if (me && me.status === 'pending')
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
-        <img src="/logo.png" alt="" className="w-14 rounded-xl" />
+        <img src="/logo.png" alt="" className="w-14 rounded-lg" />
         <p className="text-stone-700">你好 {me.display_name}，已收到你的加入申请</p>
         <p className="text-sm text-stone-400">等待邀请人确认后自动进入，这个页面不用刷新</p>
         <button onClick={() => supabase.auth.signOut()} className="mt-2 text-xs text-stone-300 hover:text-stone-500">
@@ -538,27 +538,27 @@ export default function Board({ session }) {
     return loadTimeout ? (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-stone-600">加载有点慢，可能是网络问题</p>
-        <button onClick={() => window.location.reload()} className="rounded-lg bg-stone-900 px-4 py-2 text-sm text-white">
+        <button onClick={() => window.location.reload()} className="rounded-md bg-stone-900 px-4 py-2 text-sm text-white">
           刷新重试
         </button>
       </div>
     ) : (
       <div className="mx-auto flex h-screen max-w-4xl animate-pulse">
         <div className="hidden w-52 shrink-0 px-4 py-6 md:block">
-          <div className="h-5 w-24 rounded-lg bg-stone-100" />
-          <div className="mt-6 h-10 rounded-lg bg-stone-100" />
+          <div className="h-5 w-24 rounded-md bg-stone-100" />
+          <div className="mt-6 h-10 rounded-md bg-stone-100" />
           <div className="mt-6 space-y-2">
-            <div className="h-6 rounded-lg bg-stone-100" />
-            <div className="h-6 rounded-lg bg-stone-100" />
+            <div className="h-6 rounded-md bg-stone-100" />
+            <div className="h-6 rounded-md bg-stone-100" />
           </div>
         </div>
         <div className="flex-1 px-6 py-6">
-          <div className="h-20 rounded-xl bg-stone-100" />
+          <div className="h-20 rounded-lg bg-stone-100" />
           <div className="mt-8 space-y-3">
-            <div className="h-4 w-12 rounded-lg bg-stone-100" />
-            <div className="h-5 w-3/4 rounded-lg bg-stone-100" />
-            <div className="h-5 w-2/3 rounded-lg bg-stone-100" />
-            <div className="h-5 w-1/2 rounded-lg bg-stone-100" />
+            <div className="h-4 w-12 rounded-md bg-stone-100" />
+            <div className="h-5 w-3/4 rounded-md bg-stone-100" />
+            <div className="h-5 w-2/3 rounded-md bg-stone-100" />
+            <div className="h-5 w-1/2 rounded-md bg-stone-100" />
           </div>
         </div>
       </div>
@@ -572,7 +572,7 @@ export default function Board({ session }) {
     <>
         {/* 顶部：logo + 用户名（桌面）／日期（手机抽屉头） */}
         <div className="mb-4 flex items-center gap-2 px-2.5 py-1.5 text-[17px] font-bold max-md:text-[21px]">
-          <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg max-md:hidden" />
+          <img src="/logo.png" alt="" className="h-7 w-7 rounded-md max-md:hidden" />
           <span className="truncate max-md:hidden">{me.display_name}</span>
           <span className="truncate md:hidden">
             {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日
@@ -595,7 +595,7 @@ export default function Board({ session }) {
           <button
             onClick={() => setView(view === 'all' ? 'paper' : 'all')}
             className={
-              'mb-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
+              'mb-2 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13.5px] max-md:py-2 max-md:text-[16.5px] ' +
               (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
             }
           >
@@ -627,7 +627,7 @@ export default function Board({ session }) {
           <button
             onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
             className={
-              'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] hover:bg-stone-100 ' +
+              'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] hover:bg-stone-100 ' +
               (view === 'notifications' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-500')
             }
           >
@@ -640,7 +640,7 @@ export default function Board({ session }) {
           </button>
           <button
             onClick={() => setSettingsOpen(true)}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] text-stone-500 hover:bg-stone-100"
           >
             <Settings size={14} /> 设置
           </button>
@@ -683,7 +683,7 @@ export default function Board({ session }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜索内容或人名"
-                className="w-full rounded-xl bg-stone-100 px-4 py-2 text-[17px] outline-none placeholder:text-stone-400"
+                className="w-full rounded-lg bg-stone-100 px-4 py-2 text-[17px] outline-none placeholder:text-stone-400"
               />
             </span>
           ) : (
@@ -720,7 +720,7 @@ export default function Board({ session }) {
                 <>
                   <button
                     onClick={() => setDateOpen((v) => !v)}
-                    className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[15px] font-semibold text-stone-900 hover:bg-stone-100"
+                    className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[15px] font-semibold text-stone-900 hover:bg-stone-100"
                     title="点击回看任何一天"
                   >
                     <CalendarDays size={16} /> {(baseDate || new Date()).getMonth() + 1}月{(baseDate || new Date()).getDate()}日 周
@@ -741,7 +741,7 @@ export default function Board({ session }) {
                   {!isLive && (
                     <button
                       onClick={() => setBaseDate(null)}
-                      className="rounded-lg bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+                      className="rounded-md bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
                     >
                       回到今天
                     </button>
@@ -764,7 +764,7 @@ export default function Board({ session }) {
                   }
                 }}
                 placeholder="搜索"
-                className="w-40 rounded-lg border border-stone-200 bg-white py-1.5 pl-9 pr-2 text-[13px] outline-none placeholder:text-stone-300 focus:border-stone-300 md:w-64"
+                className="w-40 rounded-md border border-stone-200 bg-white py-1.5 pl-9 pr-2 text-[13px] outline-none placeholder:text-stone-300 focus:border-stone-300 md:w-64"
               />
               {!query && (
                 <kbd className="pointer-events-none absolute right-2.5 text-[11px] text-stone-300">⌘K</kbd>
@@ -799,7 +799,7 @@ export default function Board({ session }) {
             </div>
           )}
           {(offline || syncSlow) && (
-            <div className="mt-2 rounded-lg bg-stone-100 px-3 py-2 text-center text-[13px] text-stone-500">
+            <div className="mt-2 rounded-md bg-stone-100 px-3 py-2 text-center text-[13px] text-stone-500">
               {offline ? '离线状态，内容已暂存本页，恢复网络后自动保存，' : '正在同步，网络有点慢，'}
               <button
                 onClick={() => { replayFailed(); loadData() }}
@@ -875,7 +875,7 @@ export default function Board({ session }) {
       {view === 'paper' && isMyPage && !composeOpen && (
         <button
           onClick={() => setComposeOpen(true)}
-          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-xl bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
+          className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-lg bg-stone-900 text-white shadow-lg active:scale-95 md:hidden"
           title="记一条"
         >
           <Plus size={26} />
@@ -886,7 +886,7 @@ export default function Board({ session }) {
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setComposeOpen(false)} />
           <div
-            className="absolute inset-x-0 rounded-t-xl bg-white p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl"
+            className="absolute inset-x-0 rounded-t-lg bg-white p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl"
             style={{ bottom: kbOffset }}
           >
             <QuickCapture

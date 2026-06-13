@@ -93,7 +93,7 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
                 {off !== 0 && (
                   <button
                     onClick={() => setDayOff((x) => ({ ...x, [p.id]: 0 }))}
-                    className="rounded-lg bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
+                    className="rounded-md bg-stone-100 px-2 py-px text-[11px] text-stone-500 hover:bg-stone-200"
                   >
                     回到今天
                   </button>
@@ -102,14 +102,14 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
                   <button
                     onClick={() => setDayOff((x) => ({ ...x, [p.id]: off - 1 }))}
                     title="看前一天"
-                    className="rounded-lg p-0.5 hover:bg-stone-100 hover:text-stone-500"
+                    className="rounded-md p-0.5 hover:bg-stone-100 hover:text-stone-500"
                   >
                     <ChevronLeft size={13} />
                   </button>
                   <button
                     onClick={() => setDayOff((x) => ({ ...x, [p.id]: off + 1 }))}
                     title="看后一天"
-                    className="rounded-lg p-0.5 hover:bg-stone-100 hover:text-stone-500"
+                    className="rounded-md p-0.5 hover:bg-stone-100 hover:text-stone-500"
                   >
                     <ChevronRight size={13} />
                   </button>
@@ -122,7 +122,7 @@ export default function TeamAllView({ allEntries, allMentions = [], profiles, or
             {(moreCount > 0 || r.done.length > 0) && (
               <button
                 onClick={() => setExpanded((x) => ({ ...x, [p.id]: !open }))}
-                className="mt-1.5 flex items-center gap-1 rounded-lg bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 max-md:py-1 max-md:text-[14px]"
+                className="mt-1.5 flex items-center gap-1 rounded-md bg-stone-100 px-2.5 py-0.5 text-xs text-stone-500 outline-none hover:bg-stone-200 max-md:py-1 max-md:text-[14px]"
               >
                 {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                 本周 {r.week.length} · 本月 {r.month.length} · 已完成 {r.done.length}
