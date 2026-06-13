@@ -4,18 +4,28 @@ import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Highlight from '@tiptap/extension-highlight'
-import Image from '@tiptap/extension-image'
 import Mention from '@tiptap/extension-mention'
+import { ResizableImage } from './ResizableImage'
 import { Bold, Highlighter, Italic, List, ListOrdered, Quote, Strikethrough, Underline as UnderlineIcon } from 'lucide-react'
 import { uploadImage } from '../lib/storage'
 import './doc-editor.css'
 
-// 把图片文件传 Storage 再插进编辑器（粘贴/拖拽共用）。用 view 直接派发，不依赖 editor 实例。
+// 插图：先用本地预览秒显（不等上传），后台传 Storage，传完把 src 换成公网地址。
 function insertImageFromFile(view, file, uploaderId) {
+  const localUrl = URL.createObjectURL(file)
+  const node = view.state.schema.nodes.image.create({ src: localUrl })
+  view.dispatch(view.state.tr.replaceSelectionWith(node))
   uploadImage(file, uploaderId)
     .then((url) => {
-      const node = view.state.schema.nodes.image.create({ src: url })
-      view.dispatch(view.state.tr.replaceSelectionWith(node))
+      let pos = null
+      view.state.doc.descendants((n, p) => {
+        if (n.type.name === 'image' && n.attrs.src === localUrl) { pos = p; return false }
+      })
+      if (pos != null) {
+        const attrs = { ...view.state.doc.nodeAt(pos).attrs, src: url }
+        view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, attrs))
+      }
+      URL.revokeObjectURL(localUrl)
     })
     .catch((e) => console.error('图片上传失败', e))
 }
@@ -38,7 +48,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
       // StarterKit v3 已含 bold/italic/strike/underline/link/heading/lists/blockquote/code/undo 等
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Highlight, // ==高亮==
-      Image,
+      ResizableImage,
       Placeholder.configure({ placeholder }),
       Mention.configure({
         HTMLAttributes: { class: 'doc-mention' },
