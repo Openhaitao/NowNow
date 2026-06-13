@@ -858,7 +858,7 @@ export default function Board({ session }) {
               </span>
             )}
             <span className="relative ml-auto hidden items-center md:flex">
-              <Search size={16} strokeWidth={2.5} className="pointer-events-none absolute left-2.5 text-stone-400" />
+              <Search size={16} strokeWidth={2.5} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
               <input
                 id="search-input"
                 value={query}
@@ -869,10 +869,10 @@ export default function Board({ session }) {
                     e.target.blur()
                   }
                 }}
-                className="w-40 rounded-md bg-stone-200/80 py-2.5 pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200 md:w-56"
+                className="h-9 w-[230px] rounded-md bg-stone-200/80 pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200"
               />
               {!query && (
-                <kbd className="pointer-events-none absolute left-9 flex items-center font-medium text-stone-400">
+                <kbd className="pointer-events-none absolute left-9 top-1/2 flex -translate-y-1/2 items-center font-medium text-stone-400">
                   {/* ⌘ 字形天生比字母小（字体度量问题），单独放大让它和 K 视觉等大 */}
                   <span className="text-[20px] leading-none">⌘</span>
                   <span className="text-[15px]">+K</span>
