@@ -26,7 +26,7 @@
   --text-xs: 12px;  --leading-xs: 16px;
   --text-sm: 13px;  --leading-sm: 18px;
   --text-ui: 14px;  --leading-ui: 20px;
-  --text-body: 16px; --leading-body: 28px;
+  --text-body: 14px; --leading-body: 24px;  /* flomo 式：书写区默认 14px、行高松 */
   --text-h3: 18px;  --leading-h3: 28px;  --weight-h3: 600;
   --text-h2: 22px;  --leading-h2: 32px;  --weight-h2: 650;
   --text-h1: 30px;  --leading-h1: 40px;  --weight-h1: 700;
