@@ -186,16 +186,27 @@
   max-width: 100%;
   border-radius: 6px;
 }
-/* 可缩放图片：右下角拖拽手柄（悬停显现） */
+/* 飞书式图片：外层 block 承载左/中/右对齐，内层 inline-block 包 img + 手柄 */
+.doc-img-block {
+  margin: 0.4em 0;
+}
 .doc-img-wrap {
   position: relative;
   display: inline-block;
   line-height: 0;
+  vertical-align: top;
 }
 .doc-img-wrap img {
   display: inline-block;
   max-width: 100%;
+  border-radius: 6px;
 }
+/* 图片选中 = 蓝框（和文字选中的蓝高亮是两套） */
+.doc-img-wrap.is-selected img {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* 四角缩放手柄：只在选中时随手柄一起渲染（不再 hover 常显） */
 .doc-img-handle {
   position: absolute;
   width: 11px;
@@ -203,15 +214,46 @@
   border: 2px solid #fff;
   background: var(--accent);
   border-radius: 2px;
-  opacity: 0;
-  transition: opacity 0.15s;
 }
 .doc-img-handle.tl { left: 2px; top: 2px; cursor: nwse-resize; }
 .doc-img-handle.tr { right: 2px; top: 2px; cursor: nesw-resize; }
 .doc-img-handle.bl { left: 2px; bottom: 2px; cursor: nesw-resize; }
 .doc-img-handle.br { right: 2px; bottom: 2px; cursor: nwse-resize; }
-.doc-img-wrap:hover .doc-img-handle {
-  opacity: 1;
+/* 选中浮出的对齐工具条（飞书式，悬在图片上方居中） */
+.doc-img-toolbar {
+  position: absolute;
+  top: -42px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  line-height: normal;
+  background: var(--surface-elevated);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+  white-space: nowrap;
+}
+.doc-img-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.doc-img-toolbar button:hover {
+  background: var(--surface-hover);
+}
+.doc-img-toolbar button.on {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 /* Placeholder：空文档时显示灰提示（@tiptap/extension-placeholder 给首个空块加 is-empty） */
 .doc-prose p.is-editor-empty:first-child::before {
