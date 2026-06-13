@@ -816,13 +816,13 @@ export default function Board({ session }) {
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
           {/* 顶部 今日/本周/本月/暂存箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
           {view === 'paper' && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {SECTIONS.map((s) => (
               <button
                 key={s.key}
                 onClick={() => goChannel(s.key)}
                 className={
-                  'rounded-md px-2 py-1 text-[14px] transition-colors ' +
+                  'rounded-full px-4 py-1.5 text-[16px] transition-colors ' +
                   (channel === s.key
                     ? 'bg-stone-200/80 font-medium text-stone-900'
                     : 'text-stone-500 hover:bg-stone-100 hover:text-stone-900')
