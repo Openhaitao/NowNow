@@ -624,30 +624,30 @@ export default function Board({ session }) {
         <button
           onClick={() => viewPage(me.id)}
           className={
-            'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[16px] max-md:py-2 ' +
+            'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
             (view === 'paper' && isMyPage ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
           }
         >
-          <Home size={14} /> 我的目标
+          <Home size={16} /> 我的目标
         </button>
         <button
           onClick={() => setView('all')}
           className={
-            'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[16px] max-md:py-2 ' +
+            'mt-0.5 flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
             (view === 'all' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
           }
         >
-          <LayoutList size={14} /> 团队目标
+          <LayoutList size={16} /> 团队目标
         </button>
 
-        {/* 段2 · 置顶成员 + 团队成员（都不含本人；📌 切换置顶，存本地个人偏好） */}
-        <div className="my-2 border-t border-stone-100" />
+        {/* 段2 · 置顶成员 + 团队成员（都不含本人；📌 切换置顶，存本地个人偏好）。置顶成员上方不再画分隔线 */}
+        <div className="mt-3" />
         {/* 成员多到放不下时这一段自己滚动（细灰滚动条），通知/设置钉在底部不动 */}
         <div className="paper-scroll min-h-0 flex-1 overflow-y-auto">
           <DndContext sensors={memberSensors} collisionDetection={closestCenter} onDragEnd={onMemberDragEnd}>
             {pinnedMembers.length > 0 && (
               <>
-                <div className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">
+                <div className="mb-1 px-2.5 text-[12px] font-medium uppercase tracking-wide text-stone-300">
                   置顶成员
                 </div>
                 <SortableContext items={pinnedMembers.map((p) => p.id)} strategy={verticalListSortingStrategy}>
@@ -667,7 +667,7 @@ export default function Board({ session }) {
                 <div className="mt-3" />
               </>
             )}
-            <div className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">
+            <div className="mb-1 px-2.5 text-[12px] font-medium uppercase tracking-wide text-stone-300">
               团队成员
             </div>
             <SortableContext items={restMembers.map((p) => p.id)} strategy={verticalListSortingStrategy}>
