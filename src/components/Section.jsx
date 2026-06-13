@@ -24,7 +24,7 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
   const [isGoal, setIsGoal] = useState(draft.initial != null ? draft.is_goal : false)
   const d = { ...draft, is_goal: isGoal }
   return (
-    <div className={'flex items-start gap-2.5 py-[5px] leading-relaxed ' + (isGoal ? 'text-[16px]' : 'text-[14px]')}>
+    <div className="flex items-start gap-2.5 py-[5px] text-[14px] leading-relaxed">
       <button
         type="button"
         tabIndex={-1}
@@ -44,8 +44,9 @@ function DraftRow({ draft, profiles, onCommit, onCancel, onCancelToPrev, onNav, 
         onChange={setVal}
         autoFocus
         initialCaret={draft.caret ?? null}
+        placeholder="现在要做什么？回车存，@ 派人"
         profiles={profiles}
-        fontClass={isGoal ? 'text-[16px]' : 'text-[14px]'}
+        fontClass="text-[14px]"
         onTab={() => setIsGoal((v) => !v)}
         onSubmit={() => {
           if (val.trim()) onCommit(d, val, true)
@@ -376,8 +377,9 @@ export default function Section({ sec, entries, me, isMyPage, profiles, allEntri
             )}
         </SortableContext>
       </DndContext>
-      {/* 幽灵行：只在当前周期（offset 0）出现——新建只发生在今天/本周/本月，过去的时间块不出「＋」 */}
-      {isMyPage && !q && range.isCurrent && (
+      {/* 幽灵行：只在当前周期（offset 0）出现；有草稿在写时收起——草稿自带 placeholder 提示，
+          编辑一个字 placeholder 即消失，不再往下多占一行 */}
+      {isMyPage && !q && range.isCurrent && drafts.length === 0 && (
         <div
           onClick={() =>
             setDrafts((d) => [

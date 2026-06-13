@@ -229,7 +229,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
       ref={rowRef}
       className={
         'entry-row group flex items-start gap-2.5 rounded-md py-[5px] pr-1.5 leading-relaxed transition-colors max-md:py-2 max-md:pr-0 ' +
-        (entry.is_goal ? 'text-[16px] ' : 'text-[14px] ') + // 目标块 16px、纯文字 14px
+        'text-[14px] ' + // 全部内容统一 14px（目标不再放大）
         (closing ? 'closing ' : '') +
         (editing ? '' : 'hover:bg-stone-50 ') +
         (flash ? 'bg-amber-100 ' : '') +
@@ -279,7 +279,7 @@ export default function EntryRow({ entry, me, profiles, allEntries, mutate, forc
           onArrowUp={onNavUp ? () => { saveEdit(false); onNavUp(entry) } : undefined}
           onArrowDown={onNavDown ? () => { saveEdit(false); onNavDown(entry) } : undefined}
           profiles={profiles}
-          fontClass={entry.is_goal ? 'text-[16px]' : 'text-[14px]'}
+          fontClass="text-[14px]"
           mentionStates={mentionStates}
           autoFocus
           initialCaret={clickCaret}
