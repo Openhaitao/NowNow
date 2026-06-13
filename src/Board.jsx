@@ -840,17 +840,7 @@ export default function Board({ session }) {
             </span>
           </div>
           )}
-          {view === 'paper' && !isMyPage && (
-            <div className="mt-2 flex items-center justify-between text-[13px] text-stone-400 max-md:hidden">
-              <span>{pageUser.display_name}的主页（只读）</span>
-              <button
-                onClick={() => viewPage(me.id)}
-                className="text-stone-400 transition-colors hover:text-stone-600"
-              >
-                ← 回到我的主页
-              </button>
-            </div>
-          )}
+          {/* 看别人主页时不再显示「X的主页（只读）/回到我的主页」横条——那块留给时间戳，和自己主页一样（回到自己页走侧栏点自己名字）*/}
           {/* 独立输入框已删除 → 改为纸即输入：频道底部常驻幽灵行（见 Section） */}
           {(offline || syncSlow) && (
             <div className="mt-2 rounded-md bg-stone-100 px-3 py-2 text-center text-[13px] text-stone-500">
@@ -911,7 +901,8 @@ export default function Board({ session }) {
                 }
                 // 今日/本周/本月：往下回溯的时间线，当前周期(0)在最上，过去有内容的周期降序在下
                 return [0, ...pastOffsets].map((off) => (
-                  <div key={off} className="mb-3">
+                  // 当前周期(0)块至少占满首屏：没写就是空白一页，过去的时间线沉到下面、下拉才见
+                  <div key={off} className={'mb-3 ' + (off === 0 ? 'min-h-full' : '')}>
                     <div className={'pb-0.5 pt-3 text-[13px] font-medium ' + (off === 0 ? 'text-stone-600' : 'text-stone-400')}>
                       {periodHeader(channel, off, baseDate)}
                     </div>
