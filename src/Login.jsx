@@ -57,22 +57,26 @@ export default function Login() {
     if (password !== password2) { setErr('两次输入的密码不一样'); return }
     setBusy(true)
     if (await nameTaken(n)) { setBusy(false); setErr(`@${n} 已经有人用了，换一个名字`); return }
-    // 邀请码 + 名字带进门：进 Board → SetupCard 自动用名字认领、后端 redeem_code 校验码
     localStorage.setItem('nownow_invite_code', inviteCode.trim())
     localStorage.setItem('nownow_pending_name', n)
     const { data, error } = await supabase.auth.signUp({ email, password })
-    setBusy(false)
     if (error) {
+      setBusy(false)
       setErr(humanize(error.message))
       if (error.message.includes('already registered')) setAuthMode('login')
       return
     }
     // Supabase 防枚举：对已存在邮箱 signUp 也返回"成功"但 identities 为空——其实是老账号
     const existing = data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0
-    if (existing) { setErr('这个邮箱已经注册过了，直接去登录'); setAuthMode('login'); return }
+    if (existing) { setBusy(false); setErr('这个邮箱已经注册过了，直接去登录'); setAuthMode('login'); return }
     localStorage.setItem('nownow_last_email', email)
-    if (!data.session) setSent(true) // 兜底：后台若开着邮箱确认
-    // 有 session：自动进 Board → SetupCard 起名 → redeem_code
+    if (!data.session) { setBusy(false); setSent(true); return } // 兜底：后台若开着邮箱确认
+    // 注册页已收集名字+码 → 当场建 profile，跳过「起名字」页，注册完直接进主页
+    const { error: rErr } = await supabase.rpc('redeem_code', { p_code: inviteCode.trim(), p_name: n })
+    if (rErr) { setBusy(false); setErr(humanize(rErr.message)); return }
+    localStorage.removeItem('nownow_invite_code')
+    localStorage.removeItem('nownow_pending_name')
+    // 不复位 busy：让 App 直接切主页（profile 已建）
   }
 
   async function doLogin(e) {
@@ -127,20 +131,18 @@ export default function Login() {
           <h1 className="mt-5 flex items-baseline justify-center text-xl font-bold">
             Hi&nbsp;@
             {/* 固定宽度名字槽：Hi @ 不动，下划线随字长 */}
-            <span className="ml-2 w-24 text-left">
-              <span className="relative inline-block min-w-[3.25rem]">
-                <span aria-hidden="true" className="invisible whitespace-pre px-0.5">{name || '名字'}</span>
-                <input
-                  value={name}
-                  onChange={(e) => { setName(e.target.value); setErr('') }}
-                  onBlur={async () => {
-                    const n = name.trim().replace(/^@/, '')
-                    if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
-                  }}
-                  placeholder="名字"
-                  className="absolute inset-0 w-full border-b-2 border-stone-200 bg-transparent px-0.5 text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-stone-400 placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
-                />
-              </span>
+            <span className="relative ml-1 inline-block min-w-[3.25rem] text-left">
+              <span aria-hidden="true" className="invisible whitespace-pre px-0.5">{name || '名字'}</span>
+              <input
+                value={name}
+                onChange={(e) => { setName(e.target.value); setErr('') }}
+                onBlur={async () => {
+                  const n = name.trim().replace(/^@/, '')
+                  if (n && (await nameTaken(n))) setErr(`@${n} 已经有人用了，换一个名字`)
+                }}
+                placeholder="名字"
+                className="absolute inset-0 w-full border-b-2 border-stone-200 bg-transparent px-0.5 text-left text-xl font-bold text-stone-900 outline-none transition-colors focus:border-stone-400 focus-visible:shadow-none placeholder:text-base placeholder:font-normal placeholder:text-stone-300"
+              />
             </span>
           </h1>
         ) : (
