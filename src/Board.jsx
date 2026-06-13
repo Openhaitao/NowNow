@@ -10,6 +10,7 @@ import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
 import DocSearch from './components/DocSearch'
+import ThemeToggle from './components/ThemeToggle'
 import SettingsModal from './components/SettingsModal'
 
 const SECTIONS = [
@@ -702,12 +703,15 @@ export default function Board({ session }) {
               </span>
             )}
           </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-stone-100"
-          >
-            <Settings size={16} /> 设置
-          </button>
+          <div className="flex items-center">
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="flex flex-1 items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-stone-100"
+            >
+              <Settings size={16} /> 设置
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
     </>
   )
