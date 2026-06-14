@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AtSign, Bell, CheckCircle2, Square, UserPlus, X } from 'lucide-react'
+import { AtSign, Bell, CheckCircle2, CheckSquare, Square, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { loadMyMentions, markMentionRead, completeMention, loadMyCompletions, ackCompletion } from '../lib/docMentionsApi'
 import { periodHeaderFromKey } from '../lib/periodKey'
@@ -29,9 +29,11 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
     onJumpDoc?.(m.owner, m.section, m.periodKey)
   }
 
-  // 勾选完成：被@人标记这条派活完成 → 自己收件箱移除（派活人那边会冒黄色「已完成」）
+  // 勾选完成：被@人标记完成 → 原地划横线（不消失，像待办勾掉），派活人那边冒黄色「已完成」。
+  // 已完成的下次刷新会被 loadMyMentions 自动清掉，不长期堆积。
   async function complete(m) {
-    setMentions((xs) => xs.filter((x) => x.id !== m.id))
+    if (m.completed_at) return
+    setMentions((xs) => xs.map((x) => (x.id === m.id ? { ...x, completed_at: new Date().toISOString() } : x)))
     completeMention(m.id).catch(() => {})
   }
 
@@ -79,20 +81,26 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
           {mentions.map((m) => {
             const from = profiles?.find((p) => p.id === m.author)
             const ctx = m.section === 'stash' ? '暂存' : periodHeaderFromKey(m.section, m.periodKey)
+            const done = !!m.completed_at
+            const dim = done || m.read_at
             return (
               <div key={m.id} className="flex items-center gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px]">
-                <button onClick={() => complete(m)} title="标记完成" className="shrink-0 text-stone-400 transition-colors hover:text-[var(--accent)]">
-                  <Square size={16} />
+                <button
+                  onClick={() => complete(m)}
+                  title={done ? '已完成' : '标记完成'}
+                  className={'shrink-0 transition-colors ' + (done ? 'text-[var(--accent)]' : 'text-stone-400 hover:text-[var(--accent)]')}
+                >
+                  {done ? <CheckSquare size={16} /> : <Square size={16} />}
                 </button>
                 <button
                   onClick={() => openMention(m)}
                   className="flex min-w-0 flex-1 items-center gap-2 text-left hover:underline"
-                  style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--ink-muted)' }}
+                  style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink-muted)', textDecoration: done ? 'line-through' : 'none' }}
                 >
                   <span className="min-w-0 flex-1 truncate">
-                    <b style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--ink)' }}>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section]}」@了你
+                    <b style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink)' }}>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section]}」@了你
                   </span>
-                  <span className="shrink-0 text-[11.5px]" style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--accent)' }}>{ctx} · 去看看</span>
+                  <span className="shrink-0 text-[11.5px]" style={{ color: done ? 'var(--ink-faint)' : m.read_at ? 'var(--ink-faint)' : 'var(--accent)', textDecoration: 'none' }}>{ctx} · 去看看</span>
                 </button>
               </div>
             )
