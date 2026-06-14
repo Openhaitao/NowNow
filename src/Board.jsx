@@ -47,7 +47,7 @@ function SortableMemberRow({ p, isMe, active, news, pinned, onClick, onTogglePin
       className={
         'group/mem flex w-full items-center rounded-md px-2.5 py-1.5 text-[14px] max-md:py-2 ' +
         (isDragging ? 'z-10 ' : '') +
-        (active || isDragging ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
+        (active || isDragging ? 'bg-[var(--accent-soft)] font-medium text-stone-900' : 'text-stone-600 hover:bg-[var(--accent-soft)]')
       }
     >
       {/* 按住名字拖动排序；点击进主页 */}
@@ -669,7 +669,7 @@ export default function Board({ session }) {
           {/* 桌面：折叠侧栏按钮（在用户名右侧） */}
           <button
             onClick={() => setSidebarCollapsed(true)}
-            className="ml-auto hidden shrink-0 rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600 md:block"
+            className="ml-auto hidden shrink-0 rounded p-1 text-stone-400 hover:bg-[var(--accent-soft)] hover:text-stone-600 md:block"
             title="收起侧栏"
           >
             <PanelLeftClose size={18} />
@@ -692,7 +692,7 @@ export default function Board({ session }) {
           onClick={() => viewPage(me.id)}
           className={
             'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
-            (view === 'paper' && isMyPage ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-600 hover:bg-stone-100')
+            (view === 'paper' && isMyPage ? 'bg-[var(--accent-soft)] font-medium text-stone-900' : 'text-stone-600 hover:bg-[var(--accent-soft)]')
           }
         >
           <CircleCheck size={16} /> 我的目标
@@ -749,8 +749,8 @@ export default function Board({ session }) {
           <button
             onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
             className={
-              'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] hover:bg-stone-100 ' +
-              (view === 'notifications' ? 'bg-stone-200/80 font-medium text-stone-900' : 'text-stone-500')
+              'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] hover:bg-[var(--accent-soft)] ' +
+              (view === 'notifications' ? 'bg-[var(--accent-soft)] font-medium text-stone-900' : 'text-stone-500')
             }
           >
             <Bell size={16} /> 通知
@@ -762,7 +762,7 @@ export default function Board({ session }) {
           </button>
           <button
             onClick={() => setSettingsOpen(true)}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-stone-100"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-[var(--accent-soft)]"
           >
             <Settings size={16} /> 设置
           </button>
@@ -788,7 +788,7 @@ export default function Board({ session }) {
           // 折叠 = 一条 44px 窄轨（隐藏条），展开 icon 顶在最上最左，点它复原
           <button
             onClick={() => setSidebarCollapsed(false)}
-            className="mt-1.5 rounded p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+            className="mt-1.5 rounded p-1.5 text-stone-400 hover:bg-[var(--accent-soft)] hover:text-stone-600"
             title="展开侧栏"
           >
             <PanelLeftOpen size={18} />
@@ -875,8 +875,8 @@ export default function Board({ session }) {
                 className={
                   'rounded-full px-3.5 py-1.5 text-[14px] leading-none transition-colors ' +
                   (channel === s.key
-                    ? 'bg-stone-200/80 font-medium text-stone-900'
-                    : 'text-stone-500 hover:bg-stone-100 hover:text-stone-900')
+                    ? 'bg-[var(--accent-soft)] font-medium text-stone-900'
+                    : 'text-stone-500 hover:bg-[var(--accent-soft)] hover:text-stone-900')
                 }
               >
                 {s.label}
@@ -894,7 +894,7 @@ export default function Board({ session }) {
                     e.target.blur()
                   }
                 }}
-                className="h-9 w-[230px] rounded-md bg-stone-200/80 pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200"
+                className="h-9 w-[230px] rounded-md bg-[var(--accent-soft)] pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200"
               />
               {!query && (
                 <kbd className="pointer-events-none absolute left-9 top-1/2 flex -translate-y-1/2 items-center font-medium text-stone-400">
