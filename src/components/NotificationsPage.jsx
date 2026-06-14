@@ -83,24 +83,35 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
             const ctx = m.section === 'stash' ? '暂存' : periodHeaderFromKey(m.section, m.periodKey)
             const done = !!m.completed_at
             const dim = done || m.read_at
+            const who = from?.display_name || '有人'
             return (
-              <div key={m.id} className="flex items-center gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px]">
+              <div key={m.id} className="flex items-start gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px]">
                 <button
                   onClick={() => complete(m)}
                   title={done ? '已完成' : '标记完成'}
-                  className={'shrink-0 transition-colors ' + (done ? 'text-[var(--accent)]' : 'text-stone-400 hover:text-[var(--accent)]')}
+                  className={'mt-0.5 shrink-0 transition-colors ' + (done ? 'text-[var(--accent)]' : 'text-stone-400 hover:text-[var(--accent)]')}
                 >
                   {done ? <CheckSquare size={16} /> : <Square size={16} />}
                 </button>
                 <button
                   onClick={() => openMention(m)}
-                  className="flex min-w-0 flex-1 items-center gap-2 text-left hover:underline"
-                  style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink-muted)', textDecoration: done ? 'line-through' : 'none' }}
+                  className="block min-w-0 flex-1 text-left hover:opacity-80"
+                  style={{ textDecoration: done ? 'line-through' : 'none' }}
                 >
-                  <span className="min-w-0 flex-1 truncate">
-                    <b style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink)' }}>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section]}」@了你
-                  </span>
-                  <span className="shrink-0 text-[11.5px]" style={{ color: done ? 'var(--ink-faint)' : m.read_at ? 'var(--ink-faint)' : 'var(--accent)', textDecoration: 'none' }}>{ctx} · 去看看</span>
+                  {m.snippet ? (
+                    <>
+                      <div className="truncate" style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink)' }}>{m.snippet}</div>
+                      <div className="mt-0.5 flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
+                        <span className="min-w-0 flex-1 truncate"><b style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{who}</b> @了你 · {ctx}</span>
+                        <span className="shrink-0" style={{ color: done ? 'var(--ink-faint)' : 'var(--accent)' }}>去看看</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2" style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>
+                      <span className="min-w-0 flex-1 truncate"><b style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink)' }}>{who}</b> 在「{SECTION_LABELS[m.section]}」@了你</span>
+                      <span className="shrink-0 text-[11.5px]" style={{ color: done ? 'var(--ink-faint)' : m.read_at ? 'var(--ink-faint)' : 'var(--accent)' }}>{ctx} · 去看看</span>
+                    </div>
+                  )}
                 </button>
               </div>
             )

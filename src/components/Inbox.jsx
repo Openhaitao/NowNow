@@ -45,17 +45,23 @@ export default function Inbox({ profiles, onJumpDoc }) {
       {items.map((m) => {
         const from = profiles?.find((p) => p.id === m.author)
         const ctx = m.section === 'stash' ? '暂存' : periodHeaderFromKey(m.section, m.periodKey)
+        const who = from?.display_name || '有人'
         return (
-          <button
-            key={m.id}
-            onClick={() => open(m)}
-            className="flex w-full items-center gap-2 py-1 text-left text-[13.5px] max-md:text-[15.5px] hover:underline"
-            style={{ color: 'var(--ink-muted)' }}
-          >
-            <span className="min-w-0 flex-1 truncate">
-              <b style={{ color: 'var(--ink)' }}>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section] || ''}」@了你
-            </span>
-            <span className="shrink-0 text-[11.5px]" style={{ color: 'var(--accent)' }}>{ctx} · 去看看</span>
+          <button key={m.id} onClick={() => open(m)} className="block w-full py-1 text-left hover:opacity-80 max-md:text-[15.5px]">
+            {m.snippet ? (
+              <>
+                <div className="truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{m.snippet}</div>
+                <div className="mt-0.5 flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
+                  <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink-muted)' }}>{who}</b> @了你 · {ctx}</span>
+                  <span className="shrink-0" style={{ color: 'var(--accent)' }}>去看看</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-[13.5px]" style={{ color: 'var(--ink-muted)' }}>
+                <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink)' }}>{who}</b> 在「{SECTION_LABELS[m.section] || ''}」@了你</span>
+                <span className="shrink-0 text-[11.5px]" style={{ color: 'var(--accent)' }}>{ctx} · 去看看</span>
+              </div>
+            )}
           </button>
         )
       })}
