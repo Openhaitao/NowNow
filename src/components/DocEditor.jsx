@@ -279,7 +279,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
                 (i === sug.index ? 'bg-blue-50 text-blue-700' : 'text-stone-700')
               }
             >
-              <span>{p.display_name}</span>
+              <span className="font-medium">{p.display_name}</span>
             </button>
           ))}
         </div>
