@@ -410,12 +410,23 @@ export default function Board({ session }) {
     viewPage(owner)
     setChannel(section)
     setQuery('')
-    setFlashDoc({ section, periodKey })
-    setTimeout(() => {
-      document.getElementById(`doc-${section}-${periodKey}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
-    }, 150)
-    setTimeout(() => setFlashDoc(null), 2600) // 高亮闪一下就撤
-  }, [viewPage])
+    // 定位到「@我」那个 mention 节点本身、滚过去并高亮它（而不是整块变蓝）。
+    // doc 是异步渲染的，找不到就重试；先滚到块让用户看到移动，再精确到那个 @。
+    let tries = 0
+    const locate = () => {
+      const block = document.getElementById(`doc-${section}-${periodKey}`)
+      const mention = block?.querySelector(`.doc-mention[data-id="${user.id}"]`)
+      if (mention) {
+        mention.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        mention.classList.add('mention-flash')
+        setTimeout(() => mention.classList.remove('mention-flash'), 2600)
+        return
+      }
+      if (block && tries === 0) block.scrollIntoView({ block: 'start', behavior: 'smooth' })
+      if (tries++ < 10) setTimeout(locate, 150)
+    }
+    setTimeout(locate, 160)
+  }, [viewPage, user.id])
 
   const hasNews = useCallback(
     (p) => {

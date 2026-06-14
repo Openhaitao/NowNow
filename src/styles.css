@@ -179,14 +179,16 @@ select:focus-visible {
   outline: none !important;
 }
 
-/* @通知「去看看」落地：把那篇 doc 暖蓝高亮闪一下，告诉你被 @ 在这 */
-@keyframes doc-flash {
-  0%   { background: color-mix(in srgb, var(--accent) 14%, transparent); }
-  100% { background: transparent; }
+/* @通知「去看看」落地：精确高亮「@我」那个提及本身，闪一下渐隐（不是整块变蓝）*/
+@keyframes mention-flash {
+  0%, 55% { background: color-mix(in srgb, var(--accent) 32%, transparent); }
+  100%    { background: transparent; }
 }
-.doc-flash {
-  animation: doc-flash 2.4s ease-out;
-  border-radius: var(--radius-md, 8px);
+.mention-flash {
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  animation: mention-flash 2.4s ease-out;
 }
 
 /* 完成动画的过渡只在勾选瞬间生效，平时不挂 transition（避免滚动/悬停时内容跟着缓动"晃"） */
