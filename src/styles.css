@@ -1,5 +1,28 @@
 @import 'tailwindcss';
 
+/* Geist Sans 自托管 + 用 unicode-range 限定到拉丁区间。关键：Geist 字体里**自带**中日韩标点字形
+   （，。？！ = U+FF0C/3002/FF1F…）但画得很窄/像英文标点；因为 @fontsource 的 @font-face 没有
+   unicode-range，Geist（字体栈第一位）就会抢去渲染这些标点、轮不到 PingFang。限定到拉丁后，
+   中文标点不在 Geist 覆盖范围 → 回退到 --font-sans 里的 PingFang，显示正确的全角中文标点。 */
+@font-face {
+  font-family: 'Geist Sans';
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/fonts/geist-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Sans';
+  font-style: normal; font-weight: 500; font-display: swap;
+  src: url('/fonts/geist-sans-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Geist Sans';
+  font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/fonts/geist-sans-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* ===== 设计 token（改这里全站生效，细调一处即可）—— Claude 暖色系 ===== */
 :root {
   --bg: #fafaf8;             /* spool 暖米白（never pure white）*/

@@ -1,9 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-// Geist Sans（Latin，font-display:swap，未加载到优雅回退系统 sans；中文走系统）。家族名 = "Geist Sans"
-import '@fontsource/geist-sans/400.css'
-import '@fontsource/geist-sans/500.css'
-import '@fontsource/geist-sans/600.css'
+// Geist Sans 的 @font-face 改到 styles.css 里自托管 + unicode-range 限定拉丁
+// （@fontsource 的 face 没 unicode-range，会让 Geist 抢去渲染中文标点成英文样）。
 import App from './App.jsx'
 import { initTheme } from './lib/theme'
 import './styles.css'
