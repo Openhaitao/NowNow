@@ -1,24 +1,21 @@
 import { useEffect, useState } from 'react'
-import { AtSign, Bell, UserPlus } from 'lucide-react'
+import { AtSign, Bell, CheckCircle2, Square, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { loadMyMentions, markMentionRead } from '../lib/docMentionsApi'
+import { loadMyMentions, markMentionRead, completeMention, loadMyCompletions, ackCompletion } from '../lib/docMentionsApi'
 import { periodHeaderFromKey } from '../lib/periodKey'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存' }
 
-// docs 世界的通知中心：① @我的（别人在文档里 @ 我）② 待确认成员。
-// 旧的「已解决 / 待认领」任务流随目标模型删除。
+// docs 世界的通知中心：① @我的（别人在文档里 @ 我 = 派活）→ 勾选完成 ② 我派的活被完成（黄色）③ 待确认成员。
 export default function NotificationsPage({ pendingMembers = [], profiles, onMembersChanged, onJumpDoc }) {
-  const [mentions, setMentions] = useState([])
+  const [mentions, setMentions] = useState([]) // 别人 @ 我的（未完成）
+  const [completions, setCompletions] = useState([]) // 我派的活、对方完成了（黄色）
 
   useEffect(() => {
     let alive = true
-    loadMyMentions()
-      .then((rows) => alive && setMentions(rows))
-      .catch(() => {})
-    return () => {
-      alive = false
-    }
+    loadMyMentions().then((r) => alive && setMentions(r)).catch(() => {})
+    loadMyCompletions().then((r) => alive && setCompletions(r)).catch(() => {})
+    return () => { alive = false }
   }, [])
 
   async function approve(p, ok) {
@@ -32,7 +29,19 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
     onJumpDoc?.(m.owner, m.section, m.periodKey)
   }
 
-  const empty = mentions.length === 0 && pendingMembers.length === 0
+  // 勾选完成：被@人标记这条派活完成 → 自己收件箱移除（派活人那边会冒黄色「已完成」）
+  async function complete(m) {
+    setMentions((xs) => xs.filter((x) => x.id !== m.id))
+    completeMention(m.id).catch(() => {})
+  }
+
+  // 点掉黄色完成通知
+  async function dismiss(c) {
+    setCompletions((xs) => xs.filter((x) => x.id !== c.id))
+    ackCompletion(c.id).catch(() => {})
+  }
+
+  const empty = mentions.length === 0 && pendingMembers.length === 0 && completions.length === 0
 
   return (
     <div className="pt-1">
@@ -42,7 +51,7 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
 
       {empty && (
         <p className="mt-6 text-sm text-stone-300 max-md:text-[15px]">
-          没有新通知。别人在文档里 @ 你、申请加入的成员，都会出现在这里。
+          没有新通知。别人 @ 你派活、对方完成、申请加入的成员，都会出现在这里。
         </p>
       )}
 
@@ -53,26 +62,15 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
           </div>
           {pendingMembers.map((p) => (
             <div key={p.id} className="flex items-center gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px] text-emerald-900">
-              <span className="min-w-0 flex-1">
-                <b>{p.display_name}</b> 通过你的邀请链接申请加入
-              </span>
-              <button
-                onClick={() => approve(p, true)}
-                className="shrink-0 rounded-md border border-emerald-600 bg-white px-2.5 py-0.5 text-xs text-emerald-700 max-md:py-1 max-md:text-[13px] hover:bg-emerald-600 hover:text-white"
-              >
-                通过
-              </button>
-              <button
-                onClick={() => approve(p, false)}
-                className="shrink-0 rounded-md px-2 py-0.5 text-xs text-stone-400 hover:text-red-600"
-              >
-                拒绝
-              </button>
+              <span className="min-w-0 flex-1"><b>{p.display_name}</b> 通过你的邀请链接申请加入</span>
+              <button onClick={() => approve(p, true)} className="shrink-0 rounded-md border border-emerald-600 bg-white px-2.5 py-0.5 text-xs text-emerald-700 max-md:py-1 max-md:text-[13px] hover:bg-emerald-600 hover:text-white">通过</button>
+              <button onClick={() => approve(p, false)} className="shrink-0 rounded-md px-2 py-0.5 text-xs text-stone-400 hover:text-red-600">拒绝</button>
             </div>
           ))}
         </div>
       )}
 
+      {/* @我的 = 别人派给我的活，勾选方框 = 完成 */}
       {mentions.length > 0 && (
         <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
           <div className="mb-1.5 flex items-center gap-1 text-xs font-medium max-md:text-[13px]" style={{ color: 'var(--accent)' }}>
@@ -82,17 +80,44 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
             const from = profiles?.find((p) => p.id === m.author)
             const ctx = m.section === 'stash' ? '暂存' : periodHeaderFromKey(m.section, m.periodKey)
             return (
-              <button
-                key={m.id}
-                onClick={() => openMention(m)}
-                className="flex w-full items-center gap-2 py-1 text-left text-[13.5px] max-md:py-1.5 max-md:text-[15.5px] hover:underline"
-                style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--ink-muted)' }}
-              >
-                <span className="min-w-0 flex-1 truncate">
-                  <b style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--ink)' }}>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section]}」@了你
+              <div key={m.id} className="flex items-center gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px]">
+                <button onClick={() => complete(m)} title="标记完成" className="shrink-0 text-stone-400 transition-colors hover:text-[var(--accent)]">
+                  <Square size={16} />
+                </button>
+                <button
+                  onClick={() => openMention(m)}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left hover:underline"
+                  style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--ink-muted)' }}
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    <b style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--ink)' }}>{from?.display_name || '有人'}</b> 在「{SECTION_LABELS[m.section]}」@了你
+                  </span>
+                  <span className="shrink-0 text-[11.5px]" style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--accent)' }}>{ctx} · 去看看</span>
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* 黄色：我派的活被对方完成了 */}
+      {completions.length > 0 && (
+        <div className="mt-3 rounded-lg px-4 py-3" style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
+          <div className="mb-1.5 flex items-center gap-1 text-xs font-medium max-md:text-[13px]" style={{ color: 'var(--warning)' }}>
+            <CheckCircle2 size={13} /> 已完成 · {completions.length}
+          </div>
+          {completions.map((c) => {
+            const who = profiles?.find((p) => p.id === c.mentioned)
+            return (
+              <div key={c.id} className="flex items-center gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px]" style={{ color: 'var(--ink-muted)' }}>
+                <CheckCircle2 size={15} className="shrink-0" style={{ color: 'var(--warning)' }} />
+                <span className="min-w-0 flex-1">
+                  <b style={{ color: 'var(--ink)' }}>{who?.display_name || '有人'}</b> 完成了你在「{SECTION_LABELS[c.section]}」派的任务
                 </span>
-                <span className="shrink-0 text-[11.5px]" style={{ color: m.read_at ? 'var(--ink-faint)' : 'var(--accent)' }}>{ctx} · 去看看</span>
-              </button>
+                <button onClick={() => dismiss(c)} title="知道了" className="shrink-0 text-stone-400 hover:text-stone-600">
+                  <X size={14} />
+                </button>
+              </div>
             )
           })}
         </div>
