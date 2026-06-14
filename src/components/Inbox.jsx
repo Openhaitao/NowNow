@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Inbox as InboxIcon } from 'lucide-react'
+import { ChevronDown, Inbox as InboxIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { loadMyMentions, markMentionRead } from '../lib/docMentionsApi'
 import { periodHeaderFromKey } from '../lib/periodKey'
@@ -10,6 +10,8 @@ const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash
 // 纯通知，无认领/拒绝/任务流（那套随目标模型一起删了）。
 export default function Inbox({ profiles, onJumpDoc }) {
   const [items, setItems] = useState([])
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('nownow_inbox_collapsed') === '1')
+  const toggle = () => setCollapsed((v) => { localStorage.setItem('nownow_inbox_collapsed', v ? '0' : '1'); return !v })
 
   useEffect(() => {
     let alive = true
@@ -39,10 +41,11 @@ export default function Inbox({ profiles, onJumpDoc }) {
 
   return (
     <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
-      <div className="mb-1.5 flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--accent)' }}>
+      <button onClick={toggle} className={'flex w-full items-center gap-1 text-xs font-medium' + (collapsed ? '' : ' mb-1.5')} style={{ color: 'var(--accent)' }}>
         <InboxIcon size={13} /> @我的 · {items.length} 条
-      </div>
-      {items.map((m) => {
+        <ChevronDown size={13} className={'ml-auto transition-transform ' + (collapsed ? '-rotate-90' : '')} />
+      </button>
+      {!collapsed && items.map((m) => {
         const from = profiles?.find((p) => p.id === m.author)
         const ctx = m.section === 'stash' ? '暂存' : periodHeaderFromKey(m.section, m.periodKey)
         const who = from?.display_name || '有人'
