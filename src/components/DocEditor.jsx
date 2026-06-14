@@ -273,14 +273,13 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
             <button
               key={p.id}
               type="button"
-              onMouseDown={(e) => { e.preventDefault(); sug.command({ id: p.id, label: p.handle }) }}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); sug.command({ id: p.id, label: p.display_name }) }}
               className={
                 'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm ' +
                 (i === sug.index ? 'bg-blue-50 text-blue-700' : 'text-stone-700')
               }
             >
               <span>{p.display_name}</span>
-              <span className="text-stone-400">@{p.handle}</span>
             </button>
           ))}
         </div>
