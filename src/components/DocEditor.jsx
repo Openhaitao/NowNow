@@ -19,7 +19,7 @@ import { ResizableImage } from './ResizableImage'
 import { DragHandle } from './DragHandle'
 import { SlashCommand } from './SlashCommand'
 import { Callout } from './Callout'
-import { Bold, CheckSquare, Code, Heading1, Heading2, Heading3, Highlighter, Image as ImageIcon, Info, Italic, List, ListOrdered, Minus, Quote, Strikethrough, Table as TableIcon, Underline as UnderlineIcon } from 'lucide-react'
+import { Bold, CheckSquare, ChevronDown, Code, Heading1, Heading2, Heading3, Highlighter, Image as ImageIcon, Info, Italic, List, ListOrdered, Minus, Quote, Strikethrough, Table as TableIcon, Underline as UnderlineIcon } from 'lucide-react'
 import { uploadImage } from '../lib/storage'
 import './doc-editor.css'
 
@@ -63,6 +63,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
   const slashRef = useRef(null)
   slashRef.current = slash
   const fileInputRef = useRef(null)
+  const [colorPanel, setColorPanel] = useState(false) // 选区工具条里「A」颜色面板展开态（飞书式整合）
 
   const slashItems = [
     { title: '待办清单', icon: CheckSquare, kw: 'todo task daiban 待办 清单', command: ({ editor, range }) => editor.chain().focus().deleteRange(range).toggleTaskList().run() },
@@ -215,39 +216,50 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
           ),
         )}
         <span className="mx-0.5 h-4 w-px bg-stone-200" />
-        {/* 字体颜色 */}
-        {TEXT_COLORS.map((c) => (
+        {/* 颜色：整合成一个「A」按钮 + 下拉面板（飞书式，不再平铺所有色块）*/}
+        <span className="relative">
           <button
-            key={'t' + c}
             type="button"
-            title="字体颜色"
-            onClick={() => editor.chain().focus().setColor(c).run()}
-            className="flex h-7 w-5 items-center justify-center rounded-md hover:bg-stone-100"
+            title="字体 / 背景颜色"
+            onMouseDown={(e) => { e.preventDefault(); setColorPanel((v) => !v) }}
+            className={'flex h-7 items-center gap-0.5 rounded-md px-1 hover:bg-stone-100 hover:text-stone-900 ' + (colorPanel ? 'bg-stone-200 text-stone-900' : '')}
           >
-            <span className="text-[13px] font-bold leading-none" style={{ color: c }}>A</span>
+            <span className="text-[13px] font-bold leading-none">A</span>
+            <ChevronDown size={11} strokeWidth={2.5} />
           </button>
-        ))}
-        <span className="mx-0.5 h-4 w-px bg-stone-200" />
-        {/* 背景高亮色 */}
-        {HL_COLORS.map((c) => (
-          <button
-            key={'h' + c}
-            type="button"
-            title="背景高亮"
-            onClick={() => editor.chain().focus().toggleHighlight({ color: c }).run()}
-            className="flex h-7 w-5 items-center justify-center rounded-md hover:bg-stone-100"
-          >
-            <span className="h-3.5 w-3.5 rounded-sm" style={{ background: c }} />
-          </button>
-        ))}
-        <button
-          type="button"
-          title="清除颜色"
-          onClick={() => editor.chain().focus().unsetColor().unsetHighlight().run()}
-          className="flex h-7 w-6 items-center justify-center rounded-md text-[11px] text-stone-400 hover:bg-stone-100"
-        >
-          清除
-        </button>
+          {colorPanel && (
+            <div
+              className="absolute left-0 top-full z-50 mt-1.5 w-52 rounded-lg border border-stone-200 bg-[var(--surface-elevated)] p-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.1)]"
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <div className="mb-1.5 text-[11px] text-stone-400">字体颜色</div>
+              <div className="flex flex-wrap gap-1">
+                <button type="button" title="默认" onClick={() => editor.chain().focus().unsetColor().run()} className="flex h-6 w-6 items-center justify-center rounded-md border border-stone-200 hover:bg-stone-100">
+                  <span className="text-[13px] font-bold leading-none text-[var(--ink)]">A</span>
+                </button>
+                {TEXT_COLORS.map((c) => (
+                  <button key={'t' + c} type="button" onClick={() => editor.chain().focus().setColor(c).run()} className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-stone-100">
+                    <span className="text-[13px] font-bold leading-none" style={{ color: c }}>A</span>
+                  </button>
+                ))}
+              </div>
+              <div className="mb-1.5 mt-2.5 text-[11px] text-stone-400">背景颜色</div>
+              <div className="flex flex-wrap gap-1">
+                <button type="button" title="无" onClick={() => editor.chain().focus().unsetHighlight().run()} className="flex h-6 w-6 items-center justify-center rounded-md border border-stone-200 hover:bg-stone-100">
+                  <span className="text-[12px] leading-none text-stone-300">/</span>
+                </button>
+                {HL_COLORS.map((c) => (
+                  <button key={'h' + c} type="button" onClick={() => editor.chain().focus().toggleHighlight({ color: c }).run()} className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-stone-100">
+                    <span className="h-4 w-4 rounded" style={{ background: c }} />
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => editor.chain().focus().unsetColor().unsetHighlight().run()} className="mt-2.5 w-full rounded-md border border-stone-200 py-1 text-[12px] text-stone-500 hover:bg-stone-100">
+                恢复默认
+              </button>
+            </div>
+          )}
+        </span>
       </BubbleMenu>
       <EditorContent editor={editor} />
       {sug && sug.items.length > 0 && sug.rect && (
