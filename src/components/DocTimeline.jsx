@@ -47,7 +47,11 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
       {/* 过去：只读，往下回溯 */}
       {pastKeys.map((k) => (
         <div key={k} id={`doc-${section}-${k}`} className={'mb-3' + (flashKey === k ? ' doc-flash' : '')}>
-          <div className="pb-1 pt-3 text-[13px] font-normal text-stone-400">{periodHeaderFromKey(section, k)}</div>
+          <div className="flex items-center gap-1.5 pb-1 pt-3 text-[13px] font-normal text-stone-400">
+            {/* 每个时间点旁都带主题蓝小圆点（时间线一致感）*/}
+            <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} aria-hidden />
+            {periodHeaderFromKey(section, k)}
+          </div>
           <DocBlock owner={owner} section={section} periodKey={k} editable={false} profiles={profiles} />
         </div>
       ))}
