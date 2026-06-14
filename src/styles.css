@@ -172,6 +172,13 @@ select:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
 }
+/* 按钮/链接不画聚焦框（海涛：键盘焦点落到按钮上会突然冒一圈蓝边，很突兀）。表单输入框仍保留焦点框。*/
+button:focus,
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible {
+  outline: none;
+}
 /* 注册页「Hi @名字」是下划线输入框，不画焦点框 */
 .nn-name-input:focus,
 .nn-name-input:focus-visible {
