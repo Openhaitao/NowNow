@@ -24,7 +24,10 @@
   --btn-bg: var(--ink);
   --btn-fg: var(--bg);
   --btn-bg-hover: color-mix(in srgb, var(--ink) 85%, var(--bg));
-  --font-sans: 'Geist Sans', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'PingFang SC', Inter, 'Helvetica Neue', sans-serif;
+  /* CJK 字体放在 Geist（拉丁）之后、系统字体之前：否则中文标点（，。？！）会被 SF/-apple-system
+     抢去渲染成「窄/英文样」（汉字没字形会回退到 PingFang 所以正常，标点 SF 有字形就不回退了）。
+     这样拉丁走 Geist、所有中日韩（含标点）走 PingFang/雅黑，标点显示正确。 */
+  --font-sans: 'Geist Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   /* 局部衬线（仅日期页头 + 大标题，纸感来源）。系统衬线、0 webfont */
   --font-serif: Charter, Georgia, 'Songti SC', 'STSong', serif;
 
