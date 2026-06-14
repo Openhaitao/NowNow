@@ -266,7 +266,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
       <EditorContent editor={editor} />
       {sug && sug.items.length > 0 && sug.rect && (
         <div
-          className="fixed z-50 w-48 rounded-lg border border-stone-200 bg-[var(--surface-elevated)] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+          className="fixed z-50 w-36 rounded-lg border border-stone-200 bg-[var(--surface-elevated)] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
           style={{ left: sug.rect.left, top: sug.rect.bottom + 4 }}
         >
           {sug.items.map((p, i) => (
