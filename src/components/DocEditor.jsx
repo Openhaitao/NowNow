@@ -16,6 +16,7 @@ import { Color } from '@tiptap/extension-color'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { createLowlight, common } from 'lowlight'
 import { ResizableImage } from './ResizableImage'
+import { DragHandle } from './DragHandle'
 import { SlashCommand } from './SlashCommand'
 import { Callout } from './Callout'
 import { Bold, CheckSquare, Code, Heading1, Heading2, Heading3, Highlighter, Image as ImageIcon, Info, Italic, List, ListOrdered, Minus, Quote, Strikethrough, Table as TableIcon, Underline as UnderlineIcon } from 'lucide-react'
@@ -95,8 +96,8 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
       TableHeader,
       TableCell,
       Callout,
-      // 注：tiptap-extension-global-drag-handle 已移除——它会破坏中文/CJK 输入法合成（无法输入中文）。
-      // 块拖拽是锦上添花，中文输入是刚需；要找回拖拽得换不影响 IME 的方案。
+      // 块拖拽：用本地 fork 的 DragHandle（去掉了原扩展打断中文输入法的 keydown 监听，IME 安全）
+      ...(editable ? [DragHandle.configure({ dragHandleWidth: 20, scrollTreshold: 100 })] : []),
       SlashCommand.configure({
         suggestion: {
           items: ({ query }) => {
