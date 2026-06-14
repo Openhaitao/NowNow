@@ -10,9 +10,8 @@ export async function loadMyMentions() {
   if (!user) return []
   const { data, error } = await supabase
     .from('doc_mentions')
-    .select('id, doc_id, author, created_at, read_at, docs!inner(owner, section, period_key)')
+    .select('id, doc_id, author, created_at, read_at, completed_at, docs!inner(owner, section, period_key)')
     .eq('mentioned', user.id)
-    .is('completed_at', null) // 已完成的从收件箱移除（派活闭环）
     .order('created_at', { ascending: false })
   if (error) throw error
   return (data ?? []).map((m) => ({
@@ -20,6 +19,7 @@ export async function loadMyMentions() {
     author: m.author,
     created_at: m.created_at,
     read_at: m.read_at,
+    completed_at: m.completed_at, // 已完成的不再隐藏，UI 给它画横线（像勾掉的待办）
     owner: m.docs.owner,
     section: m.docs.section,
     periodKey: m.docs.period_key,
