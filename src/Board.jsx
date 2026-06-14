@@ -6,7 +6,7 @@ import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, PanelLeftClose, Pan
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
-import { loadMyMentions } from './lib/docMentionsApi'
+import { loadMyMentions, loadMyCompletions } from './lib/docMentionsApi'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
@@ -153,7 +153,8 @@ export default function Board({ session }) {
   const [allEntries, setAllEntries] = useState([])
   const [mentions, setMentions] = useState([])
   const [allMentions, setAllMentions] = useState([])
-  const [docMentions, setDocMentions] = useState([]) // doc 世界的 @我（含已读/未读），侧栏红点 + 通知页用
+  const [docMentions, setDocMentions] = useState([]) // doc 世界的 @我（含已读/未读/已完成）
+  const [docDone, setDocDone] = useState([]) // 我派的活、对方完成了（黄色），未点掉的
   const [lastViewed, setLastViewed] = useState(loadLastViewed)
   const [hasAnchor, setHasAnchor] = useState(false)
 
@@ -476,9 +477,10 @@ export default function Board({ session }) {
   const [mobileSearch, setMobileSearch] = useState(false) // 手机端搜索页模式
   const [view, setView] = useState('paper') // paper | notifications | all
 
-  // 侧栏通知红点 = 未读 @我（doc_mentions）。切视图时重拉，读完回来红点自动更新。
+  // 侧栏通知数 = 未完成的派活 + 对方完成待我知道 + 待确认成员。切视图时重拉。
   useEffect(() => {
     loadMyMentions().then(setDocMentions).catch(() => {})
+    loadMyCompletions().then(setDocDone).catch(() => {})
   }, [view])
 
   // 侧栏（桌面）：宽度可拖拽 + 可折叠，存本地个人偏好。中间那条分隔线就是拖拽手柄。
@@ -580,8 +582,8 @@ export default function Board({ session }) {
 
   // 「待我处理 / 我派出去的」侧栏入口已按 Haitao 移除；mentions/notifications 底层数据保留，要恢复见 git 3e4455d
   const inboxCount = mentions.length // 还用在手机 ☰ 红点（@我窄条仍在「我的目标」里）
-  const unreadAt = docMentions.filter((m) => !m.read_at).length // 未读 @我
-  const notifCount = unreadAt + pendingMembers.length
+  const pendingAt = docMentions.filter((m) => !m.completed_at).length // 我没完成的派活（读没读都算，做完才消）
+  const notifCount = pendingAt + docDone.length + pendingMembers.length
 
   // 三格：今日未完成 / 本周未完成（今天还要干啥）+ 累计已完成（成就感，flomo 的"863 笔记"对应物）
   // 搜索跳转：纸拨回那条所在的日期 + 高亮闪烁定位
