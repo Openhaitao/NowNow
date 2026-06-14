@@ -38,47 +38,46 @@ export async function saveDoc({ owner, section, periodKey, json, text }) {
   return data?.id
 }
 
-// 取一个块的纯文本（@提及计为「@label」），并把其中 @到的 profile id 收进 ids
-function blockText(node, ids) {
+// 取一个块的纯文本（@提及计为「@label」），并把每个 @ 节点的 {id, mid} 收进 items
+function blockText(node, items) {
   if (!node) return ''
   if (node.type === 'text') return node.text || ''
   if (node.type === 'mention') {
-    if (node.attrs?.id) ids.push(node.attrs.id)
+    if (node.attrs?.id) items.push({ id: node.attrs.id, mid: node.attrs.mid || null })
     return '@' + (node.attrs?.label || '')
   }
-  if (Array.isArray(node.content)) return node.content.map((c) => blockText(c, ids)).join('')
+  if (Array.isArray(node.content)) return node.content.map((c) => blockText(c, items)).join('')
   return ''
 }
 
-// 收集每个被@的人 → 其所在段落的文本片段（通知 snippet：取首次出现的块、截断 140）
+// 收集每个 @ 实例：{mid, mentioned, snippet}（按节点；没 mid 的老节点跳过——靠编辑器 parseHTML 兜底生成 mid）
 function collectMentions(json) {
-  const map = new Map() // profileId -> snippet
+  const out = []
   for (const block of json?.content || []) {
-    const ids = []
-    const txt = blockText(block, ids).trim()
-    for (const id of ids) if (!map.has(id)) map.set(id, txt.slice(0, 140))
+    const items = []
+    const txt = blockText(block, items).trim()
+    for (const it of items) if (it.mid) out.push({ mid: it.mid, mentioned: it.id, snippet: txt.slice(0, 140) })
   }
-  return map
+  return out
 }
 
-// 同步 @提及索引：文里现有的 upsert（带 snippet）、文里已删的 prune。供收件箱「@我的」查询。
+// 同步 @提及索引：每个 @ 实例一行（按 mid 唯一）。现有的 upsert、文里已删的 prune。供收件箱「@我的」查询。
 export async function syncDocMentions(docId, authorId, json) {
   const mentions = collectMentions(json)
-  const ids = [...mentions.keys()]
-  if (ids.length) {
-    // ignoreDuplicates=DO NOTHING：已存在的行不走 UPDATE。否则作者(doc owner)在已有@的文档里再存，
-    // upsert 的 ON CONFLICT DO UPDATE 会撞 doc_mentions 的 update RLS（只允许 mentioned 本人改）→
-    // 整条 upsert 报错被 catch 吞掉 → 连同一批里的新 @ 也插不进去 → 对方收不到通知。
-    // (doc_id,mentioned)→author 恒定，本就无需更新，DO NOTHING 即可。snippet 是 @ 当下快照。
+  const mids = mentions.map((m) => m.mid)
+  if (mentions.length) {
+    // ignoreDuplicates=DO NOTHING：已存在的行不走 UPDATE（撞 update RLS 会整批报错、新@也丢）。
+    // 一个 @ 实例一行、按 mention_id(=mid) 唯一；重存幂等、新@新行。snippet 是 @ 当下快照。
     await supabase
       .from('doc_mentions')
-      .upsert(ids.map((mentioned) => ({ doc_id: docId, mentioned, author: authorId, snippet: mentions.get(mentioned) })), {
-        onConflict: 'doc_id,mentioned',
-        ignoreDuplicates: true,
-      })
+      .upsert(
+        mentions.map((m) => ({ mention_id: m.mid, doc_id: docId, mentioned: m.mentioned, author: authorId, snippet: m.snippet })),
+        { onConflict: 'mention_id', ignoreDuplicates: true },
+      )
   }
+  // prune：这篇里 mid 已不在的行删掉（删 @ / 改 @ 都靠它）
   let del = supabase.from('doc_mentions').delete().eq('doc_id', docId)
-  if (ids.length) del = del.not('mentioned', 'in', `(${ids.join(',')})`)
+  if (mids.length) del = del.not('mention_id', 'in', `(${mids.join(',')})`)
   await del
 }
 
