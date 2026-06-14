@@ -52,7 +52,7 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
             <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} aria-hidden />
             {periodHeaderFromKey(section, k)}
           </div>
-          <DocBlock owner={owner} section={section} periodKey={k} editable={false} profiles={profiles} />
+          <DocBlock owner={owner} section={section} periodKey={k} editable={isMyPage} placeholder="写点什么…" profiles={profiles} />
         </div>
       ))}
     </>
