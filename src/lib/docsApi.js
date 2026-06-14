@@ -50,9 +50,16 @@ function collectMentionIds(node, out = new Set()) {
 export async function syncDocMentions(docId, authorId, json) {
   const ids = [...collectMentionIds(json)]
   if (ids.length) {
+    // ignoreDuplicates=DO NOTHING：已存在的行不走 UPDATE。否则作者(doc owner)在已有@的文档里再存，
+    // upsert 的 ON CONFLICT DO UPDATE 会撞 doc_mentions 的 update RLS（只允许 mentioned 本人改）→
+    // 整条 upsert 报错被 catch 吞掉 → 连同一批里的新 @ 也插不进去 → 对方收不到通知。
+    // (doc_id,mentioned)→author 恒定，本就无需更新，DO NOTHING 即可。
     await supabase
       .from('doc_mentions')
-      .upsert(ids.map((mentioned) => ({ doc_id: docId, mentioned, author: authorId })), { onConflict: 'doc_id,mentioned' })
+      .upsert(ids.map((mentioned) => ({ doc_id: docId, mentioned, author: authorId })), {
+        onConflict: 'doc_id,mentioned',
+        ignoreDuplicates: true,
+      })
   }
   let del = supabase.from('doc_mentions').delete().eq('doc_id', docId)
   if (ids.length) del = del.not('mentioned', 'in', `(${ids.join(',')})`)
