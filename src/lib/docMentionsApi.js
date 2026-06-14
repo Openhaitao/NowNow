@@ -10,7 +10,7 @@ export async function loadMyMentions() {
   if (!user) return []
   const { data, error } = await supabase
     .from('doc_mentions')
-    .select('id, doc_id, author, created_at, read_at, completed_at, docs!inner(owner, section, period_key)')
+    .select('id, doc_id, author, created_at, read_at, completed_at, snippet, docs!inner(owner, section, period_key)')
     .eq('mentioned', user.id)
     .order('created_at', { ascending: false })
   if (error) throw error
@@ -20,6 +20,7 @@ export async function loadMyMentions() {
     created_at: m.created_at,
     read_at: m.read_at,
     completed_at: m.completed_at, // 已完成的不再隐藏，UI 给它画横线（像勾掉的待办）
+    snippet: m.snippet, // 被@那段的文本（通知 snippet）
     owner: m.docs.owner,
     section: m.docs.section,
     periodKey: m.docs.period_key,
@@ -48,7 +49,7 @@ export async function loadMyCompletions() {
   if (!user) return []
   const { data, error } = await supabase
     .from('doc_mentions')
-    .select('id, mentioned, completed_at, docs!inner(owner, section, period_key)')
+    .select('id, mentioned, completed_at, snippet, docs!inner(owner, section, period_key)')
     .eq('author', user.id)
     .not('completed_at', 'is', null)
     .is('completion_seen_at', null)
@@ -58,6 +59,7 @@ export async function loadMyCompletions() {
     id: m.id,
     mentioned: m.mentioned,
     completed_at: m.completed_at,
+    snippet: m.snippet, // 被@那段的文本
     owner: m.docs.owner,
     section: m.docs.section,
     periodKey: m.docs.period_key,

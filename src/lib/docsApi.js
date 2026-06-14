@@ -38,25 +38,41 @@ export async function saveDoc({ owner, section, periodKey, json, text }) {
   return data?.id
 }
 
-// 从 PM JSON 递归收集 @提及到的 profile id
-function collectMentionIds(node, out = new Set()) {
-  if (!node) return out
-  if (node.type === 'mention' && node.attrs?.id) out.add(node.attrs.id)
-  if (Array.isArray(node.content)) for (const c of node.content) collectMentionIds(c, out)
-  return out
+// 取一个块的纯文本（@提及计为「@label」），并把其中 @到的 profile id 收进 ids
+function blockText(node, ids) {
+  if (!node) return ''
+  if (node.type === 'text') return node.text || ''
+  if (node.type === 'mention') {
+    if (node.attrs?.id) ids.push(node.attrs.id)
+    return '@' + (node.attrs?.label || '')
+  }
+  if (Array.isArray(node.content)) return node.content.map((c) => blockText(c, ids)).join('')
+  return ''
 }
 
-// 同步 @提及索引：文里现有的 upsert、文里已删的 prune。供收件箱「@我的」查询。
+// 收集每个被@的人 → 其所在段落的文本片段（通知 snippet：取首次出现的块、截断 140）
+function collectMentions(json) {
+  const map = new Map() // profileId -> snippet
+  for (const block of json?.content || []) {
+    const ids = []
+    const txt = blockText(block, ids).trim()
+    for (const id of ids) if (!map.has(id)) map.set(id, txt.slice(0, 140))
+  }
+  return map
+}
+
+// 同步 @提及索引：文里现有的 upsert（带 snippet）、文里已删的 prune。供收件箱「@我的」查询。
 export async function syncDocMentions(docId, authorId, json) {
-  const ids = [...collectMentionIds(json)]
+  const mentions = collectMentions(json)
+  const ids = [...mentions.keys()]
   if (ids.length) {
     // ignoreDuplicates=DO NOTHING：已存在的行不走 UPDATE。否则作者(doc owner)在已有@的文档里再存，
     // upsert 的 ON CONFLICT DO UPDATE 会撞 doc_mentions 的 update RLS（只允许 mentioned 本人改）→
     // 整条 upsert 报错被 catch 吞掉 → 连同一批里的新 @ 也插不进去 → 对方收不到通知。
-    // (doc_id,mentioned)→author 恒定，本就无需更新，DO NOTHING 即可。
+    // (doc_id,mentioned)→author 恒定，本就无需更新，DO NOTHING 即可。snippet 是 @ 当下快照。
     await supabase
       .from('doc_mentions')
-      .upsert(ids.map((mentioned) => ({ doc_id: docId, mentioned, author: authorId })), {
+      .upsert(ids.map((mentioned) => ({ doc_id: docId, mentioned, author: authorId, snippet: mentions.get(mentioned) })), {
         onConflict: 'doc_id,mentioned',
         ignoreDuplicates: true,
       })
