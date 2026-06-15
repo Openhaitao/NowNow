@@ -3,6 +3,7 @@
 // 刷新/崩溃/断网都不丢——本地草稿在，下次加载优先用它。
 // 对外状态机：'saving' | 'saved' | 'offline' | 'error'，给 UI 低干扰指示用（视觉由 @UI 规范）。
 import { loadDoc as _loadDoc, saveDoc as _saveDoc } from './docsApi'
+import { supabase } from './supabase'
 
 const LS_PREFIX = 'nownow_draft:' // 未确认落库的本地草稿
 const LS_BACKUP_PREFIX = 'nownow_backup:' // 空覆盖前留的旧内容（客户端兜底，配合服务端 doc_revisions）
@@ -144,4 +145,17 @@ if (typeof window !== 'undefined') {
   } catch {}
   flushPending()
   window.addEventListener('online', flushPending)
+
+  // 退出登录时清「读缓存」(doccache)：同浏览器换账号不残留上个账号的缓存内容（隐私）。
+  // ⚠️ 草稿/备份不清——那是「永不丢字」+ 可恢复内容，留着等同账号重登能找回(flushPending)。
+  supabase.auth.onAuthStateChange((event) => {
+    if (event !== 'SIGNED_OUT') return
+    docCache.clear()
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith(LS_CACHE_PREFIX)) localStorage.removeItem(key)
+      }
+    } catch {}
+  })
 }
