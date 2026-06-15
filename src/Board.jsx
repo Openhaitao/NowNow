@@ -917,6 +917,7 @@ export default function Board({ session }) {
               />
             ) : view === 'notifications' ? (
               <NotificationsPage
+                me={me}
                 pendingMembers={pendingMembers}
                 profiles={profiles}
                 onMembersChanged={loadProfiles}
