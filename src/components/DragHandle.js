@@ -119,7 +119,9 @@ function DragHandlePlugin(options) {
       }
       dragHandleElement.addEventListener('drag', onDragHandleDrag)
       hideDragHandle()
-      view?.dom?.parentElement?.appendChild(dragHandleElement)
+      // 挂到 body（配合 .drag-handle 的 position:fixed）：用视口坐标定位，
+      // 不再受编辑器父级 position:relative（DocBlock 的 SaveStatus 包裹层）影响而算偏跑到屏外。
+      document.body.appendChild(dragHandleElement)
       view?.dom?.parentElement?.addEventListener('mouseout', hideHandleOnEditorOut)
       return {
         destroy: () => {

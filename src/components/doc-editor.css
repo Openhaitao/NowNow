@@ -36,9 +36,10 @@
 .doc-prose li {
   margin: 0.1em 0;
 }
-/* 块拖拽手柄（悬停块时在左边距出现 ⠿，拖动整块换位） */
+/* 块拖拽手柄（悬停块时在左边距出现 ⠿，拖动整块换位）。
+   position: fixed + 挂到 body：用视口坐标定位，免受 DocBlock 的 position:relative 祖先影响（否则手柄被算偏、跑到屏外）。*/
 .drag-handle {
-  position: absolute;
+  position: fixed;
   display: flex;
   align-items: center;
   justify-content: center;
