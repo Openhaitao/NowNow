@@ -66,6 +66,13 @@ function isEffectivelyEmpty(json, text) {
   return !json.content.some(hasContent)
 }
 
+// 同步读缓存（不发网络）——给 DocBlock 同步初始化内容用：缓存命中就直接拿来当初值，
+// 不经过 content=undefined 的占位空白，消除「即使缓存命中也闪一下加载」的 1 帧空白。
+// 返回：undefined=未命中（按原流程异步加载）、null=空文档、obj=PM JSON。
+export function peekDocCache(owner, section, periodKey) {
+  return cacheGet(owner, section, periodKey)
+}
+
 // 读：本地有未同步草稿就优先用（防"断网/刷新丢字"），否则读服务器。
 // 守卫(P1-6)：本地草稿"实质为空"时绝不盲信——去服务器看一眼，服务器非空就以服务器为准、
 // 并清掉这份坏空草稿。否则一份误存的空草稿会一直遮住库里的真内容（这次事故的显空根因之一）。
