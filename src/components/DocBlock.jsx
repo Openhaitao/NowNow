@@ -47,6 +47,7 @@ export default function DocBlock({ owner, section, periodKey, editable, placehol
         </div>
       )}
       <DocEditor
+        key={`${owner}/${section}/${periodKey}`}
         content={content || undefined}
         editable={editable}
         fill={fill && editable}
