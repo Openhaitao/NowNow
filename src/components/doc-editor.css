@@ -61,9 +61,15 @@
   cursor: grabbing;
   opacity: 1;
 }
-/* 拖拽落点指示线（dropcursor）：主题蓝、圆角，像 Notion/飞书那条线 */
-.doc-dropcursor {
+/* 自定义拖动落点线：fixed 定位、按光标 Y 画在块上/下缘（DragHandle.js showDropLine），
+   左 gutter / 上移都能显。替掉默认 dropcursor（它在 gutter 不显）。*/
+.doc-drop-line {
+  position: fixed;
+  height: 3px;
+  background: var(--accent);
   border-radius: 2px;
+  z-index: 60;
+  pointer-events: none;
 }
 /* 拖拽进行中：整页正文略降透明，焦点落在被拖的块和那条蓝线上 */
 .ProseMirror.dragging {

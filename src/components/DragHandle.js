@@ -103,6 +103,32 @@ function DragHandlePlugin(options) {
   function clearHoverBlock() { if (hoveredBlock) { hoveredBlock.classList.remove('drag-hover'); hoveredBlock = null } }
   function hideDragHandle() { if (dragHandleElement) dragHandleElement.classList.add('hide'); clearHoverBlock() }
   function showDragHandle() { if (dragHandleElement) dragHandleElement.classList.remove('hide') }
+  // 拖动落点线：按光标 Y 找最近的顶层块、在其上/下缘画一条蓝线（不依赖光标在正文上，
+  // 所以在左 gutter 拖、或上移时都能显——这是默认 dropcursor 在 gutter 不显的根因）。
+  let dropLineEl = null
+  function showDropLine(view, event) {
+    const children = Array.from(view.dom.children).filter((c) => c.nodeType === 1 && c !== dropLineEl)
+    if (!children.length) return hideDropLine()
+    const y = event.clientY
+    let target = children[0]
+    let after = false
+    for (const child of children) {
+      const r = child.getBoundingClientRect()
+      if (y < r.top + r.height / 2) { target = child; after = false; break }
+      target = child; after = true
+    }
+    const r = target.getBoundingClientRect()
+    if (!dropLineEl) {
+      dropLineEl = document.createElement('div')
+      dropLineEl.className = 'doc-drop-line'
+      document.body.appendChild(dropLineEl)
+    }
+    dropLineEl.style.display = 'block'
+    dropLineEl.style.left = `${r.left}px`
+    dropLineEl.style.top = `${(after ? r.bottom : r.top) - 1.5}px`
+    dropLineEl.style.width = `${r.width}px`
+  }
+  function hideDropLine() { if (dropLineEl) dropLineEl.style.display = 'none' }
   function hideHandleOnEditorOut(event) {
     if (event.target instanceof Element) {
       const relatedTarget = event.relatedTarget
@@ -175,9 +201,11 @@ function DragHandlePlugin(options) {
         },
         mousewheel: () => { hideDragHandle() },
         dragstart: (view) => { view.dom.classList.add('dragging') },
+        dragover: (view, event) => { if (view.dragging) showDropLine(view, event); return false },
         drop: (view, event) => {
           view.dom.classList.remove('dragging')
           hideDragHandle()
+          hideDropLine()
           // ② 落点后给落地的块闪一下蓝（像通知 flash）。PM 在本 handler 之后才应用移动，setTimeout 等它落定再闪。
           setTimeout(() => {
             try {
@@ -203,7 +231,7 @@ function DragHandlePlugin(options) {
             view.dragging = { slice, move: event.ctrlKey }
           }
         },
-        dragend: (view) => { view.dom.classList.remove('dragging') },
+        dragend: (view) => { view.dom.classList.remove('dragging'); hideDropLine() },
       },
     },
   })
