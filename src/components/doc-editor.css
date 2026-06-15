@@ -248,6 +248,8 @@
 .doc-editor { cursor: default; }
 .doc-prose[contenteditable='true'] { cursor: text; }
 .doc-prose[contenteditable='false'] { cursor: default; }
+/* 链接显示小手（直接命中 a、压过正文继承来的 I-beam）*/
+.doc-prose a { cursor: pointer; }
 /* 过去块每块右侧的「⬆️ 搬到今天」按钮（官方 DragHandle 定位，block hover 才显）*/
 .doc-carry-handle {
   display: flex;
