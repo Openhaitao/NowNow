@@ -81,6 +81,38 @@ export async function syncDocMentions(docId, authorId, json) {
   await del
 }
 
+// 一篇 doc_json → 纯文本投影（喂搜索/RLS），口径与编辑器一致：块内拼接、块间换行。
+function docText(json) {
+  return (json?.content || []).map((b) => blockText(b, [])).join('\n')
+}
+
+// 给一个节点(及子树)里所有 mention 换新 mid（深拷贝后调用）：搬到今天 = 今天重新 @ 一次。
+function regenMids(node) {
+  if (!node) return node
+  if (node.type === 'mention' && node.attrs) node.attrs = { ...node.attrs, mid: crypto.randomUUID() }
+  if (Array.isArray(node.content)) node.content.forEach(regenMids)
+  return node
+}
+
+// 把过去某篇里的一个块「搬到今天」（或任意目标周期）：源篇移除该块、目标篇追加该块。
+// 带 @ 的块换新 mid（= 今天重新 @ 一次、独立通知；与源篇 prune 谁先谁后无关）。两边各自 saveDoc(自动 syncDocMentions)。
+// 供「⬆️ 搬到今天」用。前端传：块在源篇 content 里的 index + 源/目标周期。owner 必须是自己(RLS: owner=auth.uid())。
+export async function moveBlockToToday({ owner, fromSection, fromPeriod, blockIndex, toSection = 'today', toPeriod }) {
+  const fromJson = await loadDoc(owner, fromSection, fromPeriod)
+  const block = fromJson?.content?.[blockIndex]
+  if (!block) throw new Error('源块不存在或内容已变化，请刷新后重试')
+  const toJson = (await loadDoc(owner, toSection, toPeriod)) || { type: 'doc', content: [] }
+
+  const moved = regenMids(structuredClone(block))
+  const fromNew = { ...fromJson, content: fromJson.content.filter((_, i) => i !== blockIndex) }
+  const toNew = { ...toJson, content: [...(toJson.content || []), moved] }
+
+  // 先存源(删掉该块) → 再存目标(追加)。换了 mid 顺序其实无关，先源后目更稳。
+  await saveDoc({ owner, section: fromSection, periodKey: fromPeriod, json: fromNew, text: docText(fromNew) })
+  await saveDoc({ owner, section: toSection, periodKey: toPeriod, json: toNew, text: docText(toNew) })
+  return { ok: true }
+}
+
 // 搜 docs（团队可见的都能搜，RLS select 全可读）。命中 doc_text，返回文档 + 片段。
 export async function searchDocs(query) {
   const q = query.trim()
