@@ -166,11 +166,11 @@ body {
 /* 焦点框只给真正的表单输入框（input/textarea/select）。
    按钮、可拖拽行、文档编辑区（contenteditable）都不画框——
    否则点一下成员/日期就冒出一个琥珀色「输入框」，点别处又消失（Haitao 反馈）。*/
+/* 输入框不画全局蓝色聚焦框（海涛不喜欢点一下冒蓝边）。各输入框自己的 focus:border/bg 负责聚焦反馈。*/
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 /* 按钮/链接不画聚焦框（海涛：键盘焦点落到按钮上会突然冒一圈蓝边，很突兀）。表单输入框仍保留焦点框。*/
 button:focus,
