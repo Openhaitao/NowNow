@@ -56,8 +56,7 @@
 }
 .drag-handle:hover {
   opacity: 1;
-  background: var(--surface);
-  color: #78716c;
+  color: #44403c; /* 透明无底色，hover 只把圆点加深（海涛要的） */
 }
 .drag-handle:active {
   cursor: grabbing;
@@ -74,20 +73,20 @@
 .ProseMirror.dragging .ProseMirror-selectednode {
   opacity: 0.4; /* 被拖的块半透明 ghost 感 */
 }
-/* 飞书式 2×3 圆点抓手（替掉 braille ⠿，更干净均匀）；用 currentColor 画点，hover 变色照常生效 */
+/* 飞书式 2×3 圆点抓手，缩小到和正文字号平齐（8×12、点更小更密）；currentColor 画点，hover 变色照常 */
 .drag-handle::before {
   content: '';
   display: block;
-  width: 10px;
-  height: 16px;
+  width: 8px;
+  height: 12px;
   background-repeat: no-repeat;
   background-image:
-    radial-gradient(circle at 2px 3px, currentColor 1.2px, transparent 1.6px),
-    radial-gradient(circle at 8px 3px, currentColor 1.2px, transparent 1.6px),
-    radial-gradient(circle at 2px 8px, currentColor 1.2px, transparent 1.6px),
-    radial-gradient(circle at 8px 8px, currentColor 1.2px, transparent 1.6px),
-    radial-gradient(circle at 2px 13px, currentColor 1.2px, transparent 1.6px),
-    radial-gradient(circle at 8px 13px, currentColor 1.2px, transparent 1.6px);
+    radial-gradient(circle at 1.5px 2px, currentColor 1px, transparent 1.4px),
+    radial-gradient(circle at 6.5px 2px, currentColor 1px, transparent 1.4px),
+    radial-gradient(circle at 1.5px 6px, currentColor 1px, transparent 1.4px),
+    radial-gradient(circle at 6.5px 6px, currentColor 1px, transparent 1.4px),
+    radial-gradient(circle at 1.5px 10px, currentColor 1px, transparent 1.4px),
+    radial-gradient(circle at 6.5px 10px, currentColor 1px, transparent 1.4px);
 }
 .drag-handle.hide {
   display: none;
