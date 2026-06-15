@@ -23,18 +23,6 @@ const SECTIONS = [
 const LAST_VIEWED_KEY = 'nownow_last_viewed'
 const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) || '{}')
 
-// 待我处理的唯一查询口径（fail-closed）：@我未认领未拒绝 + 源条目仍 open + 非我自己创建。
-// fetchAll 和 realtime reloadMentions 共用这一个 builder，杜绝双路径漂移（Kent gate）。
-const inboxMentionsQuery = (uid) =>
-  supabase
-    .from('mentions')
-    .select('*, entries!mentions_entry_id_fkey!inner(content, creator, status)')
-    .eq('mentioned', uid)
-    .is('claimed_entry', null)
-    .is('rejected_at', null)
-    .eq('entries.status', 'open')
-    .neq('entries.creator', uid)
-
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
 // 侧栏成员行：直接按住名字拖动排序（顺序存本地，纯个人视图偏好，不进数据库）
 // 拖动中的那一行用选中同款的蓝色高亮
@@ -156,7 +144,6 @@ export default function Board({ session }) {
   const [docMentions, setDocMentions] = useState([]) // doc 世界的 @我（含已读/未读/已完成）
   const [docDone, setDocDone] = useState([]) // 我派的活、对方完成了（黄色），未点掉的
   const [lastViewed, setLastViewed] = useState(loadLastViewed)
-  const [hasAnchor, setHasAnchor] = useState(false)
 
   const me = profiles.find((p) => p.id === user.id) || null
   const activeProfiles = useMemo(
@@ -164,15 +151,6 @@ export default function Board({ session }) {
     [profiles],
   )
   const [myInviteTokens, setMyInviteTokens] = useState([])
-
-  // 探测时间锚定列是否已迁移（migration-001 跑过后自动启用日历导航）
-  useEffect(() => {
-    supabase
-      .from('entries')
-      .select('anchor')
-      .limit(1)
-      .then(({ error }) => setHasAnchor(!error))
-  }, [])
 
   const [query, setQuery] = useState('') // 顶部搜索：直接输入、就地过滤 todolist
   const [baseDate, setBaseDate] = useState(null) // null = 真实今天；设了 = 整张纸拨回那天
@@ -252,15 +230,13 @@ export default function Board({ session }) {
 
   const applyLoad = useCallback(
     ({ es, ms, am }) => {
-      // 自愈：清掉空内容的孤儿条目（正常路径建不出空条，出现=历史 bug 残留）
-      const strays = es.filter((e) => e.owner === user.id && !e.content.trim())
-      for (const stray of strays) supabase.from('entries').delete().eq('id', stray.id)
-      setAllEntries(es.filter((e) => !strays.includes(e)))
+      // 旧 entries/mentions 表已下线：es/ms/am 恒为空，这里只把派生态置空、不再碰旧表。
+      setAllEntries(es)
       setMentions(ms)
       setAllMentions(am)
       setLoaded(true)
     },
-    [user.id],
+    [],
   )
 
   const doLoad = useCallback(async () => applyLoad(await fetchAll()), [fetchAll, applyLoad])
@@ -390,11 +366,6 @@ export default function Board({ session }) {
       return list
     })
   }, [])
-
-  const reloadMentions = useCallback(async () => {
-    const { data: ms } = await inboxMentionsQuery(user.id)
-    setMentions(ms || [])
-  }, [user.id])
 
   useEffect(() => {
     const ch = supabase
