@@ -6,15 +6,20 @@ import { periodHeaderFromKey } from '../lib/periodKey'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存' }
 
+// 模块级缓存：再次进通知页时先用上次的数据秒显（不再空白等网络），后台再刷新。
+// 直接回答海涛「为什么每次都拉」：现在进页面先显缓存、感知是即时的，拉取在后台静默更新。
+let cachedMentions = []
+let cachedCompletions = []
+
 // docs 世界的通知中心：① @我的（别人在文档里 @ 我 = 派活）→ 勾选完成 ② 我派的活被完成（黄色）③ 待确认成员。
 export default function NotificationsPage({ pendingMembers = [], profiles, onMembersChanged, onJumpDoc, onChanged }) {
-  const [mentions, setMentions] = useState([]) // 别人 @ 我的（未完成）
-  const [completions, setCompletions] = useState([]) // 我派的活、对方完成了（黄色）
+  const [mentions, setMentions] = useState(cachedMentions) // 别人 @ 我的（未完成）
+  const [completions, setCompletions] = useState(cachedCompletions) // 我派的活、对方完成了（黄色）
 
   useEffect(() => {
     let alive = true
-    loadMyMentions().then((r) => alive && setMentions(r)).catch(() => {})
-    loadMyCompletions().then((r) => alive && setCompletions(r)).catch(() => {})
+    loadMyMentions().then((r) => { cachedMentions = r; if (alive) setMentions(r) }).catch(() => {})
+    loadMyCompletions().then((r) => { cachedCompletions = r; if (alive) setCompletions(r) }).catch(() => {})
     return () => { alive = false }
   }, [])
 

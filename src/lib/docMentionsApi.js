@@ -4,9 +4,13 @@ import { supabase } from './supabase'
 
 // 我收到的 @：join docs 拿 (owner, section, period_key) 用于跳转/上下文。降序。
 export async function loadMyMentions() {
+  // getSession（读本地缓存、无网络）取 user，别用 getUser（每次都打一次 auth 服务器网络往返）。
+  // 通知页每次进入会多处调这俩(Board refreshNotif + NotificationsPage)，getUser 的网络往返叠起来
+  // = 海涛报的「点通知半天才显示内容」。登录态已在 App 启动时校验过(auth-ready)，本地 session 够用。
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) return []
   const { data, error } = await supabase
     .from('doc_mentions')
@@ -43,9 +47,13 @@ export async function completeMention(id) {
 
 // 我派出去、对方已完成的活（黄色「X 完成了你派的任务」），未点掉的。降序。
 export async function loadMyCompletions() {
+  // getSession（读本地缓存、无网络）取 user，别用 getUser（每次都打一次 auth 服务器网络往返）。
+  // 通知页每次进入会多处调这俩(Board refreshNotif + NotificationsPage)，getUser 的网络往返叠起来
+  // = 海涛报的「点通知半天才显示内容」。登录态已在 App 启动时校验过(auth-ready)，本地 session 够用。
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) return []
   const { data, error } = await supabase
     .from('doc_mentions')
