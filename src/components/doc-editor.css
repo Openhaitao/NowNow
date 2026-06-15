@@ -90,6 +90,22 @@
 .drag-handle.hide {
   display: none;
 }
+/* hover 手柄时整块蓝高亮（主题 --accent-soft），box-shadow 外扩 4px 像一条高亮带、不挤压文字 */
+.ProseMirror .drag-hover {
+  background: var(--accent-soft);
+  border-radius: 4px;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  transition: background 0.1s ease;
+}
+/* 落点后整块闪一下蓝再淡出（像通知/搜索跳转那个 flash） */
+@keyframes drag-dropped-flash {
+  from { background: var(--accent-soft); box-shadow: 0 0 0 4px var(--accent-soft); }
+  to { background: transparent; box-shadow: 0 0 0 4px transparent; }
+}
+.ProseMirror .drag-dropped {
+  border-radius: 4px;
+  animation: drag-dropped-flash 0.65s ease-out;
+}
 
 /* 待办清单：复选框 + 内容横排，勾上划线变灰 */
 .doc-prose ul[data-type='taskList'] {

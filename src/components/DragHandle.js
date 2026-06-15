@@ -91,7 +91,17 @@ function DragHandlePlugin(options) {
   }
 
   let dragHandleElement = null
-  function hideDragHandle() { if (dragHandleElement) dragHandleElement.classList.add('hide') }
+  // hover 手柄时整块高亮（海涛要的主题蓝 --accent-soft 背景）
+  let hoveredBlock = null
+  function setHoverBlock(el) {
+    const target = el && el.classList ? el : null
+    if (hoveredBlock === target) return
+    if (hoveredBlock) hoveredBlock.classList.remove('drag-hover')
+    hoveredBlock = target
+    if (hoveredBlock) hoveredBlock.classList.add('drag-hover')
+  }
+  function clearHoverBlock() { if (hoveredBlock) { hoveredBlock.classList.remove('drag-hover'); hoveredBlock = null } }
+  function hideDragHandle() { if (dragHandleElement) dragHandleElement.classList.add('hide'); clearHoverBlock() }
   function showDragHandle() { if (dragHandleElement) dragHandleElement.classList.remove('hide') }
   function hideHandleOnEditorOut(event) {
     if (event.target instanceof Element) {
@@ -161,12 +171,25 @@ function DragHandlePlugin(options) {
           dragHandleElement.style.left = `${colLeft - 16}px`
           dragHandleElement.style.top = `${rect.top}px`
           showDragHandle()
+          setHoverBlock(node) // hover 手柄/块时整块蓝高亮
         },
         mousewheel: () => { hideDragHandle() },
         dragstart: (view) => { view.dom.classList.add('dragging') },
         drop: (view, event) => {
           view.dom.classList.remove('dragging')
           hideDragHandle()
+          // ② 落点后给落地的块闪一下蓝（像通知 flash）。PM 在本 handler 之后才应用移动，setTimeout 等它落定再闪。
+          setTimeout(() => {
+            try {
+              const sel = view.state.selection
+              let dom = view.nodeDOM(sel.from)
+              if (dom && dom.nodeType !== 1) dom = dom.parentElement
+              if (dom && dom.classList) {
+                dom.classList.add('drag-dropped')
+                setTimeout(() => dom.classList.remove('drag-dropped'), 650)
+              }
+            } catch { /* ignore */ }
+          }, 0)
           let droppedNode = null
           const dropPos = view.posAtCoords({ left: event.clientX, top: event.clientY })
           if (!dropPos) return
