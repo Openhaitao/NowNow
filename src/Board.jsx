@@ -933,7 +933,7 @@ export default function Board({ session }) {
                     onJump={(h) => { viewPage(h.owner); goChannel(h.section); setQuery('') }}
                   />
                 ) : (
-                  <DocTimeline owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null} />
+                  <DocTimeline key={`${pageUserId}-${channel}`} owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null} />
                 )}
               </>
             )}
