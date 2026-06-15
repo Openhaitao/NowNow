@@ -46,7 +46,7 @@
   box-sizing: border-box;
   width: 26px;
   padding-right: 8px; /* 透明命中区，覆到正文左缘 ~6px → 鼠标从正文移向 ⠿ 不再穿过无 hover 的断层而消失 */
-  height: 22px;
+  height: 24px; /* 和 DragHandle.js 里垂直居中用的 24 对齐——否则圆点和正文行差 1~2px 不齐 */
   border-radius: 4px;
   color: var(--ink-faint);
   cursor: grab;
