@@ -61,15 +61,28 @@
   cursor: grabbing;
   opacity: 1;
 }
-/* 自定义拖动落点线：fixed 定位、按光标 Y 画在块上/下缘（DragHandle.js showDropLine），
-   左 gutter / 上移都能显。替掉默认 dropcursor（它在 gutter 不显）。*/
-.doc-drop-line {
-  position: fixed;
-  height: 3px;
-  background: var(--accent);
+/* 拖拽落点线（默认 dropcursor，官方手柄配套）：主题蓝、圆角 */
+.doc-dropcursor {
   border-radius: 2px;
-  z-index: 60;
-  pointer-events: none;
+}
+/* 官方 drag-handle 的抓手按钮（drag-only）：飞书式 2×3 圆点、透明无底色、hover 加深 */
+.doc-block-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 22px;
+  color: var(--ink-faint);
+  cursor: grab;
+  opacity: 0.5; /* 平时淡、hover 才实 */
+  transition: opacity 0.12s ease, color 0.12s ease;
+}
+.doc-block-handle:hover {
+  opacity: 1;
+  color: #44403c; /* 透明无底色，hover 只把圆点加深 */
+}
+.doc-block-handle:active {
+  cursor: grabbing;
 }
 /* 拖拽进行中：整页正文略降透明，焦点落在被拖的块和那条蓝线上 */
 .ProseMirror.dragging {
@@ -78,9 +91,8 @@
 .ProseMirror.dragging .ProseMirror-selectednode {
   opacity: 0.4; /* 被拖的块半透明 ghost 感 */
 }
-/* 飞书式 2×3 圆点抓手，缩小到和正文字号平齐（8×12、点更小更密）；currentColor 画点，hover 变色照常 */
-.drag-handle::before {
-  content: '';
+/* 飞书式 2×3 圆点抓手（8×12、和正文字号平齐）；currentColor 画点，hover 变色照常 */
+.doc-block-grip {
   display: block;
   width: 8px;
   height: 12px;
@@ -92,9 +104,6 @@
     radial-gradient(circle at 6.5px 6px, currentColor 1px, transparent 1.4px),
     radial-gradient(circle at 1.5px 10px, currentColor 1px, transparent 1.4px),
     radial-gradient(circle at 6.5px 10px, currentColor 1px, transparent 1.4px);
-}
-.drag-handle.hide {
-  display: none;
 }
 /* hover 手柄时整块蓝高亮（主题 --accent-soft），box-shadow 外扩 4px 像一条高亮带、不挤压文字 */
 .ProseMirror .drag-hover {
