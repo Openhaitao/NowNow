@@ -477,11 +477,13 @@ export default function Board({ session }) {
   const [mobileSearch, setMobileSearch] = useState(false) // 手机端搜索页模式
   const [view, setView] = useState('paper') // paper | notifications | all
 
-  // 侧栏通知数 = 未完成的派活 + 对方完成待我知道 + 待确认成员。切视图时重拉。
-  useEffect(() => {
+  // 侧栏通知数 = 未完成的派活 + 对方完成待我知道 + 待确认成员。
+  // 切视图时重拉；通知页里勾完成/点掉黄条也回调这个，让红点数字当场变（不用跳页）。
+  const refreshNotif = useCallback(() => {
     loadMyMentions().then(setDocMentions).catch(() => {})
     loadMyCompletions().then(setDocDone).catch(() => {})
-  }, [view])
+  }, [])
+  useEffect(() => { refreshNotif() }, [view, refreshNotif])
 
   // 侧栏（桌面）：宽度可拖拽 + 可折叠，存本地个人偏好。中间那条分隔线就是拖拽手柄。
   const asideRef = useRef(null)
@@ -921,7 +923,7 @@ export default function Board({ session }) {
           )}
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
-        <div ref={scrollRef} className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-2 pl-6 pr-1">
+        <div ref={scrollRef} className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-2 pl-6 pr-3">
           {/* 所有视图统一收进 720px 主列（--doc-width）：通知/设置/正文同一阅读宽，
              左对齐和上方 tab/日期头同边界，折叠侧栏时跟着撑到左边 */}
           <div className="w-full max-w-[var(--doc-width)]">
@@ -940,6 +942,7 @@ export default function Board({ session }) {
                 profiles={profiles}
                 onMembersChanged={loadProfiles}
                 onJumpDoc={jumpToDoc}
+                onChanged={refreshNotif}
               />
             ) : (
               <>

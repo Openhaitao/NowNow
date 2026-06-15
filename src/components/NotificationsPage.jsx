@@ -7,7 +7,7 @@ import { periodHeaderFromKey } from '../lib/periodKey'
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存' }
 
 // docs 世界的通知中心：① @我的（别人在文档里 @ 我 = 派活）→ 勾选完成 ② 我派的活被完成（黄色）③ 待确认成员。
-export default function NotificationsPage({ pendingMembers = [], profiles, onMembersChanged, onJumpDoc }) {
+export default function NotificationsPage({ pendingMembers = [], profiles, onMembersChanged, onJumpDoc, onChanged }) {
   const [mentions, setMentions] = useState([]) // 别人 @ 我的（未完成）
   const [completions, setCompletions] = useState([]) // 我派的活、对方完成了（黄色）
 
@@ -34,13 +34,15 @@ export default function NotificationsPage({ pendingMembers = [], profiles, onMem
   async function complete(m) {
     if (m.completed_at) return
     setMentions((xs) => xs.map((x) => (x.id === m.id ? { ...x, completed_at: new Date().toISOString() } : x)))
-    completeMention(m.id).catch(() => {})
+    try { await completeMention(m.id) } catch {}
+    onChanged?.() // 落库后刷新侧栏未完成计数（本地划横线不动，靠这个让红点数字当场减）
   }
 
   // 点掉黄色完成通知
   async function dismiss(c) {
     setCompletions((xs) => xs.filter((x) => x.id !== c.id))
-    ackCompletion(c.id).catch(() => {})
+    try { await ackCompletion(c.id) } catch {}
+    onChanged?.()
   }
 
   const empty = mentions.length === 0 && pendingMembers.length === 0 && completions.length === 0
