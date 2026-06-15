@@ -64,11 +64,11 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} aria-hidden />
           {periodHeader(section, 0, baseDate)}
         </div>
-        <DocBlock key={`cur-${owner}-${reloadNonce}`} owner={owner} section={section} periodKey={curKey} editable={isMyPage} placeholder="写点什么…" profiles={profiles} fill />
+        <DocBlock key={`${owner}-${section}-${curKey}-${reloadNonce}`} owner={owner} section={section} periodKey={curKey} editable={isMyPage} placeholder="写点什么…" profiles={profiles} fill />
       </div>
       {/* 过去：只读，往下回溯 */}
       {pastKeys.map((k) => (
-        <div key={`${owner}-${k}-${reloadNonce}`} id={`doc-${section}-${k}`} className={'mb-3' + (flashKey === k ? ' doc-flash' : '')}>
+        <div key={`${owner}-${section}-${k}-${reloadNonce}`} id={`doc-${section}-${k}`} className={'mb-3' + (flashKey === k ? ' doc-flash' : '')}>
           <div className="flex items-center gap-1.5 pb-1 pt-3 text-[13px] font-normal text-stone-400">
             {/* 每个时间点旁都带主题蓝小圆点（时间线一致感）*/}
             <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} aria-hidden />
