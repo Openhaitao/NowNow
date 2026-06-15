@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronDown, ChevronRight, Copy, Download, Link2, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, Copy, Download, Link2, LogOut, Settings as SettingsIcon, Upload, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { friendlyDbError } from '../lib/errors'
-import { docJsonToMarkdown } from '../lib/markdown'
+import { docJsonToMarkdown, markdownToDocJson, docJsonToText } from '../lib/markdown'
+import { loadDocResilient, saveDocResilient } from '../lib/resilientDocs'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
@@ -147,6 +148,36 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
     }
   }
 
+  // 数据导入：选一个 .md 文件 → 解析成块 → **追加**到暂存箱（非破坏性，绝不覆盖既有内容）。
+  // 故意只往暂存箱加：导入后你在暂存箱里再把内容搬去今日/本周。整篇覆盖式「恢复」太危险、不做。
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
+  const fileRef = useRef(null)
+  async function importMarkdown(file) {
+    if (!file) return
+    setImporting(true)
+    setImportMsg('')
+    try {
+      const text = await file.text()
+      const imported = markdownToDocJson(text)
+      const blocks = (imported && Array.isArray(imported.content)) ? imported.content : []
+      if (!blocks.length) { setImportMsg('这个文件没解析出内容'); return }
+      // 读当前暂存箱、把导入的块接在后面（不动原有的）
+      const cur = await loadDocResilient(me.id, 'stash', 'stash')
+      const curContent = (cur && Array.isArray(cur.content)) ? cur.content : []
+      const merged = { type: 'doc', content: [...curContent, ...blocks] }
+      await saveDocResilient({ owner: me.id, section: 'stash', periodKey: 'stash', json: merged, text: docJsonToText(merged) })
+      setImportMsg(`已导入 ${blocks.length} 块到暂存箱 ✓ 去暂存箱看`)
+      setTimeout(() => setImportMsg(''), 4000)
+    } catch (e) {
+      console.error('导入失败', e)
+      setImportMsg('导入失败了，文件可能不是 Markdown')
+    } finally {
+      setImporting(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
   // 设置页主体：桌面模态框和手机整页共用
   const body = (
     <>
@@ -278,6 +309,11 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
           <button onClick={exportData} disabled={exporting} className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700 disabled:opacity-50 max-md:text-[15px]">
             <Download size={13} /> {exporting ? '导出中…' : '导出我的数据（Markdown）'}
           </button>
+          <input ref={fileRef} type="file" accept=".md,.markdown,text/markdown,text/plain" className="hidden" onChange={(e) => importMarkdown(e.target.files?.[0])} />
+          <button onClick={() => fileRef.current?.click()} disabled={importing} className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700 disabled:opacity-50 max-md:text-[15px]">
+            <Upload size={13} /> {importing ? '导入中…' : '导入 Markdown（进暂存箱）'}
+          </button>
+          {importMsg && <p className={'mt-1 text-xs ' + (importMsg.includes('✓') ? 'text-emerald-600' : 'text-red-500')}>{importMsg}</p>}
           <button
             onClick={() => supabase.auth.signOut()}
             className="mt-2 flex items-center gap-1.5 text-[13px] text-red-500 hover:text-red-700 max-md:text-[15px]"

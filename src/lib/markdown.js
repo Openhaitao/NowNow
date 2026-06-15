@@ -61,3 +61,11 @@ export function markdownToDocJson(md) {
   ed.commands.setContent(md || '')
   return ed.getJSON()
 }
+
+// Tiptap JSON → 纯文本（落库 text 列 / 空判定用）
+export function docJsonToText(json) {
+  if (!json) return ''
+  const ed = converter()
+  ed.commands.setContent(json)
+  return ed.getText()
+}
