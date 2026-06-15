@@ -42,25 +42,52 @@
   position: fixed;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 18px;
+  justify-content: flex-start; /* ⠿ 靠 gutter 左侧，右侧透明 padding 把和正文之间的空隙桥起来 */
+  box-sizing: border-box;
+  width: 26px;
+  padding-right: 8px; /* 透明命中区，覆到正文左缘 ~6px → 鼠标从正文移向 ⠿ 不再穿过无 hover 的断层而消失 */
   height: 22px;
   border-radius: 4px;
   color: var(--ink-faint);
   cursor: grab;
   z-index: 10;
+  opacity: 0.55; /* 平时淡淡的，hover 才实（Notion/飞书那种克制感）*/
+  transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
 }
 .drag-handle:hover {
+  opacity: 1;
   background: var(--surface);
   color: #78716c;
 }
 .drag-handle:active {
   cursor: grabbing;
+  opacity: 1;
 }
+/* 拖拽落点指示线（dropcursor）：主题蓝、圆角，像 Notion/飞书那条线 */
+.doc-dropcursor {
+  border-radius: 2px;
+}
+/* 拖拽进行中：整页正文略降透明，焦点落在被拖的块和那条蓝线上 */
+.ProseMirror.dragging {
+  cursor: grabbing;
+}
+.ProseMirror.dragging .ProseMirror-selectednode {
+  opacity: 0.4; /* 被拖的块半透明 ghost 感 */
+}
+/* 飞书式 2×3 圆点抓手（替掉 braille ⠿，更干净均匀）；用 currentColor 画点，hover 变色照常生效 */
 .drag-handle::before {
-  content: '⠿';
-  font-size: 14px;
-  line-height: 1;
+  content: '';
+  display: block;
+  width: 10px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-image:
+    radial-gradient(circle at 2px 3px, currentColor 1.2px, transparent 1.6px),
+    radial-gradient(circle at 8px 3px, currentColor 1.2px, transparent 1.6px),
+    radial-gradient(circle at 2px 8px, currentColor 1.2px, transparent 1.6px),
+    radial-gradient(circle at 8px 8px, currentColor 1.2px, transparent 1.6px),
+    radial-gradient(circle at 2px 13px, currentColor 1.2px, transparent 1.6px),
+    radial-gradient(circle at 8px 13px, currentColor 1.2px, transparent 1.6px);
 }
 .drag-handle.hide {
   display: none;
