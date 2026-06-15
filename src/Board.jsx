@@ -227,10 +227,18 @@ export default function Board({ session }) {
   }, [])
 
   const loadProfiles = useCallback(async () => {
-    const [{ data }, { data: inv }] = await Promise.all([
+    const [{ data, error }, { data: inv }] = await Promise.all([
       supabase.from('profiles').select('*').order('handle'),
       supabase.from('invites').select('token').eq('created_by', user.id),
     ])
+    // 关键：profiles 查询失败时绝不静默清空 / 误判「没 profile」。
+    // 之前吞了 error → 查询一旦报错或被 RLS 挡空，就 profiles=[] + needSetup=true，
+    // 表现成「数据全空 + 弹起名字卡片」，用户以为数据丢了、再起名还可能造重复行。
+    // 失败就保留上次状态、记日志、等下次重试，绝不据此改 needSetup。
+    if (error) {
+      console.error('[loadProfiles] profiles 查询失败，保留现状不清空：', error)
+      return
+    }
     setProfiles(data || [])
     setMyInviteTokens((inv || []).map((i) => i.token))
     setNeedSetup(!(data || []).some((p) => p.id === user.id))

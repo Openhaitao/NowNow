@@ -59,10 +59,13 @@ export default function App() {
   }, [])
 
   if (session === undefined) return null
+  // 关键：必须有 session.user.id 才算真登录。session 存在但 user.id 为空时（token 失效/掉登录态）
+  // 绝不渲染 Board——否则 Board 会拿 owner=null 去查/存（页面全空、看着像"数据全丢"，实则只是掉登录）。
+  const authed = !!session?.user?.id
   // /login：未登录时显示登录页；登录成功后地址改回 / 并直接进主页
   // （之前这里无条件渲染登录页，导致登录成功了页面也"没反应"）
   if (window.location.pathname === '/login') {
-    if (!session)
+    if (!authed)
       return (
         <ErrorBoundary>
           <Login />
@@ -70,5 +73,5 @@ export default function App() {
       )
     window.history.replaceState(null, '', '/')
   }
-  return <ErrorBoundary>{session ? <Board session={session} /> : <Login />}</ErrorBoundary>
+  return <ErrorBoundary>{authed ? <Board session={session} /> : <Login />}</ErrorBoundary>
 }
