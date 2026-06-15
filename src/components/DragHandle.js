@@ -91,8 +91,11 @@ function DragHandlePlugin(options) {
   }
 
   let dragHandleElement = null
-  // hover 手柄时整块高亮（海涛要的主题蓝 --accent-soft 背景）
+  // hover 手柄时整块高亮（海涛要的主题蓝 --accent-soft 背景）。
+  // 只在「鼠标在 ⠿ 手柄上」时高亮——不能在 hover 整块时就高亮，否则光标移到正文里选字时，
+  // 蓝底会盖住（同为蓝色的）选区高亮、看着像选不中（海涛报的「滑文字没出现选中线」）。
   let hoveredBlock = null
+  let currentBlock = null // mousemove 记录当前块，进手柄时才真高亮
   function setHoverBlock(el) {
     const target = el && el.classList ? el : null
     if (hoveredBlock === target) return
@@ -154,6 +157,11 @@ function DragHandlePlugin(options) {
         else if (window.innerHeight - e.clientY < options.scrollTreshold) window.scrollTo({ top: scrollY + 30, behavior: 'smooth' })
       }
       dragHandleElement.addEventListener('drag', onDragHandleDrag)
+      // 整块蓝高亮只在鼠标真在 ⠿ 手柄上时显示（不影响在正文里选字）
+      function onHandleEnter() { setHoverBlock(currentBlock) }
+      function onHandleLeave() { clearHoverBlock() }
+      dragHandleElement.addEventListener('mouseenter', onHandleEnter)
+      dragHandleElement.addEventListener('mouseleave', onHandleLeave)
       hideDragHandle()
       // 挂到 body（配合 .drag-handle 的 position:fixed）：用视口坐标定位，
       // 不再受编辑器父级 position:relative（DocBlock 的 SaveStatus 包裹层）影响而算偏跑到屏外。
@@ -164,6 +172,10 @@ function DragHandlePlugin(options) {
           dragHandleElement?.remove?.()
           dragHandleElement?.removeEventListener('drag', onDragHandleDrag)
           dragHandleElement?.removeEventListener('dragstart', onDragHandleDragStart)
+          dragHandleElement?.removeEventListener('mouseenter', onHandleEnter)
+          dragHandleElement?.removeEventListener('mouseleave', onHandleLeave)
+          clearHoverBlock()
+          dropLineEl?.remove?.(); dropLineEl = null
           dragHandleElement = null
           view?.dom?.parentElement?.removeEventListener('mouseout', hideHandleOnEditorOut)
         },
@@ -197,7 +209,7 @@ function DragHandlePlugin(options) {
           dragHandleElement.style.left = `${colLeft - 16}px`
           dragHandleElement.style.top = `${rect.top}px`
           showDragHandle()
-          setHoverBlock(node) // hover 手柄/块时整块蓝高亮
+          currentBlock = node // 记录当前块；只有鼠标进到 ⠿ 手柄上才真高亮（见 handle 的 mouseenter）
         },
         mousewheel: () => { hideDragHandle() },
         dragstart: (view) => { view.dom.classList.add('dragging') },
