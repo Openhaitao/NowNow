@@ -239,6 +239,10 @@
   color: var(--accent);
   font-weight: 600;
 }
+/* 当前周期块铺满首屏：编辑器留出一片可点空白，点任意位置都能落光标（配 DocEditor 的 onMouseDown 聚焦末尾）*/
+.doc-editor-fill {
+  min-height: 65vh;
+}
 .doc-prose img {
   max-width: 100%;
   border-radius: 6px;

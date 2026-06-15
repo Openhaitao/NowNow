@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import DocEditor from './DocEditor'
 import SaveStatus from './SaveStatus'
-import { loadDocResilient, saveDocResilient, flushPending } from '../lib/resilientDocs'
+import { loadDocResilient, saveDocResilient, flushPending, peekDocCache } from '../lib/resilientDocs'
 
 // 时间线里的一个文档块 = 一个 (owner, section, period_key)。
 // 当前周期可写（防抖 600ms 自动落库；永不丢字 + 离线韧性，见 resilientDocs）；过去/别人的只读。
-export default function DocBlock({ owner, section, periodKey, editable, placeholder, profiles }) {
-  const [content, setContent] = useState(undefined) // undefined=加载中, null=空, obj=PM JSON
+// fill=当前周期块铺满首屏（点空白也能落光标编辑）。
+export default function DocBlock({ owner, section, periodKey, editable, placeholder, profiles, fill }) {
+  // 初值同步读缓存：命中就直接拿来当初值、不经 undefined 占位 → 缓存命中零加载闪（暂存等再点秒显）。
+  const [content, setContent] = useState(() => peekDocCache(owner, section, periodKey)) // undefined=加载中, null=空, obj=PM JSON
   const [saveState, setSaveState] = useState(null) // 'saving'|'saved'|'offline'|'error'|null
   const saveTimer = useRef(null)
   const savedClear = useRef(null)
@@ -20,7 +22,8 @@ export default function DocBlock({ owner, section, periodKey, editable, placehol
 
   useEffect(() => {
     let alive = true
-    setContent(undefined)
+    // 切块时也先用缓存（命中=不闪），miss 才回到 undefined 占位
+    setContent(peekDocCache(owner, section, periodKey))
     loadDocResilient(owner, section, periodKey)
       .then((j) => alive && setContent(j ?? null))
       .catch(() => alive && setContent(null))
@@ -46,6 +49,7 @@ export default function DocBlock({ owner, section, periodKey, editable, placehol
       <DocEditor
         content={content || undefined}
         editable={editable}
+        fill={fill && editable}
         placeholder={placeholder}
         profiles={profiles}
         uploaderId={owner}
