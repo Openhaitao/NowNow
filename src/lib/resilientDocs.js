@@ -17,6 +17,40 @@ function lsDel(key) { try { localStorage.removeItem(key) } catch {} }
 
 const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false
 
+// 文档读缓存：加载过的文档存内存 + localStorage，再访问/跳转秒显，后台再刷新（stale-while-revalidate）。
+// 解决「点通知跳文档 / 翻页每次都拉服务器、半天才出」。草稿(未同步)优先级高于缓存，见 loadDocResilient。
+const LS_CACHE_PREFIX = 'nownow_doccache:'
+const ck = (owner, section, periodKey) => `${LS_CACHE_PREFIX}${owner}/${section}/${periodKey}`
+const docCache = new Map() // `${owner}/${section}/${periodKey}` -> json（内存层，最快）
+
+function cacheGet(owner, section, periodKey) {
+  const mem = `${owner}/${section}/${periodKey}`
+  if (docCache.has(mem)) return docCache.get(mem)
+  const ls = lsGet(ck(owner, section, periodKey)) // 跨刷新：从 localStorage 回填内存
+  if (ls && ls.json !== undefined) { docCache.set(mem, ls.json ?? null); return ls.json ?? null }
+  return undefined // 未命中（undefined 区别于 null=空文档）
+}
+function cacheSet(owner, section, periodKey, json) {
+  docCache.set(`${owner}/${section}/${periodKey}`, json ?? null)
+  lsSet(ck(owner, section, periodKey), { json: json ?? null, at: Date.now() })
+  pruneDocCache()
+}
+// 限制 localStorage 里缓存的文档数（按最近访问，留最近 40 篇），防膨胀。
+function pruneDocCache(max = 40) {
+  try {
+    const keys = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(LS_CACHE_PREFIX)) keys.push(key)
+    }
+    if (keys.length <= max) return
+    keys.map((key) => ({ key, at: lsGet(key)?.at || 0 }))
+      .sort((a, b) => b.at - a.at)
+      .slice(max)
+      .forEach(({ key }) => lsDel(key))
+  } catch {}
+}
+
 // 一份 PM JSON / 文本是否"实质为空"（空 doc、只剩空段落、无可见内容）。
 // 防数据丢失的关键判定：空草稿不许遮服务器、空内容覆盖非空前先备份。
 function isEffectivelyEmpty(json, text) {
@@ -41,11 +75,19 @@ export async function loadDocResilient(owner, section, periodKey) {
     if (!isEffectivelyEmpty(local.json, local.text)) return local.json ?? null
     try {
       const server = await _loadDoc(owner, section, periodKey)
-      if (!isEffectivelyEmpty(server, null)) { lsDel(k(owner, section, periodKey)); return server }
+      if (!isEffectivelyEmpty(server, null)) { lsDel(k(owner, section, periodKey)); cacheSet(owner, section, periodKey, server); return server }
     } catch { /* 服务器读不到：退回本地，保持"永不丢字"语义 */ }
     return local.json ?? null
   }
-  return _loadDoc(owner, section, periodKey)
+  // 无草稿 → 缓存优先：命中就秒返 + 后台刷新缓存（跳转/翻页即时）；未命中拉服务器并缓存。
+  const cached = cacheGet(owner, section, periodKey)
+  if (cached !== undefined) {
+    _loadDoc(owner, section, periodKey).then((fresh) => cacheSet(owner, section, periodKey, fresh)).catch(() => {})
+    return cached
+  }
+  const server = await _loadDoc(owner, section, periodKey)
+  cacheSet(owner, section, periodKey, server)
+  return server
 }
 
 // 存：先落本地（永不丢），再尝试落库；失败/断网入队等重试。onState 给 UI 显示。
@@ -61,6 +103,7 @@ export async function saveDocResilient({ owner, section, periodKey, json, text }
   }
   const payload = { owner, section, periodKey, json, text }
   lsSet(key, payload) // ← 永不丢字：先写本地
+  cacheSet(owner, section, periodKey, json) // 读缓存跟着自己的编辑走，绝不被旧缓存遮住
   if (isOffline()) { pending.set(key, payload); onState?.('offline'); return }
   onState?.('saving')
   try {
