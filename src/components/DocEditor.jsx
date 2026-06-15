@@ -69,7 +69,18 @@ function insertImageFromFile(view, file, uploaderId) {
       }
       URL.revokeObjectURL(localUrl)
     })
-    .catch((e) => console.error('图片上传失败', e))
+    .catch((e) => {
+      console.error('图片上传失败', e)
+      // 之前上传失败是静默的：图片只剩本地预览，刷新后变坏图、用户却以为存上了。
+      // 现在删掉这张没传上的预览图 + 明确告诉用户，免得悄悄丢图。
+      let pos = null
+      view.state.doc.descendants((n, p) => {
+        if (n.type.name === 'image' && n.attrs.src === localUrl) { pos = p; return false }
+      })
+      if (pos != null) view.dispatch(view.state.tr.delete(pos, pos + view.state.doc.nodeAt(pos).nodeSize))
+      URL.revokeObjectURL(localUrl)
+      alert('图片上传失败，这张图没存上，请重试。')
+    })
 }
 
 // P0：Tiptap 单人版文档内核。替代「每行一个 entry + textarea」的旧模型——

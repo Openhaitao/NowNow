@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, ChevronRight, Copy, Download, Link2, LogOut, Settings as SettingsIcon, UserPlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { friendlyDbError } from '../lib/errors'
+import { docJsonToMarkdown } from '../lib/markdown'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月' }
 
@@ -111,27 +112,39 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
     } catch { /* 复制被拦：链接已显示，手动复制 */ }
   }
 
-  // 数据导出：我的全部条目 → Markdown 下载（数据所有权，flomo 同款理念）
-  function exportData() {
-    const mine = allEntries.filter((e) => e.owner === me.id)
-    const lines = [`# ${me.display_name} 的 NowNow 数据`, '']
-    for (const sec of ['today', 'week', 'month']) {
-      lines.push(`## ${SECTION_LABELS[sec]}`)
-      for (const e of mine.filter((x) => x.section === sec).sort((a, b) => a.position - b.position)) {
-        const box = e.is_goal ? (e.status === 'closed' ? '- [x] ' : '- [ ] ') : '- '
-        const flags = [e.is_private ? '(私密)' : '', e.status === 'resolved' ? '(已解决待关闭)' : '', e.anchor || '']
-          .filter(Boolean)
-          .join(' ')
-        lines.push(box + e.content + (flags ? `  _${flags}_` : ''))
+  // 数据导出：我的全部文档（Tiptap）→ Markdown 下载（数据所有权，flomo 同款理念）。
+  // 之前导的是旧「条目」模型(allEntries 已脱钩返空)→ 导出空文件；现在直接从 docs 表取、用 tiptap-markdown 转。
+  const [exporting, setExporting] = useState(false)
+  async function exportData() {
+    setExporting(true)
+    try {
+      const { data, error } = await supabase
+        .from('docs')
+        .select('section, period_key, doc_json, updated_at')
+        .eq('owner', me.id)
+        .order('period_key', { ascending: false })
+      if (error) { setErr(friendlyDbError(error)); return }
+      const SECS = { today: '今日', week: '本周', month: '本月', stash: '暂存' }
+      const lines = [`# ${me.display_name} 的 NowNow`, '']
+      for (const sec of ['today', 'week', 'month', 'stash']) {
+        const docs = (data || []).filter((d) => d.section === sec)
+        if (!docs.length) continue
+        lines.push(`## ${SECS[sec] || sec}`, '')
+        for (const d of docs) {
+          const md = docJsonToMarkdown(d.doc_json).trim()
+          if (!md) continue
+          lines.push(sec === 'stash' ? '' : `### ${d.period_key}`, '', md, '')
+        }
       }
-      lines.push('')
+      const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `nownow-${me.handle}.md`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } finally {
+      setExporting(false)
     }
-    const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `nownow-${me.handle}.md`
-    a.click()
-    URL.revokeObjectURL(a.href)
   }
 
   // 设置页主体：桌面模态框和手机整页共用
@@ -262,8 +275,8 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
         {/* 数据与账号 */}
         <div className="mt-5 border-t border-stone-100 pt-4">
           <div className="text-[11px] font-medium uppercase tracking-wide text-stone-300 max-md:text-[12.5px]">数据与账号</div>
-          <button onClick={exportData} className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700 max-md:text-[15px]">
-            <Download size={13} /> 导出我的数据（Markdown）
+          <button onClick={exportData} disabled={exporting} className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700 disabled:opacity-50 max-md:text-[15px]">
+            <Download size={13} /> {exporting ? '导出中…' : '导出我的数据（Markdown）'}
           </button>
           <button
             onClick={() => supabase.auth.signOut()}
