@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
+import { TextSelection } from '@tiptap/pm/state'
 import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -46,8 +47,16 @@ const newMid = () => (crypto?.randomUUID ? crypto.randomUUID() : 'm-' + Math.ran
 // 插图：先用本地预览秒显（不等上传），后台传 Storage，传完把 src 换成公网地址。
 function insertImageFromFile(view, file, uploaderId) {
   const localUrl = URL.createObjectURL(file)
-  const node = view.state.schema.nodes.image.create({ src: localUrl })
-  view.dispatch(view.state.tr.replaceSelectionWith(node))
+  const { schema } = view.state
+  const node = schema.nodes.image.create({ src: localUrl })
+  // 插入图片后把光标落到图片后面（图片在末尾就补个空段落），这样能直接接着打字，
+  // 不会卡在图片的 NodeSelection 上（之前要点别处/刷新才能编辑就是这个）。
+  let tr = view.state.tr.replaceSelectionWith(node)
+  const after = tr.selection.to
+  if (!tr.doc.resolve(after).nodeAfter) tr = tr.insert(after, schema.nodes.paragraph.create())
+  tr = tr.setSelection(TextSelection.near(tr.doc.resolve(after), 1)).scrollIntoView()
+  view.dispatch(tr)
+  view.focus()
   uploadImage(file, uploaderId)
     .then((url) => {
       let pos = null
