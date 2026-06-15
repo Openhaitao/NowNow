@@ -153,10 +153,12 @@ function DragHandlePlugin(options) {
           const rect = absoluteRect(node)
           rect.top += (lineHeight - 24) / 2
           rect.top += paddingTop
-          if (node.matches('ul:not([data-type=taskList]) li, ol li')) rect.left -= options.dragHandleWidth
-          rect.width = options.dragHandleWidth
           if (!dragHandleElement) return
-          dragHandleElement.style.left = `${rect.left - rect.width}px`
+          // 水平：固定在正文列左外侧（用 .ProseMirror 内容左缘，不随块缩进而左右移）——
+          // 海涛要的「位置固定、不随缩进缩进、和文字保持固定距离、再近一点」。竖直仍跟随 hover 行。
+          const pmStyle = window.getComputedStyle(view.dom)
+          const colLeft = view.dom.getBoundingClientRect().left + (parseFloat(pmStyle.paddingLeft) || 0)
+          dragHandleElement.style.left = `${colLeft - 16}px`
           dragHandleElement.style.top = `${rect.top}px`
           showDragHandle()
         },

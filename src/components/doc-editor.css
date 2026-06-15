@@ -44,8 +44,7 @@
   align-items: center;
   justify-content: flex-start; /* ⠿ 靠 gutter 左侧，右侧透明 padding 把和正文之间的空隙桥起来 */
   box-sizing: border-box;
-  width: 26px;
-  padding-right: 8px; /* 透明命中区，覆到正文左缘 ~6px → 鼠标从正文移向 ⠿ 不再穿过无 hover 的断层而消失 */
+  width: 16px; /* 固定在 colLeft-16：圆点(8px,flex-start)落在正文左外侧、距文字 ~8px；盒右缘正好抵正文左缘 */
   height: 24px; /* 和 DragHandle.js 里垂直居中用的 24 对齐——否则圆点和正文行差 1~2px 不齐 */
   border-radius: 4px;
   color: var(--ink-faint);
