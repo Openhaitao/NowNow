@@ -894,7 +894,7 @@ export default function Board({ session }) {
                     e.target.blur()
                   }
                 }}
-                className="h-9 w-[230px] rounded-md bg-[var(--accent-soft)] pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200"
+                className="h-9 w-[230px] rounded-md bg-stone-200/80 pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200"
               />
               {!query && (
                 <kbd className="pointer-events-none absolute left-9 top-1/2 flex -translate-y-1/2 items-center font-medium text-stone-400">
