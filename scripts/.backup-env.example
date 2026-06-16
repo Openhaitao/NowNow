@@ -1,0 +1,5 @@
+# 复制本文件为 scripts/.backup-env 再填写。.backup-env 已被 git 忽略，绝不进仓库、绝不贴聊天。
+# 从 Supabase 后台取：Project Settings → Database → Connection string → URI（含密码）。
+# 形如： postgresql://postgres:[你的密码]@db.yklskyyirfboamhtzzhp.supabase.co:5432/postgres
+# 或 Session pooler 串： postgresql://postgres.yklskyyirfboamhtzzhp:[密码]@aws-0-<region>.pooler.supabase.com:5432/postgres
+export NOWNOW_DB_URL="postgresql://postgres:PASSWORD@db.yklskyyirfboamhtzzhp.supabase.co:5432/postgres"

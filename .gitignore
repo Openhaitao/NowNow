@@ -2,3 +2,7 @@ node_modules
 dist
 .env.local
 .DS_Store
+
+# DB backups (contain user data — never commit)
+scripts/.backup-env
+backups/
