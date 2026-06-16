@@ -17,8 +17,11 @@ export async function loadDoc(owner, section, periodKey) {
 }
 
 // upsert 自己的文档（RLS：owner 必须 = auth.uid()）。空文档也存，保持"今天那篇"存在。
-// 落库后顺带同步 @提及索引（doc_mentions）——通知链。表还没建时容错跳过，不影响存。
+// 同时存一份「剥掉私密块」的 public 投影（doc_json_public/doc_text_public）——别人只能读到这份。
+// 落库后顺带同步 @提及索引（doc_mentions）：用 public 投影做，私密块里的 @ 不通知别人、不进搜索。
 export async function saveDoc({ owner, section, periodKey, json, text }) {
+  const publicJson = stripPrivate(json)
+  const publicText = docText(publicJson)
   const { data, error } = await supabase
     .from('docs')
     .upsert(
@@ -28,6 +31,8 @@ export async function saveDoc({ owner, section, periodKey, json, text }) {
         period_key: periodKey,
         doc_json: json,
         doc_text: text ?? '',
+        doc_json_public: publicJson,
+        doc_text_public: publicText,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'owner,section,period_key' },
@@ -35,7 +40,7 @@ export async function saveDoc({ owner, section, periodKey, json, text }) {
     .select('id')
     .single()
   if (error) throw error
-  if (data?.id) syncDocMentions(data.id, owner, json).catch(() => {}) // 非致命：doc_mentions 没建好也不挡存
+  if (data?.id) syncDocMentions(data.id, owner, publicJson).catch(() => {}) // 私密块的 @ 不外发；表没建好也不挡存
   return data?.id
 }
 
@@ -87,6 +92,16 @@ function docText(json) {
   return (json?.content || []).map((b) => blockText(b, [])).join('\n')
 }
 
+// 剥掉所有标记 attrs.private 的节点（任意层级：段落 / 待办项 / 列表项均可）→ 给别人看的 public 投影。
+// 递归、返回新树不改原对象。别人读到的就是这份、私密块根本不在里面（服务端再用 docs_visible 兜底隔离）。
+function stripPrivate(node) {
+  if (!node || typeof node !== 'object' || !Array.isArray(node.content)) return node
+  return {
+    ...node,
+    content: node.content.filter((child) => !child?.attrs?.private).map(stripPrivate),
+  }
+}
+
 // 给一个节点(及子树)里所有 mention 换新 mid（深拷贝后调用）：搬到今天 = 今天重新 @ 一次。
 function regenMids(node) {
   if (!node) return node
@@ -119,7 +134,7 @@ export async function searchDocs(query) {
   const q = query.trim()
   if (!q) return []
   const { data, error } = await supabase
-    .from('docs')
+    .from('docs_visible')
     .select('id, owner, section, period_key, doc_text, updated_at')
     .ilike('doc_text', `%${q}%`)
     .order('updated_at', { ascending: false })
@@ -131,7 +146,7 @@ export async function searchDocs(query) {
 // 列某人某 section 下"有内容的过去周期"（时间线渲染用：哪些 period_key 有文档，降序）。
 export async function listPeriods(owner, section) {
   const { data, error } = await supabase
-    .from('docs')
+    .from('docs_visible')
     .select('period_key, doc_text, updated_at')
     .eq('owner', owner)
     .eq('section', section)
