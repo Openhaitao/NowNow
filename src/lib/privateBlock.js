@@ -36,22 +36,34 @@ function currentBlockDepth($from) {
   return 1
 }
 
-// 切换「当前这条」的私密标记（悬浮条 🔒/🔓 按钮用）。
+// 当前选区所在块是否已私密：从光标处往上，任意祖先块带 private 就算（覆盖嵌套：
+// private 可能标在 listItem/taskItem 或里面的段落上，和后端递归剥离一个口径，也和右侧角标一致）。
+export function isBlockPrivate(editor) {
+  const { $from } = editor.state.selection
+  for (let d = $from.depth; d >= 1; d--) {
+    if ($from.node(d)?.attrs?.private) return true
+  }
+  return false
+}
+
+// 切换「当前这条」的私密：已私密 → 清掉所有祖先块的 private（不管之前标在哪层，确保真解锁）；
+// 未私密 → 打在「这条」（最近的 taskItem/listItem，否则顶层块）。
 export function toggleBlockPrivate(editor) {
   const { state } = editor
   const { $from } = state.selection
-  const depth = currentBlockDepth($from)
-  const node = $from.node(depth)
-  const pos = $from.before(depth)
-  editor.view.dispatch(state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, private: !node.attrs.private }))
+  if (isBlockPrivate(editor)) {
+    let tr = state.tr
+    for (let d = $from.depth; d >= 1; d--) {
+      const node = $from.node(d)
+      if (node?.attrs?.private) tr = tr.setNodeMarkup($from.before(d), undefined, { ...node.attrs, private: false })
+    }
+    editor.view.dispatch(tr)
+  } else {
+    const depth = currentBlockDepth($from)
+    const node = $from.node(depth)
+    editor.view.dispatch(state.tr.setNodeMarkup($from.before(depth), undefined, { ...node.attrs, private: true }))
+  }
   editor.commands.focus()
-}
-
-// 当前这条是否已私密（按钮高亮 + 图标在 🔒/🔓 间切换）。
-export function isBlockPrivate(editor) {
-  const { $from } = editor.state.selection
-  const depth = currentBlockDepth($from)
-  return !!$from.node(depth)?.attrs?.private
 }
 
 // lucide「Lock」闭锁描边图标——私密块右侧常驻一个闭锁角标（状态=已私密），点它取消私密。
