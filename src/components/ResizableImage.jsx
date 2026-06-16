@@ -164,7 +164,22 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
     <NodeViewWrapper as="div" className="doc-img-block" style={{ textAlign: align }}>
       <span className={'doc-img-wrap' + (selected ? ' is-selected' : '')}>
         <span className="doc-img-stage" style={stageStyle || undefined}>
-          <img ref={imgRef} src={node.attrs.src} alt={node.attrs.alt || ''} draggable={false} style={imgStyle} onLoad={onImgLoad} />
+          <img
+            ref={imgRef}
+            src={node.attrs.src}
+            alt={node.attrs.alt || ''}
+            draggable={false}
+            style={imgStyle}
+            onLoad={onImgLoad}
+            onClick={(e) => {
+              // Cmd/Ctrl + 点击 = 在新标签打开原图（和链接 Cmd+点击一致）；普通点击仍是选中编辑
+              if (e.metaKey || e.ctrlKey) {
+                e.preventDefault()
+                e.stopPropagation()
+                if (node.attrs.src) window.open(node.attrs.src, '_blank', 'noopener,noreferrer')
+              }
+            }}
+          />
         </span>
         {editable && selected && (
           <>
