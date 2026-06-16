@@ -53,7 +53,7 @@ function SortableMemberRow({ p, isMe, active, news, pinned, onClick, onTogglePin
       <button
         onClick={(e) => { e.stopPropagation(); onTogglePin(p.id) }}
         title={pinned ? '取消置顶' : '置顶'}
-        className="ml-1 shrink-0 rounded p-0.5 text-stone-300 opacity-0 transition-opacity hover:text-stone-600 group-hover/mem:opacity-100 max-md:opacity-60"
+        className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-black/[0.06] text-stone-500 opacity-0 transition-opacity hover:bg-black/10 group-hover/mem:opacity-100 max-md:opacity-60"
       >
         {pinned ? <PinOff size={13} /> : <Pin size={13} />}
       </button>
