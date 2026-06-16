@@ -241,6 +241,11 @@
   color: var(--accent);
   font-weight: 600;
 }
+/* 派出去的 @ 任务已被对方完成 → 人名转黄（未完成保持蓝），一眼区分做没做。
+   完成态是外部数据(doc_mentions)，靠 MentionDone decoration 加 .doc-mention-done 类。 */
+.doc-mention.doc-mention-done {
+  color: var(--warning);
+}
 /* 当前周期块铺满首屏：编辑器留出一片可点空白，点任意位置都能落光标（配 DocEditor 的 onMouseDown 聚焦末尾）*/
 .doc-editor-fill {
   min-height: 65vh;

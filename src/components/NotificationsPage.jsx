@@ -132,18 +132,24 @@ export default function NotificationsPage({ me, pendingMembers = [], profiles, o
       {/* 黄色：我派的活被对方完成了 */}
       {completions.length > 0 && (
         <div className="mt-3 rounded-lg px-4 py-3" style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
-          <div className="mb-1.5 flex items-center gap-1 text-xs font-medium max-md:text-[13px]" style={{ color: 'var(--warning)' }}>
+          <div className="mb-1.5 flex items-center gap-1 text-xs font-bold max-md:text-[13px]" style={{ color: 'var(--warning)' }}>
             <CheckCircle2 size={13} /> 已完成 · {completions.length}
           </div>
+          {/* 和 @ 卡同结构：snippet + who 完成了 · 日期 + 去看看跳转；× 点掉。 */}
           {completions.map((c) => {
-            const who = profiles?.find((p) => p.id === c.mentioned)
+            const who = profiles?.find((p) => p.id === c.mentioned)?.display_name || '有人'
+            const ctx = c.section === 'stash' ? '收集箱' : periodHeaderFromKey(c.section, c.periodKey)
             return (
-              <div key={c.id} className="flex items-center gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px]" style={{ color: 'var(--ink-muted)' }}>
-                <CheckCircle2 size={15} className="shrink-0" style={{ color: 'var(--warning)' }} />
-                <span className="min-w-0 flex-1">
-                  <b style={{ color: 'var(--ink)' }}>{who?.display_name || '有人'}</b> 完成了你在「{SECTION_LABELS[c.section]}」派的任务
-                </span>
-                <button onClick={() => dismiss(c)} title="知道了" className="shrink-0 text-stone-400 hover:text-stone-600">
+              <div key={c.id} className="flex items-start gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px]">
+                <CheckCircle2 size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--warning)' }} />
+                <button onClick={() => onJumpDoc?.(c.owner, c.section, c.periodKey)} className="block min-w-0 flex-1 text-left hover:opacity-80">
+                  <div className="truncate" style={{ color: 'var(--ink)' }}>{c.snippet || '（无内容）'}</div>
+                  <div className="mt-0.5 flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
+                    <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink-muted)' }}>{who}</b> 完成了你派的 · {ctx}</span>
+                    <span className="shrink-0" style={{ color: 'var(--warning)' }}>去看看</span>
+                  </div>
+                </button>
+                <button onClick={() => dismiss(c)} title="知道了" className="mt-0.5 shrink-0 text-stone-400 hover:text-stone-600">
                   <X size={14} />
                 </button>
               </div>

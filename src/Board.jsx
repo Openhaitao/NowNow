@@ -6,7 +6,7 @@ import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, PanelLeftClose, Pan
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
-import { loadMyMentions, loadMyCompletions, loadMentionFrequency } from './lib/docMentionsApi'
+import { loadMyMentions, loadMyCompletions, loadMentionFrequency, loadMyMentionStates } from './lib/docMentionsApi'
 import { warmCache } from './lib/resilientDocs'
 import { periodKey } from './lib/periodKey'
 import Inbox from './components/Inbox'
@@ -137,6 +137,7 @@ export default function Board({ session }) {
   const user = session.user
   const [profiles, setProfiles] = useState([])
   const [mentionFreq, setMentionFreq] = useState({}) // 我 @ 各人的次数 {id:count}，@选框「常用靠前」用
+  const [mentionStates, setMentionStates] = useState({}) // 我派的 @ 完成态 {mid:bool}，文档里 @ 人名上色用
   const [needSetup, setNeedSetup] = useState(false)
   const [pageUserId, setPageUserId] = useState(null)
   const [allEntries, setAllEntries] = useState([])
@@ -471,6 +472,7 @@ export default function Board({ session }) {
     loadMyMentions().then(setDocMentions).catch(() => {})
     loadMyCompletions().then(setDocDone).catch(() => {})
     loadMentionFrequency().then(setMentionFreq).catch(() => {}) // @选框排序用，顺带刷（量小）
+    loadMyMentionStates().then(setMentionStates).catch(() => {}) // 文档里 @ 人名完成态上色，对方点完成后随刷新转黄
   }, [])
   useEffect(() => { refreshNotif() }, [view, refreshNotif])
 
@@ -944,7 +946,7 @@ export default function Board({ session }) {
                     onJump={(h) => { viewPage(h.owner); goChannel(h.section); setQuery('') }}
                   />
                 ) : (
-                  <DocTimeline key={`${pageUserId}-${channel}`} owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} mentionFreq={mentionFreq} flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null} />
+                  <DocTimeline key={`${pageUserId}-${channel}`} owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} mentionFreq={mentionFreq} mentionStates={mentionStates} flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null} />
                 )}
               </>
             )}
