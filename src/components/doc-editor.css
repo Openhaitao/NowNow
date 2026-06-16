@@ -294,6 +294,10 @@
 .doc-prose ul:not([data-type='taskList']) > li[data-private='true']::before {
   left: -1.4em;
 }
+/* 待办项：抵消 taskList 的 padding-left(0.2em)，把复选框包进灰底、左缘对齐正文/列表（同一条 prose-left）。 */
+.doc-prose ul[data-type='taskList'] > li[data-private='true']::before {
+  left: -0.2em;
+}
 /* 私密块右上角的解锁角标（ProseMirror widget button）：lucide Unlock 描边、和悬浮条同一套 icon；点它取消私密 */
 /* 纯状态角标：只有 🔒 图标、无背景、不可点（解锁走悬浮条） */
 .doc-private-lock {
