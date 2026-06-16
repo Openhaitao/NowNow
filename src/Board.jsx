@@ -475,6 +475,15 @@ export default function Board({ session }) {
     loadMyMentionStates().then(setMentionStates).catch(() => {}) // 文档里 @ 人名完成态上色，对方点完成后随刷新转黄
   }, [])
   useEffect(() => { refreshNotif() }, [view, refreshNotif])
+  // 对方点完成 / 被 @ 时实时刷通知态（含文档里 @ 人名上色用的 mentionStates）→ 人名当场转黄，不用手刷。
+  // mentionStates 变 → DocEditor 的 effect 派空事务触发 MentionDone 重算上色。
+  useEffect(() => {
+    const ch = supabase
+      .channel('nownow_doc_mentions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'doc_mentions' }, refreshNotif)
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [refreshNotif])
 
   // 侧栏（桌面）：宽度可拖拽 + 可折叠，存本地个人偏好。中间那条分隔线就是拖拽手柄。
   const asideRef = useRef(null)
