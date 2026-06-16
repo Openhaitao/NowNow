@@ -7,6 +7,8 @@ import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
 import { loadMyMentions, loadMyCompletions } from './lib/docMentionsApi'
+import { warmCache } from './lib/resilientDocs'
+import { periodKey } from './lib/periodKey'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
@@ -353,6 +355,14 @@ export default function Board({ session }) {
   useEffect(() => { loadProfiles() }, [loadProfiles])
   useEffect(() => { doLoad() }, [doLoad])
   useEffect(() => { if (me && !pageUserId) setPageUserId(me.id) }, [me, pageUserId])
+
+  // 预热缓存：成员列表/当前频道/日期变化后，后台把每个成员「当前频道的当前周期」文档拉进缓存，
+  // 让第一次点开没看过的成员也即时（不再首屏空白）。已缓存/有草稿的自动跳过、并发 4、失败静默（warmCache 内部处理）。
+  useEffect(() => {
+    if (!activeProfiles.length) return
+    const key = periodKey(channel, 0, baseDate)
+    warmCache(activeProfiles.map((p) => ({ owner: p.id, section: channel, periodKey: key })))
+  }, [activeProfiles, channel, baseDate])
 
   // Realtime 增量应用：别人的改动按行打补丁，不整表重拉（30 人规模的流量关键）
   // 自己有写操作在路上时不动本地（防旧事件盖新状态），靠落定后的对账兜底
