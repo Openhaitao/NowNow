@@ -3,6 +3,8 @@
   font-size: var(--text-body, 16px);
   line-height: var(--leading-body, 1.7);
   color: var(--ink, #1f1e1c);
+  isolation: isolate; /* 建一个层叠上下文：私密块 ::before 的 z-index:-1 退到「所有正文之下、页面之上」，
+                         不再各块自建上下文（那会让相邻私密块外扩的灰底盖住上一行文字）。 */
 }
 .doc-prose > * + * {
   margin-top: 0.4em;
@@ -271,8 +273,8 @@
 /* 私密块（逐行私密、只自己可见）：自己页上灰底（同搜索框）+ 右上角可点解锁角标，提醒「这条别人看不到」。
    真正的「别人看不到」由数据侧剥离兜底（doc_json_public）；这里只是给你自己的视觉提示。 */
 .doc-prose [data-private='true'] {
-  position: relative;
-  z-index: 0; /* 建层叠上下文，让 ::before 灰底只退到本块内容之下、不穿到页面底 */
+  position: relative; /* 仅供 ::before 定位；不设 z-index（层叠上下文交给 .doc-prose），
+                         否则相邻块外扩的灰底会盖住邻行文字。 */
   border-radius: 6px;
   padding-right: 1.7em;
 }
