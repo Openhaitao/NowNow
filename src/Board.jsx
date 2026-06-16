@@ -27,7 +27,7 @@ const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) ||
 
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
 // 侧栏成员行：直接按住名字拖动排序（顺序存本地，纯个人视图偏好，不进数据库）
-// 拖动中的那一行用选中同款的蓝色高亮
+// 拖动中的那一行用选中同款底色高亮
 function SortableMemberRow({ p, isMe, active, news, pinned, onClick, onTogglePin }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
   return (
@@ -37,7 +37,7 @@ function SortableMemberRow({ p, isMe, active, news, pinned, onClick, onTogglePin
       className={
         'group/mem flex w-full items-center rounded-md px-2.5 py-1.5 text-[14px] max-md:py-2 ' +
         (isDragging ? 'z-10 ' : '') +
-        (active || isDragging ? 'bg-[var(--accent-soft)] font-medium text-stone-900' : 'text-stone-600 hover:bg-[var(--accent-soft)]')
+        (active || isDragging ? 'bg-[var(--nav-soft)] font-medium text-stone-900' : 'text-stone-600 hover:bg-[var(--nav-soft)]')
       }
     >
       {/* 按住名字拖动排序；点击进主页 */}
@@ -671,7 +671,7 @@ export default function Board({ session }) {
           {/* 桌面：折叠侧栏按钮（在用户名右侧） */}
           <button
             onClick={() => setSidebarCollapsed(true)}
-            className="ml-auto hidden shrink-0 rounded p-1 text-stone-400 hover:bg-[var(--accent-soft)] hover:text-stone-600 md:block"
+            className="ml-auto hidden shrink-0 rounded p-1 text-stone-400 hover:bg-[var(--nav-soft)] hover:text-stone-600 md:block"
             title="收起侧栏"
           >
             <PanelLeftClose size={18} />
@@ -694,7 +694,7 @@ export default function Board({ session }) {
           onClick={() => viewPage(me.id)}
           className={
             'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] max-md:py-2 ' +
-            (view === 'paper' && isMyPage ? 'bg-[var(--accent-soft)] font-medium text-stone-900' : 'text-stone-600 hover:bg-[var(--accent-soft)]')
+            (view === 'paper' && isMyPage ? 'bg-[var(--nav-soft)] font-medium text-stone-900' : 'text-stone-600 hover:bg-[var(--nav-soft)]')
           }
         >
           <CircleCheck size={16} /> 我的目标
@@ -751,8 +751,8 @@ export default function Board({ session }) {
           <button
             onClick={() => setView(view === 'notifications' ? 'paper' : 'notifications')}
             className={
-              'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] hover:bg-[var(--accent-soft)] ' +
-              (view === 'notifications' ? 'bg-[var(--accent-soft)] font-medium text-stone-900' : 'text-stone-500')
+              'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] hover:bg-[var(--nav-soft)] ' +
+              (view === 'notifications' ? 'bg-[var(--nav-soft)] font-medium text-stone-900' : 'text-stone-500')
             }
           >
             <Bell size={16} /> 通知
@@ -764,7 +764,7 @@ export default function Board({ session }) {
           </button>
           <button
             onClick={() => setSettingsOpen(true)}
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-[var(--accent-soft)]"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[14px] text-stone-500 hover:bg-[var(--nav-soft)]"
           >
             <Settings size={16} /> 设置
           </button>
@@ -790,7 +790,7 @@ export default function Board({ session }) {
           // 折叠 = 一条 44px 窄轨（隐藏条），展开 icon 顶在最上最左，点它复原
           <button
             onClick={() => setSidebarCollapsed(false)}
-            className="mt-1.5 rounded p-1.5 text-stone-400 hover:bg-[var(--accent-soft)] hover:text-stone-600"
+            className="mt-1.5 rounded p-1.5 text-stone-400 hover:bg-[var(--nav-soft)] hover:text-stone-600"
             title="展开侧栏"
           >
             <PanelLeftOpen size={18} />
@@ -877,8 +877,8 @@ export default function Board({ session }) {
                 className={
                   'rounded-full px-3.5 py-1.5 text-[14px] leading-none transition-colors ' +
                   (channel === s.key
-                    ? 'bg-[var(--accent-soft)] font-medium text-stone-900'
-                    : 'text-stone-500 hover:bg-[var(--accent-soft)] hover:text-stone-900')
+                    ? 'bg-[var(--nav-soft)] font-medium text-stone-900'
+                    : 'text-stone-500 hover:bg-[var(--nav-soft)] hover:text-stone-900')
                 }
               >
                 {s.label}

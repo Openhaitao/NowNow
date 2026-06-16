@@ -45,6 +45,7 @@
   --accent: #2563eb;         /* 链接蓝（海涛要回从前那版亮蓝，非 spool 墨蓝）：链接/@名字/焦点 */
   --accent-hover: #1d4ed8;
   --accent-soft: #eff6ff;    /* 蓝淡底：选中/强调态/横幅 */
+  --nav-soft: rgb(241, 241, 236); /* 侧栏悬浮/选中 + 顶部频道导航底色 */
   --highlight: #f5e8c8;      /* ==高亮== */
   --success: #6baf6b;        /* spool warm 语义色（老铁 SaveStatus 接 --error）*/
   --warning: #e4a640;
@@ -96,6 +97,7 @@
   --accent: #f07020;        /* 暗色提亮的琥珀 */
   --accent-hover: #ff8636;
   --accent-soft: #2a1800;
+  --nav-soft: var(--surface-hover);
   --highlight: #4a3a16;     /* 暗色高亮（暖）*/
   --success: #7dc07d;
   --warning: #f0b854;
@@ -251,4 +253,3 @@ a:focus-visible,
 .float-in {
   animation: float-in 0.45s ease-out both;
 }
-
