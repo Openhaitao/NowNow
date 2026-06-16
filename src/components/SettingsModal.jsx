@@ -125,7 +125,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
         .eq('owner', me.id)
         .order('period_key', { ascending: false })
       if (error) { setErr(friendlyDbError(error)); return }
-      const SECS = { today: '今日', week: '本周', month: '本月', stash: '暂存' }
+      const SECS = { today: '今日', week: '本周', month: '本月', stash: '收集箱' }
       const lines = [`# ${me.display_name} 的 NowNow`, '']
       for (const sec of ['today', 'week', 'month', 'stash']) {
         const docs = (data || []).filter((d) => d.section === sec)
@@ -148,8 +148,8 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
     }
   }
 
-  // 数据导入：选一个 .md 文件 → 解析成块 → **追加**到暂存箱（非破坏性，绝不覆盖既有内容）。
-  // 故意只往暂存箱加：导入后你在暂存箱里再把内容搬去今日/本周。整篇覆盖式「恢复」太危险、不做。
+  // 数据导入：选一个 .md 文件 → 解析成块 → **追加**到收集箱（非破坏性，绝不覆盖既有内容）。
+  // 故意只往收集箱加：导入后你在收集箱里再把内容搬去今日/本周。整篇覆盖式「恢复」太危险、不做。
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
   const fileRef = useRef(null)
@@ -162,12 +162,12 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
       const imported = markdownToDocJson(text)
       const blocks = (imported && Array.isArray(imported.content)) ? imported.content : []
       if (!blocks.length) { setImportMsg('这个文件没解析出内容'); return }
-      // 读当前暂存箱、把导入的块接在后面（不动原有的）
+      // 读当前收集箱、把导入的块接在后面（不动原有的）
       const cur = await loadDocResilient(me.id, 'stash', 'stash')
       const curContent = (cur && Array.isArray(cur.content)) ? cur.content : []
       const merged = { type: 'doc', content: [...curContent, ...blocks] }
       await saveDocResilient({ owner: me.id, section: 'stash', periodKey: 'stash', json: merged, text: docJsonToText(merged) })
-      setImportMsg(`已导入 ${blocks.length} 块到暂存箱 ✓ 去暂存箱看`)
+      setImportMsg(`已导入 ${blocks.length} 块到收集箱 ✓ 去收集箱看`)
       setTimeout(() => setImportMsg(''), 4000)
     } catch (e) {
       console.error('导入失败', e)
@@ -311,7 +311,7 @@ export default function SettingsModal({ onClose, me, email, allEntries, profiles
           </button>
           <input ref={fileRef} type="file" accept=".md,.markdown,text/markdown,text/plain" className="hidden" onChange={(e) => importMarkdown(e.target.files?.[0])} />
           <button onClick={() => fileRef.current?.click()} disabled={importing} className="mt-2 flex items-center gap-1.5 text-[13px] text-stone-500 hover:text-stone-700 disabled:opacity-50 max-md:text-[15px]">
-            <Upload size={13} /> {importing ? '导入中…' : '导入 Markdown（进暂存箱）'}
+            <Upload size={13} /> {importing ? '导入中…' : '导入 Markdown（进收集箱）'}
           </button>
           {importMsg && <p className={'mt-1 text-xs ' + (importMsg.includes('✓') ? 'text-emerald-600' : 'text-red-500')}>{importMsg}</p>}
           <button

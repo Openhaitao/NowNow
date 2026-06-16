@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { loadMyMentions, markMentionRead, completeMention, loadMyCompletions, ackCompletion } from '../lib/docMentionsApi'
 import { periodHeaderFromKey } from '../lib/periodKey'
 
-const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存' }
+const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '收集箱' }
 
 // 模块级缓存：再次进通知页时先用上次的数据秒显（不再空白等网络），后台再刷新。
 // 直接回答海涛「为什么每次都拉」：现在进页面先显缓存、感知是即时的，拉取在后台静默更新。
@@ -90,7 +90,7 @@ export default function NotificationsPage({ me, pendingMembers = [], profiles, o
           </div>
           {mentions.map((m) => {
             const from = profiles?.find((p) => p.id === m.author)
-            const ctx = m.section === 'stash' ? '暂存' : periodHeaderFromKey(m.section, m.periodKey)
+            const ctx = m.section === 'stash' ? '收集箱' : periodHeaderFromKey(m.section, m.periodKey)
             const done = !!m.completed_at
             const dim = done || m.read_at
             const who = from?.display_name || '有人'

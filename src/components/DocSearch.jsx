@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { searchDocs } from '../lib/docsApi'
 import { periodHeaderFromKey } from '../lib/periodKey'
 
-const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存箱' }
+const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '收集箱' }
 
 // 命中处前后截一段做片段
 function snippet(text, q) {

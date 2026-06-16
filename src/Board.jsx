@@ -19,7 +19,7 @@ const SECTIONS = [
   { key: 'today', label: '今日' },
   { key: 'week', label: '本周' },
   { key: 'month', label: '本月' },
-  { key: 'stash', label: '暂存' },
+  { key: 'stash', label: '收集箱' },
 ]
 
 const LAST_VIEWED_KEY = 'nownow_last_viewed'
@@ -856,7 +856,7 @@ export default function Board({ session }) {
 
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-3 md:px-6">
         <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
-          {/* 顶部 今日/本周/本月/暂存箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
+          {/* 顶部 今日/本周/本月/收集箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
           {view === 'paper' && (
           <div className="flex items-center gap-1.5">
             {SECTIONS.map((s) => (

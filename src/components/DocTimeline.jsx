@@ -5,7 +5,7 @@ import { listPeriods, moveBlockToToday } from '../lib/docsApi'
 import DocBlock from './DocBlock'
 
 // 一个频道的文档时间线：当前周期可写（占首屏）、过去有内容的周期只读、往下回溯。
-// owner=正在看谁的页；section=今日/本周/本月/暂存箱；isMyPage=能不能写。
+// owner=正在看谁的页；section=今日/本周/本月/收集箱；isMyPage=能不能写。
 export default function DocTimeline({ owner, section, isMyPage, baseDate, viewportH, profiles, flashKey }) {
   const curKey = periodKey(section, 0, baseDate)
   const [pastKeys, setPastKeys] = useState([])
@@ -46,7 +46,7 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
     }
   }, [owner, section, curKey])
 
-  // 暂存箱：无时间线、单块
+  // 收集箱：无时间线、单块
   if (section === 'stash') {
     return (
       <div id="doc-stash-stash" className={'pt-1' + (flashKey === 'stash' ? ' doc-flash' : '')}>

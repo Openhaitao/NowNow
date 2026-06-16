@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { loadMyMentions, markMentionRead } from '../lib/docMentionsApi'
 import { periodHeaderFromKey } from '../lib/periodKey'
 
-const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '暂存' }
+const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '收集箱' }
 
 // docs 世界的「@我的」：别人在自己文档里 @ 了我 → 这里列未读、点一条跳到那篇并标已读。
 // 纯通知，无认领/拒绝/任务流（那套随目标模型一起删了）。
@@ -47,7 +47,7 @@ export default function Inbox({ profiles, onJumpDoc }) {
       </button>
       {!collapsed && items.map((m) => {
         const from = profiles?.find((p) => p.id === m.author)
-        const ctx = m.section === 'stash' ? '暂存' : periodHeaderFromKey(m.section, m.periodKey)
+        const ctx = m.section === 'stash' ? '收集箱' : periodHeaderFromKey(m.section, m.periodKey)
         const who = from?.display_name || '有人'
         return (
           <button key={m.id} onClick={() => open(m)} className="block w-full py-1 text-left hover:opacity-80 max-md:text-[15.5px]">
