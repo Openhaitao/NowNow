@@ -268,23 +268,35 @@
 .doc-prose[contenteditable='false'] { cursor: default; }
 /* 链接显示小手（直接命中 a、压过正文继承来的 I-beam）*/
 .doc-prose a { cursor: pointer; }
-/* 私密块（逐行私密、只自己可见）：自己页上微底色 + 左侧主题色条 + 行尾小锁，提醒「这条别人看不到」。
+/* 私密块（逐行私密、只自己可见）：自己页上灰底（同搜索框）+ 右上角可点解锁角标，提醒「这条别人看不到」。
    真正的「别人看不到」由数据侧剥离兜底（doc_json_public）；这里只是给你自己的视觉提示。 */
 .doc-prose [data-private='true'] {
   position: relative;
-  background: color-mix(in srgb, var(--accent) 6%, transparent);
-  border-radius: 5px;
-  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
-  padding-right: 1.5em;
+  background: #f5f5f4;
+  border-radius: 6px;
+  padding-right: 1.7em;
 }
-.doc-prose [data-private='true']::after {
-  content: '🔒';
+/* 私密块右上角的解锁角标（ProseMirror widget button）：lucide Unlock 描边、和悬浮条同一套 icon；点它取消私密 */
+.doc-private-lock {
   position: absolute;
-  top: 0.12em;
-  right: 0.45em;
-  font-size: 0.72em;
-  opacity: 0.55;
-  pointer-events: none;
+  top: 0.18em;
+  right: 0.35em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: var(--ink-faint, #a8a29e);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.doc-private-lock:hover {
+  color: var(--ink, #44403c);
+  background: rgba(0, 0, 0, 0.06);
 }
 /* 过去块每块右侧的「⬆️ 搬到今天」按钮（官方 DragHandle 定位，block hover 才显）*/
 .doc-carry-handle {
