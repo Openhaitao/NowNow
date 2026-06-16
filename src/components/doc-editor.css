@@ -286,7 +286,9 @@
   right: 0;
   top: -0.16em;
   bottom: -0.16em;
-  background: #eae9e7; /* 比之前(#f5f5f4)深一点、更明显，但不刺眼 */
+  /* 和搜索框(bg-stone-200/80)一致的观感。用「不透明等效色」而非字面半透明 stone-200/80：
+     私密块靠上下外扩重叠去缝，半透明在重叠处会叠深成深线；不透明等效色看起来一样、接缝处不变深。 */
+  background: #eceae9;
   border-radius: 6px;
   z-index: -1;
 }
