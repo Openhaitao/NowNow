@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, PanelLeftClose, PanelLeftOpen, Pin, Search, Settings } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, PanelLeftClose, PanelLeftOpen, Pin, PinOff, Search, Settings } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
@@ -48,16 +48,14 @@ function SortableMemberRow({ p, isMe, active, news, pinned, onClick, onTogglePin
         </span>
       </button>
       {news && <span className="ml-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" title="有新动态" />}
-      {/* 📌 默认隐藏，hover 出现；点击置顶/取消置顶（个人偏好，存本地） */}
+      {/* 置顶/取消置顶：纯图标、只在 hover 出现（置顶态本身靠分组「置顶成员」体现，按钮不常驻）。
+          未置顶=📌(Pin)、已置顶=斜线📌(PinOff)。个人偏好、存本地。 */}
       <button
         onClick={(e) => { e.stopPropagation(); onTogglePin(p.id) }}
         title={pinned ? '取消置顶' : '置顶'}
-        className={
-          'ml-1 shrink-0 rounded p-0.5 hover:text-stone-600 ' +
-          (pinned ? 'text-stone-500 opacity-100' : 'text-stone-300 opacity-0 group-hover/mem:opacity-100 max-md:opacity-60')
-        }
+        className="ml-1 shrink-0 rounded p-0.5 text-stone-300 opacity-0 transition-opacity hover:text-stone-600 group-hover/mem:opacity-100 max-md:opacity-60"
       >
-        <Pin size={12} className={pinned ? 'fill-current' : ''} />
+        {pinned ? <PinOff size={13} /> : <Pin size={13} />}
       </button>
     </div>
   )
