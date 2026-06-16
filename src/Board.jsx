@@ -41,7 +41,7 @@ function SortableMemberRow({ p, isMe, active, news, pinned, onClick, onTogglePin
       }
     >
       {/* 按住名字拖动排序；点击进主页 */}
-      <button {...attributes} {...listeners} onClick={onClick} className="flex min-w-0 flex-1 items-center text-left">
+      <button {...attributes} {...listeners} onClick={onClick} className="flex min-w-0 flex-1 cursor-pointer items-center text-left">
         <span className="truncate">
           {p.display_name}
           {isMe ? '（我）' : ''}
