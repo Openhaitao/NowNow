@@ -284,13 +284,23 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: -0.16em;
-  bottom: -0.16em;
-  /* 和搜索框(bg-stone-200/80)一致的观感。用「不透明等效色」而非字面半透明 stone-200/80：
-     私密块靠上下外扩重叠去缝，半透明在重叠处会叠深成深线；不透明等效色看起来一样、接缝处不变深。 */
-  background: #eceae9;
+  top: 0;
+  bottom: 0;
+  background: #f1f1ec; /* rgb(241,241,236)，海涛指定（不透明，避免接缝叠深）*/
   border-radius: 6px;
   z-index: -1;
+}
+/* 连续私密块（pv-join-* 由 PrivateBlockLock 插件按文档顺序判定，跨容器也认）：
+   衔接处去圆角 + 向对方外扩 0.6em 盖住块间缝 → 整段无缝灰；单独一块仍是独立圆角。 */
+.doc-prose [data-private='true'].pv-join-top::before {
+  top: -0.6em;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.doc-prose [data-private='true'].pv-join-bottom::before {
+  bottom: -0.6em;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 .doc-prose ol > li[data-private='true']::before,
 .doc-prose ul:not([data-type='taskList']) > li[data-private='true']::before {

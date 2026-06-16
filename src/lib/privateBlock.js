@@ -70,8 +70,19 @@ export function toggleBlockPrivate(editor) {
 const LOCK_SVG =
   '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
 
-// PrivateBlockLock：私密块右上角挂一个纯状态角标（只在 DocEditor 用，转换器不加）。
-// 纯 🔒 图标、不可点击（pointer-events:none）——只标识「这条私密」；解锁动作走悬浮条的锁按钮。
+// 一个节点算不算「视觉行」：顶层段落/标题/引用/代码块，或任意层级的 listItem/taskItem。
+// （listItem 里的段落不算独立行，靠 parent=doc 排除。）
+function isRowNode(node, parent) {
+  const name = node.type.name
+  if (name === 'taskItem' || name === 'listItem') return true
+  if (parent?.type?.name !== 'doc') return false
+  return name === 'paragraph' || name === 'heading' || name === 'blockquote' || name === 'codeBlock'
+}
+
+// PrivateBlockLock（只在 DocEditor 用，转换器不加）：
+// ① 把「连续私密行」标成一组——相邻私密行（即使跨容器：待办/列表/段落）衔接处去圆角 + 向对方外扩盖住块间缝，
+//    整段连成一片无缝灰；单独一块仍是独立圆角。靠 pv-join-top/bottom 类 + CSS 实现。
+// ② 私密行右上角挂纯状态 🔒 角标（不可点、解锁走悬浮条）。
 export const PrivateBlockLock = Extension.create({
   name: 'privateBlockLock',
   addProseMirrorPlugins() {
@@ -79,12 +90,23 @@ export const PrivateBlockLock = Extension.create({
       new Plugin({
         props: {
           decorations(state) {
+            // 按文档顺序收集所有「行」
+            const rows = []
+            state.doc.descendants((node, pos, parent) => {
+              if (isRowNode(node, parent)) rows.push({ pos, node })
+            })
             const decos = []
-            state.doc.descendants((node, pos) => {
-              if (!node.attrs?.private) return
+            rows.forEach((row, i) => {
+              if (!row.node.attrs?.private) return
+              const prevP = i > 0 && rows[i - 1].node.attrs?.private
+              const nextP = i + 1 < rows.length && rows[i + 1].node.attrs?.private
+              const cls = ['pv-row']
+              if (prevP) cls.push('pv-join-top') // 上一行也私密 → 顶部去圆角、向上盖缝
+              if (nextP) cls.push('pv-join-bottom') // 下一行也私密 → 底部去圆角、向下盖缝
+              decos.push(Decoration.node(row.pos, row.pos + row.node.nodeSize, { class: cls.join(' ') }))
               decos.push(
                 Decoration.widget(
-                  pos + 1,
+                  row.pos + 1,
                   () => {
                     const el = document.createElement('span')
                     el.className = 'doc-private-lock'
