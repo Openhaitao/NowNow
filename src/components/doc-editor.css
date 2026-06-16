@@ -243,6 +243,24 @@
 .doc-editor-fill {
   min-height: 65vh;
 }
+/* 图片上传中：右上角圆环 + % 的深色小药丸（让用户知道还在传、传完撤掉，配合数据侧防丢图）*/
+.doc-img-uploading {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  z-index: 5;
+}
 /* 鼠标光标：只有「可编辑正文」显示文本 I-beam（表示这能打字）；空白可点区、只读区（别人的页/过去只读）都回默认箭头。
    之前靠浏览器默认，整个可编辑块 + padding 都成 I-beam，海涛觉得"满屏都是输入光标"。显式收口，像飞书/Notion。*/
 .doc-editor { cursor: default; }

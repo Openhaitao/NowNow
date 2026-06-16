@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from '@tiptap/extension-image'
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import { AlignLeft, AlignCenter, AlignRight, Crop, Check, X } from 'lucide-react'
+import { getUploadProgress, subscribeUploadProgress } from '../lib/uploadProgress'
 
 // 飞书云文档式图片：选中=蓝框+四角圆点手柄+对齐工具条，外加裁剪。
 // 裁剪用「显示裁剪」实现：裁剪区 {x,y,w,h}(占自然尺寸的比例) 存进 attrs，
@@ -13,6 +14,15 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
   const align = node.attrs.align || 'left'
   const crop = node.attrs.crop || null
   const W = node.attrs.width || null
+  // 上传中（src 还是 blob: 临时地址）→ 右上角圆环进度。进度走旁路 store（不进 attrs，见 uploadProgress.js）。
+  const src = node.attrs.src
+  const uploading = typeof src === 'string' && src.startsWith('blob:')
+  const [uploadPct, setUploadPct] = useState(() => (uploading ? getUploadProgress(src) ?? 0 : null))
+  useEffect(() => {
+    if (!uploading) { setUploadPct(null); return }
+    setUploadPct(getUploadProgress(src) ?? 0)
+    return subscribeUploadProgress(src, setUploadPct)
+  }, [src, uploading])
   const [nat, setNat] = useState(null) // 自然尺寸 {w,h}
   const [cropping, setCropping] = useState(false)
   const [draft, setDraft] = useState(null) // 裁剪中草稿 {x,y,w,h}
@@ -181,6 +191,20 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
             }}
           />
         </span>
+        {uploading && (
+          <span className="doc-img-uploading" contentEditable={false}>
+            <svg width="15" height="15" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="6.5" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2.2" />
+              <circle
+                cx="8" cy="8" r="6.5" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 6.5}
+                strokeDashoffset={2 * Math.PI * 6.5 * (1 - (uploadPct ?? 0) / 100)}
+                transform="rotate(-90 8 8)"
+              />
+            </svg>
+            <span>{Math.round(uploadPct ?? 0)}%</span>
+          </span>
+        )}
         {editable && selected && (
           <>
             <span className={TB} contentEditable={false}>

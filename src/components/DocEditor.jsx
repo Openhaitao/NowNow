@@ -24,6 +24,7 @@ import { SlashCommand } from './SlashCommand'
 import { Callout } from './Callout'
 import { Bold, CheckSquare, ChevronDown, Code, Heading1, Heading2, Heading3, Highlighter, Image as ImageIcon, Info, Italic, List, ListOrdered, Minus, Quote, Strikethrough, Table as TableIcon, Underline as UnderlineIcon } from 'lucide-react'
 import { uploadImage } from '../lib/storage'
+import { setUploadProgress, clearUploadProgress } from '../lib/uploadProgress'
 import './doc-editor.css'
 
 const lowlight = createLowlight(common)
@@ -59,7 +60,8 @@ function insertImageFromFile(view, file, uploaderId) {
   tr = tr.setSelection(TextSelection.near(tr.doc.resolve(after), 1)).scrollIntoView()
   view.dispatch(tr)
   view.focus()
-  uploadImage(file, uploaderId)
+  setUploadProgress(localUrl, 0) // 右上角上传圈起步（ResizableImage 按这个 blob src 订阅）
+  uploadImage(file, uploaderId, (p) => setUploadProgress(localUrl, p))
     .then((url) => {
       let pos = null
       view.state.doc.descendants((n, p) => {
@@ -69,6 +71,7 @@ function insertImageFromFile(view, file, uploaderId) {
         const attrs = { ...view.state.doc.nodeAt(pos).attrs, src: url }
         view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, attrs))
       }
+      clearUploadProgress(localUrl)
       URL.revokeObjectURL(localUrl)
     })
     .catch((e) => {
@@ -80,6 +83,7 @@ function insertImageFromFile(view, file, uploaderId) {
         if (n.type.name === 'image' && n.attrs.src === localUrl) { pos = p; return false }
       })
       if (pos != null) view.dispatch(view.state.tr.delete(pos, pos + view.state.doc.nodeAt(pos).nodeSize))
+      clearUploadProgress(localUrl)
       URL.revokeObjectURL(localUrl)
       alert('图片上传失败，这张图没存上，请重试。')
     })
