@@ -172,8 +172,8 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
             style={imgStyle}
             onLoad={onImgLoad}
             onClick={(e) => {
-              // Cmd/Ctrl + 点击 = 在新标签打开原图（和链接 Cmd+点击一致）；普通点击仍是选中编辑
-              if (e.metaKey || e.ctrlKey) {
+              // 和链接同一套：只读页 普通点就开；可编辑页 Cmd/Ctrl+点开、普通点留给选中编辑。
+              if (!editable || e.metaKey || e.ctrlKey) {
                 e.preventDefault()
                 e.stopPropagation()
                 if (node.attrs.src) window.open(node.attrs.src, '_blank', 'noopener,noreferrer')
