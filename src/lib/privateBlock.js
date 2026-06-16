@@ -104,20 +104,23 @@ export const PrivateBlockLock = Extension.create({
               if (prevP) cls.push('pv-join-top') // 上一行也私密 → 顶部去圆角、向上盖缝
               if (nextP) cls.push('pv-join-bottom') // 下一行也私密 → 底部去圆角、向下盖缝
               decos.push(Decoration.node(row.pos, row.pos + row.node.nodeSize, { class: cls.join(' ') }))
-              decos.push(
-                Decoration.widget(
-                  row.pos + 1,
-                  () => {
-                    const el = document.createElement('span')
-                    el.className = 'doc-private-lock'
-                    el.title = '已私密（在悬浮条取消）'
-                    el.setAttribute('contenteditable', 'false')
-                    el.innerHTML = LOCK_SVG
-                    return el
-                  },
-                  { side: 1 },
-                ),
-              )
+              // 整段只在「这段私密的第一行」右上角放一个锁标识（不再每行一个、降噪）。
+              if (!prevP) {
+                decos.push(
+                  Decoration.widget(
+                    row.pos + 1,
+                    () => {
+                      const el = document.createElement('span')
+                      el.className = 'doc-private-lock'
+                      el.title = '这段私密 · 只自己可见'
+                      el.setAttribute('contenteditable', 'false')
+                      el.innerHTML = LOCK_SVG
+                      return el
+                    },
+                    { side: 1 },
+                  ),
+                )
+              }
             })
             return DecorationSet.create(state.doc, decos)
           },

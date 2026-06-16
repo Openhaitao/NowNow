@@ -310,7 +310,7 @@
   right: 0;
   top: 0;
   bottom: 0;
-  background: #f1f1ec; /* rgb(241,241,236)，海涛指定（不透明，避免接缝叠深）*/
+  background: #f4f3ef; /* 比之前(#f1f1ec)再浅一档，整段不再像「实灰带」那么重；私密标识靠整段一个锁 */
   border-radius: 6px;
   z-index: -1;
 }
