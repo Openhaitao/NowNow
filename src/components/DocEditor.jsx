@@ -30,7 +30,7 @@ import { PrivateBlock, toggleBlockPrivate, isBlockPrivate } from '../lib/private
 // 隐私 🔒 总开关：必须等数据侧把 docs/版本历史 SELECT 锁成 owner-only（migration-020 STEP 2）后再开。
 // false 时悬浮条显示原来的「引用」按钮、没人能标私密（后端隔离可以先部署、纯打底、无泄露窗口）。
 // true 时显示 🔒、可标私密——只在「表已锁」之后翻 true 再部署。
-const PRIVACY_ENABLED = false
+const PRIVACY_ENABLED = true
 import './doc-editor.css'
 
 const lowlight = createLowlight(common)
