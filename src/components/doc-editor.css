@@ -315,13 +315,15 @@
   z-index: -1;
 }
 /* 连续私密块（pv-join-* 由 PrivateBlockLock 插件按文档顺序判定，跨容器也认）：
-   衔接处只**去圆角**（不再向外扩——外扩会压到邻行文字，海涛拍板：块间留极小缝可接受）。
-   → 连排是「直角相接」的灰块、不再是各自圆角的胶囊；单独一块仍独立圆角。 */
+   衔接处去圆角 + 向对方外扩 0.5em 把块间缝填满 → 整段无缝灰。
+   外扩之所以不再压字：层叠上下文已挪到 .doc-prose(isolation)，所有 ::before 恒在所有正文之下。 */
 .doc-prose [data-private='true'].pv-join-top::before {
+  top: -0.5em;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
 .doc-prose [data-private='true'].pv-join-bottom::before {
+  bottom: -0.5em;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
