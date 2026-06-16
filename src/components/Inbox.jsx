@@ -52,7 +52,7 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
 
   return (
     <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
-      <button onClick={toggle} className={'flex w-full items-center gap-1 text-xs font-medium' + (collapsed ? '' : ' mb-1.5')} style={{ color: 'var(--accent)' }}>
+      <button onClick={toggle} className={'flex w-full items-center gap-1 text-xs font-bold' + (collapsed ? '' : ' mb-1.5')} style={{ color: 'var(--accent)' }}>
         <InboxIcon size={13} /> @我的 · {items.length} 条
         <ChevronDown size={13} className={'ml-auto transition-transform ' + (collapsed ? '-rotate-90' : '')} />
       </button>

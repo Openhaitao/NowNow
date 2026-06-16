@@ -85,7 +85,7 @@ export default function NotificationsPage({ me, pendingMembers = [], profiles, o
       {/* @我的 = 别人派给我的活，勾选方框 = 完成 */}
       {mentions.length > 0 && (
         <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
-          <div className="mb-1.5 flex items-center gap-1 text-xs font-medium max-md:text-[13px]" style={{ color: 'var(--accent)' }}>
+          <div className="mb-1.5 flex items-center gap-1 text-xs font-bold max-md:text-[13px]" style={{ color: 'var(--accent)' }}>
             <AtSign size={13} /> 我的 · {mentions.length}
           </div>
           {mentions.map((m) => {
@@ -110,9 +110,9 @@ export default function NotificationsPage({ me, pendingMembers = [], profiles, o
                 >
                   {m.snippet ? (
                     <>
-                      <div className="truncate" style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink)' }}>{m.snippet}</div>
+                      <div className="truncate" style={{ color: 'var(--ink)' }}>{m.snippet}</div>
                       <div className="mt-0.5 flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
-                        <span className="min-w-0 flex-1 truncate"><b style={{ color: dim ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{who}</b> @了你 · {ctx}</span>
+                        <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink-muted)' }}>{who}</b> @了你 · {ctx}</span>
                         <span className="shrink-0" style={{ color: done ? 'var(--ink-faint)' : 'var(--accent)' }}>去看看</span>
                       </div>
                     </>
