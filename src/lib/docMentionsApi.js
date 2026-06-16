@@ -79,3 +79,21 @@ export async function ackCompletion(id) {
   const { error } = await supabase.rpc('ack_completion', { p_id: id })
   if (error) throw error
 }
+
+// 我最常 @ 谁：统计我发出的 @ 次数 → {personId: count}。给 @ 选择框「常用靠前」排序用。
+// 加载一次缓存即可（量不大、按我 author 的历史）。读不到就返回 {} 不影响选择框正常显示。
+export async function loadMentionFrequency() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  const user = session?.user
+  if (!user) return {}
+  const { data, error } = await supabase
+    .from('doc_mentions')
+    .select('mentioned')
+    .eq('author', user.id)
+  if (error) return {}
+  const freq = {}
+  for (const r of data ?? []) freq[r.mentioned] = (freq[r.mentioned] || 0) + 1
+  return freq
+}
