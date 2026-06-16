@@ -246,6 +246,28 @@
   min-height: 65vh;
 }
 /* 图片上传中：右上角圆环 + % 的深色小药丸（让用户知道还在传、传完撤掉，配合数据侧防丢图）*/
+/* 私密图片：左上角锁标识药丸 + 细灰框，提醒「这张只你自己可见」（别人那边服务端已剥掉、看不到）。 */
+.doc-img-wrap.is-private {
+  outline: 2px solid #eae9e7;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.doc-img-private {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px 3px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 5;
+}
 .doc-img-uploading {
   position: absolute;
   top: 8px;

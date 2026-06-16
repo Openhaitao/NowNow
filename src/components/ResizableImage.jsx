@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from '@tiptap/extension-image'
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
-import { AlignLeft, AlignCenter, AlignRight, Crop, Check, X } from 'lucide-react'
+import { AlignLeft, AlignCenter, AlignRight, Crop, Check, X, Lock, Unlock } from 'lucide-react'
 import { getUploadProgress, subscribeUploadProgress } from '../lib/uploadProgress'
 
 // 飞书云文档式图片：选中=蓝框+四角圆点手柄+对齐工具条，外加裁剪。
@@ -172,7 +172,7 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
 
   return (
     <NodeViewWrapper as="div" className="doc-img-block" style={{ textAlign: align }}>
-      <span className={'doc-img-wrap' + (selected ? ' is-selected' : '')}>
+      <span className={'doc-img-wrap' + (selected ? ' is-selected' : '') + (node.attrs.private ? ' is-private' : '')}>
         <span className="doc-img-stage" style={stageStyle || undefined}>
           <img
             ref={imgRef}
@@ -205,6 +205,11 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
             <span>{Math.round(uploadPct ?? 0)}%</span>
           </span>
         )}
+        {node.attrs.private && (
+          <span className="doc-img-private" contentEditable={false}>
+            <Lock size={11} strokeWidth={2.5} /> 已私密
+          </span>
+        )}
         {editable && selected && (
           <>
             <span className={TB} contentEditable={false}>
@@ -213,6 +218,16 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
               <button type="button" className={tbtn(align === 'right')} onMouseDown={setAlign('right')} title="右对齐"><AlignRight size={15} strokeWidth={2.2} /></button>
               <span className="mx-0.5 h-4 w-px bg-stone-200" />
               <button type="button" className={tbtn(!!crop)} onMouseDown={enterCrop} title="裁剪"><Crop size={15} strokeWidth={2.2} /></button>
+              <span className="mx-0.5 h-4 w-px bg-stone-200" />
+              {/* 图片私密：未锁=🔒(点设私密)、已锁=🔓(点取消)。后端按 attrs.private 剥离、别人彻底看不到 */}
+              <button
+                type="button"
+                className={tbtn(!!node.attrs.private)}
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); updateAttributes({ private: !node.attrs.private }) }}
+                title={node.attrs.private ? '取消私密' : '设为私密 · 只自己可见'}
+              >
+                {node.attrs.private ? <Unlock size={15} strokeWidth={2.2} /> : <Lock size={15} strokeWidth={2.2} />}
+              </button>
             </span>
             <span className="doc-img-handle tl" onPointerDown={startResize(-1)} title="拖拽缩放" />
             <span className="doc-img-handle tr" onPointerDown={startResize(1)} title="拖拽缩放" />
