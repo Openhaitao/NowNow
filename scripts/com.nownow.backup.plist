@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 每天 03:00 自动跑整库备份。启用：
+     cp scripts/com.nownow.backup.plist ~/Library/LaunchAgents/
+     launchctl load ~/Library/LaunchAgents/com.nownow.backup.plist
+     （Mac 那个点没开机会顺延到下次开机后补跑。停用： launchctl unload ...）
+     如果你的仓库不在 /Users/huhaitao/NowNow-tiptap，改下面两个路径。 -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.nownow.backup</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/huhaitao/NowNow-tiptap/scripts/backup-db.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>3</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/tmp/nownow-backup.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/nownow-backup.log</string>
+</dict>
+</plist>

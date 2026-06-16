@@ -28,8 +28,12 @@ if [[ -z "${NOWNOW_DB_URL:-}" ]]; then
   exit 1
 fi
 
-if ! command -v pg_dump >/dev/null 2>&1; then
-  echo "✗ 没装 pg_dump。Mac 上： brew install libpq && brew link --force libpq （或 brew install postgresql@17）" >&2
+# 找 pg_dump：优先 PATH，其次 Homebrew keg-only libpq（装了但没 link 的常见情况）
+PG_DUMP="$(command -v pg_dump || true)"
+if [[ -z "$PG_DUMP" && -x /opt/homebrew/opt/libpq/bin/pg_dump ]]; then PG_DUMP=/opt/homebrew/opt/libpq/bin/pg_dump; fi
+if [[ -z "$PG_DUMP" && -x /usr/local/opt/libpq/bin/pg_dump ]]; then PG_DUMP=/usr/local/opt/libpq/bin/pg_dump; fi
+if [[ -z "$PG_DUMP" ]]; then
+  echo "✗ 找不到 pg_dump。Mac 上： brew install libpq （已装则在 /opt/homebrew/opt/libpq/bin/）" >&2
   exit 1
 fi
 
@@ -39,7 +43,7 @@ OUT="$OUT_DIR/nownow-$STAMP.dump"
 
 echo "→ 备份中… ($OUT)"
 # -Fc 自定义压缩格式；--no-owner/--no-privileges 让恢复到任意库更顺
-if pg_dump "$NOWNOW_DB_URL" -Fc --no-owner --no-privileges -f "$OUT"; then
+if "$PG_DUMP" "$NOWNOW_DB_URL" -Fc --no-owner --no-privileges -f "$OUT"; then
   SIZE="$(du -h "$OUT" | cut -f1)"
   echo "✓ 备份完成： $OUT ($SIZE)"
 else
