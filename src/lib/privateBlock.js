@@ -54,9 +54,9 @@ export function isBlockPrivate(editor) {
   return !!$from.node(depth)?.attrs?.private
 }
 
-// lucide「Unlock」描边图标（和悬浮条按钮同一套）——私密块行首挂一个可点的解锁按钮。
-const UNLOCK_SVG =
-  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>'
+// lucide「Lock」闭锁描边图标——私密块右侧常驻一个闭锁角标（状态=已私密），点它取消私密。
+const LOCK_SVG =
+  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
 
 // PrivateBlockLock：私密块上挂一个可点的解锁角标（只在 DocEditor 用，转换器不加）。
 // 点它 = 取消这条的私密（和悬浮条 🔓 等效），用 ProseMirror widget 实现（CSS 定位到块右上角）。
@@ -79,7 +79,7 @@ export const PrivateBlockLock = Extension.create({
                     btn.className = 'doc-private-lock'
                     btn.title = '已私密 · 点击取消'
                     btn.setAttribute('contenteditable', 'false')
-                    btn.innerHTML = UNLOCK_SVG
+                    btn.innerHTML = LOCK_SVG
                     btn.addEventListener('mousedown', (e) => {
                       e.preventDefault()
                       e.stopPropagation()
