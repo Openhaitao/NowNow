@@ -272,9 +272,24 @@
    真正的「别人看不到」由数据侧剥离兜底（doc_json_public）；这里只是给你自己的视觉提示。 */
 .doc-prose [data-private='true'] {
   position: relative;
-  background: #f5f5f4;
+  z-index: 0; /* 建层叠上下文，让列表项 ::before 的灰底只退到本块内容之下、不穿到页面底 */
+  background: #eae9e7; /* 比之前(#f5f5f4)深一点、更明显，但不刺眼 */
   border-radius: 6px;
   padding-right: 1.7em;
+}
+/* 有序/无序列表项：序号 1./圆点 • 在 ol/ul 的 padding-left(1.4em) 里、在 li 盒子外，li 自身底色盖不到。
+   用 ::before 往左延伸 1.4em 把序号/圆点一起包进灰底（置内容下层，数字不移位）。taskList(复选框在 li 内)不需要。 */
+.doc-prose ol > li[data-private='true']::before,
+.doc-prose ul:not([data-type='taskList']) > li[data-private='true']::before {
+  content: '';
+  position: absolute;
+  left: -1.4em;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: #eae9e7;
+  border-radius: 6px;
+  z-index: -1;
 }
 /* 私密块右上角的解锁角标（ProseMirror widget button）：lucide Unlock 描边、和悬浮条同一套 icon；点它取消私密 */
 /* 纯状态角标：只有 🔒 图标、无背景、不可点（解锁走悬浮条） */
