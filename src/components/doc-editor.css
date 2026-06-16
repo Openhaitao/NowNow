@@ -277,26 +277,15 @@
   padding-right: 1.7em;
 }
 /* 私密块右上角的解锁角标（ProseMirror widget button）：lucide Unlock 描边、和悬浮条同一套 icon；点它取消私密 */
+/* 纯状态角标：只有 🔒 图标、无背景、不可点（解锁走悬浮条） */
 .doc-private-lock {
   position: absolute;
-  top: 0.18em;
-  right: 0.35em;
+  top: 0.2em;
+  right: 0.45em;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  color: var(--ink-muted, #78716c);
-  background: rgba(0, 0, 0, 0.07); /* 常驻灰底，明确是个可点按钮（不只 hover 才有） */
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  transition: color 0.12s ease, background 0.12s ease;
-}
-.doc-private-lock:hover {
-  color: var(--ink, #44403c);
-  background: rgba(0, 0, 0, 0.12);
+  color: var(--ink-faint, #a8a29e);
+  pointer-events: none;
 }
 /* 过去块每块右侧的「⬆️ 搬到今天」按钮（官方 DragHandle 定位，block hover 才显）*/
 /* ⬆️ 搬到今天：和 🔒 那套统一——lucide 描边、透明底、subtle hover（不再是带边框阴影的药丸）*/

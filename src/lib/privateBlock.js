@@ -58,8 +58,8 @@ export function isBlockPrivate(editor) {
 const LOCK_SVG =
   '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
 
-// PrivateBlockLock：私密块上挂一个可点的解锁角标（只在 DocEditor 用，转换器不加）。
-// 点它 = 取消这条的私密（和悬浮条 🔓 等效），用 ProseMirror widget 实现（CSS 定位到块右上角）。
+// PrivateBlockLock：私密块右上角挂一个纯状态角标（只在 DocEditor 用，转换器不加）。
+// 纯 🔒 图标、不可点击（pointer-events:none）——只标识「这条私密」；解锁动作走悬浮条的锁按钮。
 export const PrivateBlockLock = Extension.create({
   name: 'privateBlockLock',
   addProseMirrorPlugins() {
@@ -73,28 +73,13 @@ export const PrivateBlockLock = Extension.create({
               decos.push(
                 Decoration.widget(
                   pos + 1,
-                  (view, getPos) => {
-                    const btn = document.createElement('button')
-                    btn.type = 'button'
-                    btn.className = 'doc-private-lock'
-                    btn.title = '已私密 · 点击取消'
-                    btn.setAttribute('contenteditable', 'false')
-                    btn.innerHTML = LOCK_SVG
-                    btn.addEventListener('mousedown', (e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      const wpos = typeof getPos === 'function' ? getPos() : null
-                      if (wpos == null) return
-                      const $p = view.state.doc.resolve(wpos)
-                      for (let d = $p.depth; d >= 1; d--) {
-                        const n = $p.node(d)
-                        if (n.attrs?.private) {
-                          view.dispatch(view.state.tr.setNodeMarkup($p.before(d), undefined, { ...n.attrs, private: false }))
-                          return
-                        }
-                      }
-                    })
-                    return btn
+                  () => {
+                    const el = document.createElement('span')
+                    el.className = 'doc-private-lock'
+                    el.title = '已私密（在悬浮条取消）'
+                    el.setAttribute('contenteditable', 'false')
+                    el.innerHTML = LOCK_SVG
+                    return el
                   },
                   { side: 1 },
                 ),
