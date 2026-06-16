@@ -377,6 +377,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
             <button
               key={p.id}
               type="button"
+              onMouseEnter={() => setSug((s) => (s ? { ...s, index: i } : s))}
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); sug.command({ id: p.id, label: p.display_name, mid: newMid() }) }}
               className={
                 'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm ' +
@@ -397,6 +398,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
             <button
               key={it.title}
               type="button"
+              onMouseEnter={() => setSlash((s) => (s ? { ...s, index: i } : s))}
               onMouseDown={(e) => { e.preventDefault(); slash.command(it) }}
               className={
                 'flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm ' +
