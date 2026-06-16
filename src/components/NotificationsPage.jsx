@@ -135,20 +135,19 @@ export default function NotificationsPage({ me, pendingMembers = [], profiles, o
           <div className="mb-1.5 flex items-center gap-1 text-xs font-bold max-md:text-[13px]" style={{ color: 'var(--warning)' }}>
             <CheckCircle2 size={13} /> 已完成 · {completions.length}
           </div>
-          {/* 和 @ 卡同结构：snippet + who 完成了 · 日期 + 去看看跳转；× 点掉。 */}
+          {/* snippet + who 完成了 · 日期；完成的不用跳，只留 × 点掉。 */}
           {completions.map((c) => {
             const who = profiles?.find((p) => p.id === c.mentioned)?.display_name || '有人'
             const ctx = c.section === 'stash' ? '收集箱' : periodHeaderFromKey(c.section, c.periodKey)
             return (
               <div key={c.id} className="flex items-start gap-2 py-1 text-[13.5px] max-md:py-1.5 max-md:text-[15.5px]">
                 <CheckCircle2 size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--warning)' }} />
-                <button onClick={() => onJumpDoc?.(c.owner, c.section, c.periodKey)} className="block min-w-0 flex-1 text-left hover:opacity-80">
+                <div className="min-w-0 flex-1">
                   <div className="truncate" style={{ color: 'var(--ink)' }}>{c.snippet || '（无内容）'}</div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
-                    <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink-muted)' }}>{who}</b> 完成了你派的 · {ctx}</span>
-                    <span className="shrink-0" style={{ color: 'var(--warning)' }}>去看看</span>
+                  <div className="mt-0.5 truncate text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
+                    <b style={{ color: 'var(--ink-muted)' }}>{who}</b> 完成了你派的 · {ctx}
                   </div>
-                </button>
+                </div>
                 <button onClick={() => dismiss(c)} title="知道了" className="mt-0.5 shrink-0 text-stone-400 hover:text-stone-600">
                   <X size={14} />
                 </button>

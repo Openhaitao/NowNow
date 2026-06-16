@@ -100,7 +100,7 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
           })}
         </div>
       )}
-      {/* 黄色「已完成」：我派的活被对方完成了。和上面 @ 卡同一套结构（snippet + who 完成了 · 日期 + 去看看），× 点掉。 */}
+      {/* 黄色「已完成」：我派的活被对方完成了。snippet + who 完成了 · 日期；完成的不用跳，只留 × 点掉。 */}
       {done.length > 0 && (
         <div className={(items.length > 0 ? 'mt-3' : 'mt-5') + ' rounded-lg px-4 py-3'} style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
           <div className="mb-1.5 flex items-center gap-1 text-xs font-bold" style={{ color: 'var(--warning)' }}>
@@ -111,13 +111,12 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
             const ctx = c.section === 'stash' ? '收集箱' : periodHeaderFromKey(c.section, c.periodKey)
             return (
               <div key={c.id} className="flex items-start gap-2 py-1 max-md:text-[15.5px]">
-                <button onClick={() => onJumpDoc?.(c.owner, c.section, c.periodKey)} className="block min-w-0 flex-1 text-left hover:opacity-80">
+                <div className="min-w-0 flex-1">
                   <div className="truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{c.snippet || '（无内容）'}</div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
-                    <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink-muted)' }}>{who}</b> 完成了你派的 · {ctx}</span>
-                    <span className="shrink-0" style={{ color: 'var(--warning)' }}>去看看</span>
+                  <div className="mt-0.5 truncate text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
+                    <b style={{ color: 'var(--ink-muted)' }}>{who}</b> 完成了你派的 · {ctx}
                   </div>
-                </button>
+                </div>
                 <button onClick={() => dismissDone(c)} title="知道了" className="mt-0.5 shrink-0 text-stone-400 hover:text-stone-600">
                   <X size={14} />
                 </button>
