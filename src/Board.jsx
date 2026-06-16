@@ -936,7 +936,7 @@ export default function Board({ session }) {
               />
             ) : (
               <>
-                {isMyPage && view === 'paper' && <Inbox profiles={profiles} onJumpDoc={jumpToDoc} />}
+                {isMyPage && view === 'paper' && <Inbox me={me} profiles={profiles} onJumpDoc={jumpToDoc} />}
                 {query.trim() ? (
                   <DocSearch
                     query={query}

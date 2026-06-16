@@ -6,10 +6,15 @@ import { periodHeaderFromKey } from '../lib/periodKey'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '收集箱' }
 
+// 模块级缓存：切回自己页时先用上次的未读列表**瞬间按最终高度渲染**，不再「空→异步拉回→撑出来」抖一下。
+// 按账号隔离（cachedUserId），换号登录不串上个账号的通知。后台仍会刷新成最新。
+let cachedItems = []
+let cachedUserId = null
+
 // docs 世界的「@我的」：别人在自己文档里 @ 了我 → 这里列未读、点一条跳到那篇并标已读。
 // 纯通知，无认领/拒绝/任务流（那套随目标模型一起删了）。
-export default function Inbox({ profiles, onJumpDoc }) {
-  const [items, setItems] = useState([])
+export default function Inbox({ me, profiles, onJumpDoc }) {
+  const [items, setItems] = useState(() => (cachedUserId === me?.id ? cachedItems : []))
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('nownow_inbox_collapsed') === '1')
   const toggle = () => setCollapsed((v) => { localStorage.setItem('nownow_inbox_collapsed', v ? '0' : '1'); return !v })
 
@@ -17,7 +22,12 @@ export default function Inbox({ profiles, onJumpDoc }) {
     let alive = true
     const refresh = () =>
       loadMyMentions()
-        .then((rows) => alive && setItems(rows.filter((r) => !r.read_at)))
+        .then((rows) => {
+          const unread = rows.filter((r) => !r.read_at)
+          cachedItems = unread
+          cachedUserId = me?.id
+          if (alive) setItems(unread)
+        })
         .catch(() => {})
     refresh()
     // 被 @ 时实时亮（doc_mentions 已加进 realtime publication）
@@ -35,6 +45,7 @@ export default function Inbox({ profiles, onJumpDoc }) {
 
   function open(m) {
     setItems((xs) => xs.filter((x) => x.id !== m.id)) // 乐观移除
+    cachedItems = cachedItems.filter((x) => x.id !== m.id) // 缓存同步，重挂不闪回这条
     markMentionRead(m.id).catch(() => {})
     onJumpDoc?.(m.owner, m.section, m.periodKey)
   }
