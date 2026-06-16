@@ -67,6 +67,32 @@ function isEffectivelyEmpty(json, text) {
   return !json.content.some(hasContent)
 }
 
+// 预取（warm）：把一批 (owner, section, periodKey) 的文档悄悄拉进缓存，让「第一次点开」也秒出。
+// 只热没缓存过的（已缓存/有草稿的跳过，绝不覆盖用户未同步内容）；失败静默；并发小批、不抢主加载。
+// 典型用法：成员列表加载完，warmCache(activeProfiles.map(p=>({owner:p.id, section:'today', periodKey:todayKey})))。
+export async function warmCache(targets, { concurrency = 4 } = {}) {
+  if (typeof window === 'undefined' || !Array.isArray(targets)) return
+  // 待热的：没读缓存、且没本地草稿（草稿优先级更高、别用服务器盖）
+  const todo = targets.filter((t) => {
+    if (!t || !t.owner) return false
+    if (cacheGet(t.owner, t.section, t.periodKey) !== undefined) return false
+    const draft = lsGet(k(t.owner, t.section, t.periodKey))
+    return !(draft && draft.json !== undefined)
+  })
+  let i = 0
+  const worker = async () => {
+    while (i < todo.length) {
+      const t = todo[i++]
+      try {
+        const server = await _loadDoc(t.owner, t.section, t.periodKey)
+        // 期间用户可能已编辑/已缓存：再确认一次没东西才写，避免盖掉新缓存
+        if (cacheGet(t.owner, t.section, t.periodKey) === undefined) cacheSet(t.owner, t.section, t.periodKey, server)
+      } catch { /* 预取失败无所谓，点开时正常加载兜底 */ }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, todo.length) }, worker))
+}
+
 // 同步读缓存（不发网络）——给 DocBlock 同步初始化内容用：缓存命中就直接拿来当初值，
 // 不经过 content=undefined 的占位空白，消除「即使缓存命中也闪一下加载」的 1 帧空白。
 // 返回：undefined=未命中（按原流程异步加载）、null=空文档、obj=PM JSON。
