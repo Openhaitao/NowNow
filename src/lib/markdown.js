@@ -17,6 +17,7 @@ import { Color } from '@tiptap/extension-color'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { createLowlight, common } from 'lowlight'
 import { Callout } from '../components/Callout'
+import { PrivateBlock } from './privateBlock'
 import { Markdown } from 'tiptap-markdown'
 
 const lowlight = createLowlight(common)
@@ -40,6 +41,7 @@ function converter() {
         TableCell,
         Mention,
         Callout,
+        PrivateBlock,
         Markdown,
       ],
     })

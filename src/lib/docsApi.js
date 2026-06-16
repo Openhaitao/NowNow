@@ -2,10 +2,11 @@
 // doc_json = ProseMirror JSON（真源，协作上线后退化为 Y.Doc 的派生投影）；doc_text = 纯文本投影（搜索）。
 import { supabase } from './supabase'
 
-// 读某人某周期的文档（看自己或别人的页都走这；RLS 团队可读）。无则 null。
+// 读某人某周期的文档（看自己或别人的页都走这）。走 docs_visible 视图：
+// 自己拿全文、别人拿「剥掉私密块」的 public 投影（私密块服务端就被滤掉、别人根本收不到）。无则 null。
 export async function loadDoc(owner, section, periodKey) {
   const { data, error } = await supabase
-    .from('docs')
+    .from('docs_visible')
     .select('doc_json, updated_at')
     .eq('owner', owner)
     .eq('section', section)

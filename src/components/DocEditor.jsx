@@ -22,9 +22,10 @@ import BlockHandle from './BlockHandle'
 import CarryHandle from './CarryHandle'
 import { SlashCommand } from './SlashCommand'
 import { Callout } from './Callout'
-import { Bold, CheckSquare, ChevronDown, Code, Heading1, Heading2, Heading3, Highlighter, Image as ImageIcon, Info, Italic, List, ListOrdered, Minus, Quote, Strikethrough, Table as TableIcon, Underline as UnderlineIcon } from 'lucide-react'
+import { Bold, CheckSquare, ChevronDown, Code, Heading1, Heading2, Heading3, Highlighter, Image as ImageIcon, Info, Italic, List, ListOrdered, Lock, Minus, Quote, Strikethrough, Table as TableIcon, Underline as UnderlineIcon } from 'lucide-react'
 import { uploadImage } from '../lib/storage'
 import { setUploadProgress, clearUploadProgress } from '../lib/uploadProgress'
+import { PrivateBlock, toggleBlockPrivate, isBlockPrivate } from '../lib/privateBlock'
 import './doc-editor.css'
 
 const lowlight = createLowlight(common)
@@ -145,6 +146,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
       TableHeader,
       TableCell,
       Callout,
+      PrivateBlock, // 逐行私密：给块加 attrs.private（数据侧按它剥离 public 投影）
       // 块拖拽抓手改用官方 @tiptap/extension-drag-handle-react（见下方 JSX 的 <BlockHandle/>），
       // 不再走自维护 fork——官方版和 PM 的文本选择/dropcursor/拖进列表配套，IME 安全。
       SlashCommand.configure({
@@ -283,7 +285,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
     { icon: List, run: () => editor.chain().focus().toggleBulletList().run(), on: editor.isActive('bulletList'), title: '项目符号' },
     { icon: CheckSquare, run: () => editor.chain().focus().toggleTaskList().run(), on: editor.isActive('taskList'), title: '待办' },
     { icon: ListOrdered, run: () => editor.chain().focus().toggleOrderedList().run(), on: editor.isActive('orderedList'), title: '编号' },
-    { icon: Quote, run: () => editor.chain().focus().toggleBlockquote().run(), on: editor.isActive('blockquote'), title: '引用' },
+    { icon: Lock, run: () => toggleBlockPrivate(editor), on: isBlockPrivate(editor), title: '私密 · 只自己可见' },
   ]
 
   return (
