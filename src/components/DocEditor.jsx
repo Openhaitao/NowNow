@@ -277,6 +277,7 @@ export default function DocEditor({ content, onChange, placeholder = '写点什�
     { icon: Highlighter, run: () => editor.chain().focus().toggleHighlight().run(), on: editor.isActive('highlight'), title: '高亮' },
     { sep: true },
     { icon: List, run: () => editor.chain().focus().toggleBulletList().run(), on: editor.isActive('bulletList'), title: '项目符号' },
+    { icon: CheckSquare, run: () => editor.chain().focus().toggleTaskList().run(), on: editor.isActive('taskList'), title: '待办' },
     { icon: ListOrdered, run: () => editor.chain().focus().toggleOrderedList().run(), on: editor.isActive('orderedList'), title: '编号' },
     { icon: Quote, run: () => editor.chain().focus().toggleBlockquote().run(), on: editor.isActive('blockquote'), title: '引用' },
   ]
