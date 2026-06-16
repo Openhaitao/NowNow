@@ -6,7 +6,7 @@ import DocBlock from './DocBlock'
 
 // 一个频道的文档时间线：当前周期可写（占首屏）、过去有内容的周期只读、往下回溯。
 // owner=正在看谁的页；section=今日/本周/本月/收集箱；isMyPage=能不能写。
-export default function DocTimeline({ owner, section, isMyPage, baseDate, viewportH, profiles, flashKey }) {
+export default function DocTimeline({ owner, section, isMyPage, baseDate, viewportH, profiles, mentionFreq, flashKey }) {
   const curKey = periodKey(section, 0, baseDate)
   const [pastKeys, setPastKeys] = useState([])
   const [reloadNonce, setReloadNonce] = useState(0) // 搬块后 bump → 当前块+过去块重挂、读已更新缓存
@@ -50,7 +50,7 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
   if (section === 'stash') {
     return (
       <div id="doc-stash-stash" className={'pt-1' + (flashKey === 'stash' ? ' doc-flash' : '')}>
-        <DocBlock key={`stash-${owner}`} owner={owner} section="stash" periodKey="stash" editable={isMyPage} placeholder="写点什么…" profiles={profiles} fill />
+        <DocBlock key={`stash-${owner}`} owner={owner} section="stash" periodKey="stash" editable={isMyPage} placeholder="写点什么…" profiles={profiles} mentionFreq={mentionFreq} fill />
       </div>
     )
   }
@@ -64,7 +64,7 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} aria-hidden />
           {periodHeader(section, 0, baseDate)}
         </div>
-        <DocBlock key={`${owner}-${section}-${curKey}-${reloadNonce}`} owner={owner} section={section} periodKey={curKey} editable={isMyPage} placeholder="写点什么…" profiles={profiles} fill />
+        <DocBlock key={`${owner}-${section}-${curKey}-${reloadNonce}`} owner={owner} section={section} periodKey={curKey} editable={isMyPage} placeholder="写点什么…" profiles={profiles} mentionFreq={mentionFreq} fill />
       </div>
       {/* 过去：只读，往下回溯 */}
       {pastKeys.map((k) => (
@@ -82,6 +82,7 @@ export default function DocTimeline({ owner, section, isMyPage, baseDate, viewpo
             editable={isMyPage}
             placeholder="写点什么…"
             profiles={profiles}
+            mentionFreq={mentionFreq}
             onCarry={isMyPage && section === 'today' ? (blockIndex) => carry(k, blockIndex) : undefined}
           />
         </div>

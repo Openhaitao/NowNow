@@ -6,7 +6,7 @@ import { Bell, ChevronLeft, ChevronRight, CircleCheck, Menu, PanelLeftClose, Pan
 import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
-import { loadMyMentions, loadMyCompletions } from './lib/docMentionsApi'
+import { loadMyMentions, loadMyCompletions, loadMentionFrequency } from './lib/docMentionsApi'
 import { warmCache } from './lib/resilientDocs'
 import { periodKey } from './lib/periodKey'
 import Inbox from './components/Inbox'
@@ -136,6 +136,7 @@ function SetupCard({ user, onDone }) {
 export default function Board({ session }) {
   const user = session.user
   const [profiles, setProfiles] = useState([])
+  const [mentionFreq, setMentionFreq] = useState({}) // 我 @ 各人的次数 {id:count}，@选框「常用靠前」用
   const [needSetup, setNeedSetup] = useState(false)
   const [pageUserId, setPageUserId] = useState(null)
   const [allEntries, setAllEntries] = useState([])
@@ -469,6 +470,7 @@ export default function Board({ session }) {
   const refreshNotif = useCallback(() => {
     loadMyMentions().then(setDocMentions).catch(() => {})
     loadMyCompletions().then(setDocDone).catch(() => {})
+    loadMentionFrequency().then(setMentionFreq).catch(() => {}) // @选框排序用，顺带刷（量小）
   }, [])
   useEffect(() => { refreshNotif() }, [view, refreshNotif])
 
@@ -942,7 +944,7 @@ export default function Board({ session }) {
                     onJump={(h) => { viewPage(h.owner); goChannel(h.section); setQuery('') }}
                   />
                 ) : (
-                  <DocTimeline key={`${pageUserId}-${channel}`} owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null} />
+                  <DocTimeline key={`${pageUserId}-${channel}`} owner={pageUserId} section={channel} isMyPage={isMyPage} baseDate={baseDate} viewportH={viewportH} profiles={profiles} mentionFreq={mentionFreq} flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null} />
                 )}
               </>
             )}
