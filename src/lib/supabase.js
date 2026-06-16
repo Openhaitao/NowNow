@@ -16,4 +16,8 @@ const base =
     ? window.location.origin + '/sb'
     : url
 
+// 给需要自己拼请求的地方用（如带上传进度的 XHR 上传，见 storage.js）。anonKey 是公开值、可安全暴露。
+export const supabaseBase = base
+export const supabaseAnonKey = anonKey
+
 export const supabase = createClient(base, anonKey)
