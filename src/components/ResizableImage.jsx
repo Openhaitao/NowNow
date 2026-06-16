@@ -24,18 +24,32 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
     return subscribeUploadProgress(src, setUploadPct)
   }, [src, uploading])
   const [nat, setNat] = useState(null) // 自然尺寸 {w,h}
+  const [loaded, setLoaded] = useState(false) // 字节是否加载完（控加载前占位底色；src 变了重置）
   const [cropping, setCropping] = useState(false)
   const [draft, setDraft] = useState(null) // 裁剪中草稿 {x,y,w,h}
   const [cropW, setCropW] = useState(0) // 进入裁剪时实测的显示宽（避免尺寸跳变）
 
-  const ratio = nat ? nat.h / nat.w : null // 自然高/宽
+  useEffect(() => { setLoaded(false) }, [src])
+  // 自然高/宽：优先用存的 ratio（加载前就有 → 提前占住高度防 CLS），没有再用实测的。
+  const ratio = node.attrs.ratio || (nat ? nat.h / nat.w : null)
 
   // 和文字气泡 / Slash 菜单同一套浮层 UI（定位由 .doc-img-toolbar 负责）
   const TB = 'doc-img-toolbar flex items-center gap-0.5 rounded-lg border border-stone-200 bg-[var(--surface-elevated)] p-1 text-stone-600 shadow-[0_8px_24px_rgba(0,0,0,0.06)]'
   const tbtn = (on) => 'flex h-7 w-7 items-center justify-center rounded-md hover:bg-stone-100 hover:text-stone-900 ' + (on ? 'bg-stone-200 text-stone-900' : '')
 
   const onImgLoad = (e) => {
-    if (!nat) setNat({ w: e.target.naturalWidth, h: e.target.naturalHeight })
+    const w = e.target.naturalWidth
+    const h = e.target.naturalHeight
+    if (!nat) setNat({ w, h })
+    setLoaded(true)
+    // 首次加载实测后把 ratio（+缺省宽度）回填进 attrs → 持久化，以后刷新提前占位、不再抖。
+    // 只有可编辑（=自己页）才写；别人页只读，靠 owner 存好的 attrs 享受占位。
+    if (editable && w > 0) {
+      const patch = {}
+      if (!node.attrs.ratio) patch.ratio = Math.round((h / w) * 10000) / 10000
+      if (!node.attrs.width) patch.width = w // 宽要确定，aspect-ratio 才能提前占高；max-width:100% 兜响应式
+      if (Object.keys(patch).length) updateAttributes(patch)
+    }
   }
 
   // 四角拖拽缩放（整图宽度）：左角往左拖变大（dir=-1），右角往右拖变大（dir=1）
@@ -168,6 +182,10 @@ function ResizableImageView({ node, updateAttributes, editor, selected }) {
     const fullH = fullW * ratio
     stageStyle = { width: W + 'px', height: crop.h * fullH + 'px', overflow: 'hidden', position: 'relative' }
     imgStyle = { position: 'absolute', left: -crop.x * fullW + 'px', top: -crop.y * fullH + 'px', width: fullW + 'px', maxWidth: 'none', display: 'block' }
+  } else if (ratio) {
+    // 未裁剪 + 知道比例：aspect-ratio 提前占住高度（宽×ratio），加载前给浅灰占位、图来了盖上，不再顶动内容。
+    imgStyle.aspectRatio = String(1 / ratio)
+    if (!loaded) imgStyle.backgroundColor = '#f1f0ec'
   }
 
   return (
@@ -263,6 +281,13 @@ export const ResizableImage = Image.extend({
           const [x, y, w, h] = v.split(',').map(Number)
           return Number.isFinite(x) ? { x, y, w, h } : null
         },
+      },
+      // 自然高/宽比，存进 doc_json。加载前就用它 + 宽度占住高度（aspect-ratio），图来了正好填满，
+      // 不再「图没下完→内容收拢→图一到顶开撑大」(CLS)。首次加载时实测后回填，之后刷新就不抖。
+      ratio: {
+        default: null,
+        renderHTML: (attrs) => (attrs.ratio ? { 'data-ratio': attrs.ratio } : {}),
+        parseHTML: (el) => { const v = parseFloat(el.getAttribute('data-ratio')); return Number.isFinite(v) ? v : null },
       },
     }
   },
