@@ -80,6 +80,24 @@ export async function ackCompletion(id) {
   if (error) throw error
 }
 
+// 我派出去的每个 @ 实例的完成态 → {mid: true=已完成 / false=未完成}。
+// 给编辑器里 @ 名字按完成态上色用（完成=黄、未完成=蓝）。按 author=我，故只覆盖自己页上自己派的 @。
+export async function loadMyMentionStates() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  const user = session?.user
+  if (!user) return {}
+  const { data, error } = await supabase
+    .from('doc_mentions')
+    .select('mention_id, completed_at')
+    .eq('author', user.id)
+  if (error) return {}
+  const map = {}
+  for (const r of data ?? []) map[r.mention_id] = r.completed_at != null
+  return map
+}
+
 // 我最常 @ 谁：统计我发出的 @ 次数 → {personId: count}。给 @ 选择框「常用靠前」排序用。
 // 加载一次缓存即可（量不大、按我 author 的历史）。读不到就返回 {} 不影响选择框正常显示。
 export async function loadMentionFrequency() {
