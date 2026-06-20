@@ -1,6 +1,9 @@
 node_modules
 dist
 .env.local
+.env.*
+!.env.example
+!.env.*.example
 .DS_Store
 
 # DB backups (contain user data — never commit)

@@ -27,6 +27,7 @@ class ErrorBoundary extends Component {
 
 // 整个产品就两个页面：登录页 + 主页面（首次起名是主页面里的一张卡）
 const INVITE_KEY = 'nownow_invite'
+const APP_ENV = import.meta.env.VITE_APP_ENV || 'production'
 
 export default function App() {
   const [session, setSession] = useState(undefined)
@@ -88,5 +89,14 @@ export default function App() {
       )
     window.history.replaceState(null, '', '/')
   }
-  return <ErrorBoundary>{authed ? <Board session={session} /> : <Login />}</ErrorBoundary>
+  return (
+    <ErrorBoundary>
+      {APP_ENV !== 'production' && (
+        <div className="fixed right-3 top-3 z-[1000] rounded-full border border-[var(--line-strong)] bg-[var(--surface)] px-3 py-1 text-xs font-medium text-[var(--ink-muted)] shadow-sm">
+          {APP_ENV}
+        </div>
+      )}
+      {authed ? <Board session={session} /> : <Login />}
+    </ErrorBoundary>
+  )
 }
