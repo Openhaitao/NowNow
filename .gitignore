@@ -9,3 +9,7 @@ dist
 # DB backups (contain user data — never commit)
 scripts/.backup-env
 backups/
+
+# Local staging/admin state (contains credentials or project links)
+.supabase-local/
+supabase/.temp/
