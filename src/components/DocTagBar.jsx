@@ -48,8 +48,8 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
               className={
                 'shrink-0 rounded-full px-3 py-1 text-[13px] leading-none transition-colors ' +
                 (active
-                  ? 'bg-[var(--btn-bg)] font-medium text-[var(--btn-fg)]'
-                  : 'bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900')
+                  ? 'bg-[var(--nav-soft)] font-medium text-stone-900'
+                  : 'text-stone-500 hover:bg-[var(--nav-soft)] hover:text-stone-900')
               }
             >
               {tag.name}
