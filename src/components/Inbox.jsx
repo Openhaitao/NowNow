@@ -17,8 +17,10 @@ let cachedUserId = null
 export default function Inbox({ me, profiles, onJumpDoc }) {
   const [items, setItems] = useState(() => (cachedUserId === me?.id ? cachedItems : []))
   const [done, setDone] = useState(() => (cachedUserId === me?.id ? cachedDone : []))
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('nownow_inbox_collapsed') === '1')
-  const toggle = () => setCollapsed((v) => { localStorage.setItem('nownow_inbox_collapsed', v ? '0' : '1'); return !v })
+  const [mentionsCollapsed, setMentionsCollapsed] = useState(() => localStorage.getItem('nownow_inbox_collapsed') === '1')
+  const [doneCollapsed, setDoneCollapsed] = useState(() => localStorage.getItem('nownow_done_collapsed') !== '0')
+  const toggleMentions = () => setMentionsCollapsed((v) => { localStorage.setItem('nownow_inbox_collapsed', v ? '0' : '1'); return !v })
+  const toggleDone = () => setDoneCollapsed((v) => { localStorage.setItem('nownow_done_collapsed', v ? '0' : '1'); return !v })
 
   useEffect(() => {
     let alive = true
@@ -71,11 +73,11 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
     <>
       {items.length > 0 && (
         <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
-          <button onClick={toggle} className={'flex w-full items-center gap-1 text-xs font-bold' + (collapsed ? '' : ' mb-1.5')} style={{ color: 'var(--accent)' }}>
+          <button onClick={toggleMentions} className={'flex w-full items-center gap-1 text-xs font-bold' + (mentionsCollapsed ? '' : ' mb-1.5')} style={{ color: 'var(--accent)' }}>
             <InboxIcon size={13} /> @我的 · {items.length} 条
-            <ChevronDown size={13} className={'ml-auto transition-transform ' + (collapsed ? '-rotate-90' : '')} />
+            <ChevronDown size={13} className={'ml-auto transition-transform ' + (mentionsCollapsed ? '-rotate-90' : '')} />
           </button>
-          {!collapsed && items.map((m) => {
+          {!mentionsCollapsed && items.map((m) => {
             const from = profiles?.find((p) => p.id === m.author)
             const ctx = m.section === 'stash' ? '收集箱' : periodHeaderFromKey(m.section, m.periodKey)
             const who = from?.display_name || '有人'
@@ -103,10 +105,11 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
       {/* 黄色「已完成」：我派的活被对方完成了。snippet + who 完成了 · 日期；完成的不用跳，只留 × 点掉。 */}
       {done.length > 0 && (
         <div className={(items.length > 0 ? 'mt-3' : 'mt-5') + ' rounded-lg px-4 py-3'} style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
-          <div className="mb-1.5 flex items-center gap-1 text-xs font-bold" style={{ color: 'var(--warning)' }}>
+          <button onClick={toggleDone} className={'flex w-full items-center gap-1 text-xs font-bold' + (doneCollapsed ? '' : ' mb-1.5')} style={{ color: 'var(--warning)' }}>
             <CheckCircle2 size={13} /> 已完成 · {done.length}
-          </div>
-          {done.map((c) => {
+            <ChevronDown size={13} className={'ml-auto transition-transform ' + (doneCollapsed ? '-rotate-90' : '')} />
+          </button>
+          {!doneCollapsed && done.map((c) => {
             const who = profiles?.find((p) => p.id === c.mentioned)?.display_name || '有人'
             const ctx = c.section === 'stash' ? '收集箱' : periodHeaderFromKey(c.section, c.periodKey)
             return (
