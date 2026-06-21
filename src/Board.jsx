@@ -170,9 +170,14 @@ export default function Board({ session }) {
   const [docTags, setDocTags] = useState([])
   const [docTagsReady, setDocTagsReady] = useState(false)
   const [selectedTagId, setSelectedTagId] = useState(null)
+  const [docTagsScope, setDocTagsScope] = useState('')
+  const currentDocTagsScope = pageUserId ? `${pageUserId}:${channel}` : ''
+  const docTagsInScope = docTagsScope === currentDocTagsScope ? docTags : []
+  const docTagsReadyInScope = docTagsScope === currentDocTagsScope && docTagsReady
+  const selectedTagIdInScope = docTagsScope === currentDocTagsScope ? selectedTagId : null
   const selectedTag = useMemo(
-    () => docTags.find((tag) => tag.id === selectedTagId) || null,
-    [docTags, selectedTagId],
+    () => docTagsInScope.find((tag) => tag.id === selectedTagIdInScope) || null,
+    [docTagsInScope, selectedTagIdInScope],
   )
   const selectedDocTagId = selectedTag?.tagId || null
   // 每个频道各自的时间回看偏移（负=往前看）。‹ › 挪到了顶部频道标签旁，offset 上提到这里统一管
@@ -379,14 +384,25 @@ export default function Board({ session }) {
   }, [activeProfiles, channel, baseDate, selectedDocTagId])
 
   useEffect(() => {
-    if (!pageUserId) return
+    if (!pageUserId) {
+      setDocTagsScope('')
+      setDocTags([])
+      setDocTagsReady(false)
+      setSelectedTagId(null)
+      return
+    }
     let alive = true
+    const scope = currentDocTagsScope
     const savedRaw = localStorage.getItem(selectedTagStorageKey(pageUserId, channel))
     const saved = savedRaw === ALL_TAG_ID || savedRaw === DEFAULT_TAG_ID ? null : savedRaw
+    setDocTagsScope(scope)
+    setDocTags([])
+    setDocTagsReady(false)
     setSelectedTagId(saved)
     loadDocTags(pageUserId, channel)
       .then(({ tags, ready }) => {
         if (!alive) return
+        setDocTagsScope(scope)
         setDocTags(tags)
         setDocTagsReady(ready)
         if (!tags.some((tag) => tag.id === saved)) {
@@ -403,7 +419,7 @@ export default function Board({ session }) {
     return () => {
       alive = false
     }
-  }, [pageUserId, channel])
+  }, [pageUserId, channel, currentDocTagsScope])
 
   const selectDocTag = useCallback(
     (tagId) => {
@@ -418,26 +434,26 @@ export default function Board({ session }) {
 
   const createTag = useCallback(async (name) => {
     if (!isMyPage) return
-    if (!docTagsReady) {
+    if (!docTagsReadyInScope) {
       alert('标签数据层还没准备好，稍后再试。')
       return
     }
     if (!name?.trim()) return
     try {
       const tag = await createDocTag(me.id, channel, name)
-      const next = [...docTags, tag]
+      const next = [...docTagsInScope, tag]
       setDocTags(next)
       selectDocTag(tag.id)
       updateTagOrder(next.filter((item) => item.tagId).map((item, index) => ({ ...item, id: item.tagId, sort_order: index }))).catch(() => {})
     } catch (e) {
       alert(e?.message || '标签创建失败')
     }
-  }, [channel, docTags, docTagsReady, isMyPage, me?.id, selectDocTag])
+  }, [channel, docTagsInScope, docTagsReadyInScope, isMyPage, me?.id, selectDocTag])
 
   const deleteTag = useCallback(
     async (tagId) => {
       if (!isMyPage || !tagId) return
-      const tag = docTags.find((item) => item.id === tagId)
+      const tag = docTagsInScope.find((item) => item.id === tagId)
       if (!tag) return
       const ok = window.confirm(`删除标签「${tag.name}」后，里面的内容会回到未选标签，不会丢。`)
       if (!ok) return
@@ -449,7 +465,7 @@ export default function Board({ session }) {
         alert(e?.message || '删除标签失败')
       }
     },
-    [docTags, isMyPage, selectDocTag],
+    [docTagsInScope, isMyPage, selectDocTag],
   )
 
   // Realtime 增量应用：别人的改动按行打补丁，不整表重拉（30 人规模的流量关键）
@@ -997,10 +1013,10 @@ export default function Board({ session }) {
               </span>
             </div>
             <DocTagBar
-              tags={docTags}
-              selectedId={selectedTagId}
+              tags={docTagsInScope}
+              selectedId={selectedTagIdInScope}
               editable={isMyPage}
-              ready={docTagsReady}
+              ready={docTagsReadyInScope}
               onSelect={selectDocTag}
               onCreate={createTag}
               onDelete={deleteTag}
@@ -1062,7 +1078,7 @@ export default function Board({ session }) {
                   />
                 ) : (
                   <DocTimeline
-                    key={`${pageUserId}-${channel}-${selectedTagId}`}
+                    key={`${pageUserId}-${channel}-${selectedTagIdInScope}`}
                     owner={pageUserId}
                     section={channel}
                     tagId={selectedDocTagId}
