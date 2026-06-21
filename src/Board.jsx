@@ -984,7 +984,7 @@ export default function Board({ session }) {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-3 md:px-6">
-        <div className="shrink-0 pb-4 pt-3 max-md:pb-2 max-md:pt-1">
+        <div className="shrink-0 pb-2 pt-2 max-md:pb-1.5 max-md:pt-1">
           {/* 顶部 今日/本周/本月/收集箱 = 切换视图（一次看一个，高亮当前）。每个频道在下方渲染成往下回溯的时间线。右侧=搜索（桌面） */}
           {view === 'paper' && (
           <>
@@ -994,7 +994,7 @@ export default function Board({ session }) {
                   key={s.key}
                   onClick={() => goChannel(s.key)}
                   className={
-                    'rounded-full px-3.5 py-1.5 text-[14px] leading-none transition-colors ' +
+                    'rounded-full px-3 py-1 text-[14px] leading-none transition-colors ' +
                     (channel === s.key
                       ? 'bg-[var(--nav-soft)] font-medium text-stone-900'
                       : 'text-stone-500 hover:bg-[var(--nav-soft)] hover:text-stone-900')
@@ -1015,7 +1015,7 @@ export default function Board({ session }) {
                       e.target.blur()
                     }
                   }}
-                  className="h-9 w-[230px] rounded-md bg-stone-200/80 pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200"
+                  className="h-8 w-[230px] rounded-md bg-stone-200/80 pl-9 pr-2 text-[14px] outline-none focus:bg-stone-200"
                 />
                 {!query && (
                   <kbd className="pointer-events-none absolute left-9 top-1/2 flex -translate-y-1/2 items-center font-medium text-stone-400">

@@ -48,7 +48,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   }
 
   return (
-    <div className="mt-2 flex min-w-0 items-center gap-1.5">
+    <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
       <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
         {items.map((tag) => {
           const active = selectedId === tag.id
@@ -58,7 +58,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
               type="button"
               onClick={() => onSelect(active ? null : tag.id)}
               className={
-                'shrink-0 rounded-full px-3 py-1 text-[13px] leading-none transition-colors ' +
+                'shrink-0 rounded-full px-3 py-0.5 text-[13px] leading-none transition-colors ' +
                 (active
                   ? 'bg-[var(--nav-soft)] font-medium text-stone-900'
                   : 'text-stone-500 hover:bg-[var(--nav-soft)] hover:text-stone-900')
@@ -82,7 +82,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
               }}
               onBlur={commitDraft}
               placeholder="新标签"
-              className="h-[25px] w-24 rounded-full border border-stone-200 bg-white px-3 text-[13px] text-stone-800 outline-none focus:border-stone-300"
+              className="h-6 w-24 rounded-full border border-stone-200 bg-white px-3 text-[13px] text-stone-800 outline-none focus:border-stone-300"
             />
           </form>
         )}
@@ -101,14 +101,14 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
             disabled={!ready}
             title={ready ? (hasTags ? '标签管理' : '新建标签') : '标签数据准备中'}
             className={
-              'flex h-7 items-center justify-center bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40 ' +
+              'flex h-6 items-center justify-center bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40 ' +
               (hasTags ? 'w-9 rounded-md' : 'w-7 rounded-full')
             }
           >
             {hasTags ? <MoreHorizontal size={16} /> : <Plus size={16} />}
           </button>
           {hasTags && menuOpen && (
-            <div className="absolute right-0 top-8 z-30 w-28 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
+            <div className="absolute right-0 top-7 z-30 w-28 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
               <button
                 type="button"
                 className="block w-full rounded-md px-2.5 py-1.5 text-left text-stone-700 hover:bg-stone-100"

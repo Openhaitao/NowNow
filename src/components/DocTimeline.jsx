@@ -115,7 +115,7 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
     <>
       {/* 当前周期：占满首屏、可写。块带 id（doc-section-periodKey）供 @通知跳转滚动定位 */}
       <div id={`doc-${section}-${curKey}`} className={'mb-3' + (flashKey === curKey ? ' doc-flash' : '')}>
-        <div className="flex items-center gap-1.5 pb-1 pt-3 text-[13px] font-normal text-stone-500">
+        <div className="flex items-center gap-1.5 pb-0.5 pt-2 text-[13px] font-normal text-stone-500">
           {/* 主题蓝小圆点标记「当前周期」——往下回溯的过去块不带点、颜色更淡 */}
           <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} aria-hidden />
           {periodHeader(section, 0, baseDate)}
@@ -125,7 +125,7 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
       {/* 过去：只读，往下回溯 */}
       {pastKeysInScope.map((k) => (
         <div key={`${owner}-${section}-${k}-${tagKey}-${reloadNonce}`} id={`doc-${section}-${k}`} className={'mb-3' + (flashKey === k ? ' doc-flash' : '')}>
-          <div className="flex items-center gap-1.5 pb-1 pt-3 text-[13px] font-normal text-stone-400">
+          <div className="flex items-center gap-1.5 pb-0.5 pt-2.5 text-[13px] font-normal text-stone-400">
             {/* 每个时间点旁都带主题蓝小圆点（时间线一致感）*/}
             <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} aria-hidden />
             {periodHeaderFromKey(section, k)}

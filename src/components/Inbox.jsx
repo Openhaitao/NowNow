@@ -94,7 +94,7 @@ export default function Inbox({ me, profiles, onJumpDoc, scope = null }) {
   return (
     <>
       {visibleItems.length > 0 && (
-        <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
+        <div className="mt-2 rounded-md px-3.5 py-2" style={{ background: 'var(--accent-soft)' }}>
           <button onClick={toggleMentions} className={'flex w-full items-center gap-1 text-xs font-bold' + (mentionsCollapsed ? '' : ' mb-1.5')} style={{ color: 'var(--accent)' }}>
             <InboxIcon size={13} /> @我的 · {visibleItems.length} 条
             <ChevronDown size={13} className={'ml-auto transition-transform ' + (mentionsCollapsed ? '-rotate-90' : '')} />
@@ -138,7 +138,7 @@ export default function Inbox({ me, profiles, onJumpDoc, scope = null }) {
       )}
       {/* 黄色「已完成」：我派的活被对方完成了。snippet + who 完成了 · 日期；完成的不用跳，只留 × 点掉。 */}
       {visibleDone.length > 0 && (
-        <div className={(visibleItems.length > 0 ? 'mt-3' : 'mt-5') + ' rounded-lg px-4 py-3'} style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
+        <div className="mt-2 rounded-md px-3.5 py-2" style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
           <button onClick={toggleDone} className={'flex w-full items-center gap-1 text-xs font-bold' + (doneCollapsed ? '' : ' mb-1.5')} style={{ color: 'var(--warning)' }}>
             <CheckCircle2 size={13} /> 已完成 · {visibleDone.length}
             <ChevronDown size={13} className={'ml-auto transition-transform ' + (doneCollapsed ? '-rotate-90' : '')} />
