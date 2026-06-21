@@ -9,7 +9,7 @@ import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
 import { loadMyMentions, loadMyCompletions, loadMentionFrequency, loadMyMentionStates } from './lib/docMentionsApi'
 import { warmCache } from './lib/resilientDocs'
 import { periodKey } from './lib/periodKey'
-import { ALL_TAG_ID, DEFAULT_TAG_ID, createTag as createDocTag, loadDocTags, updateTagOrder } from './lib/tagsApi'
+import { ALL_TAG_ID, DEFAULT_TAG_ID, archiveTag, createTag as createDocTag, loadDocTags, updateTagOrder } from './lib/tagsApi'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
@@ -446,6 +446,24 @@ export default function Board({ session }) {
         .catch(() => loadDocTags(me.id).then(({ tags }) => setDocTags(tags)).catch(() => {}))
     },
     [docTags, isMyPage, me?.id],
+  )
+
+  const deleteTag = useCallback(
+    async (tagId) => {
+      if (!isMyPage || !tagId) return
+      const tag = docTags.find((item) => item.id === tagId)
+      if (!tag) return
+      const ok = window.confirm(`删除标签「${tag.name}」后，里面的内容会回到未选标签，不会丢。`)
+      if (!ok) return
+      try {
+        await archiveTag(tagId)
+        setDocTags((list) => list.filter((item) => item.id !== tagId))
+        selectDocTag(null)
+      } catch (e) {
+        alert(e?.message || '删除标签失败')
+      }
+    },
+    [docTags, isMyPage, selectDocTag],
   )
 
   // Realtime 增量应用：别人的改动按行打补丁，不整表重拉（30 人规模的流量关键）
@@ -1000,6 +1018,7 @@ export default function Board({ session }) {
               onSelect={selectDocTag}
               onCreate={createTag}
               onMove={moveTag}
+              onDelete={deleteTag}
             />
           </>
           )}

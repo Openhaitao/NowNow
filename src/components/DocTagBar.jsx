@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 
-export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onMove }) {
+export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onMove, onDelete }) {
   const [creating, setCreating] = useState(false)
   const [draft, setDraft] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
   const inputRef = useRef(null)
   const items = tags
   const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId)
@@ -13,6 +15,15 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   useEffect(() => {
     if (creating) inputRef.current?.focus()
   }, [creating])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const close = (e) => {
+      if (!menuRef.current?.contains(e.target)) setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', close)
+    return () => document.removeEventListener('pointerdown', close)
+  }, [menuOpen])
 
   async function submitDraft(e) {
     e.preventDefault()
@@ -28,6 +39,45 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
 
   return (
     <div className="mt-2 flex min-w-0 items-center gap-1.5">
+      {editable && (
+        <div ref={menuRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            disabled={!ready}
+            title={ready ? '标签管理' : '标签数据准备中'}
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40"
+          >
+            <MoreHorizontal size={16} />
+          </button>
+          {menuOpen && (
+            <div className="absolute left-0 top-8 z-30 w-36 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
+              <button
+                type="button"
+                className="block w-full rounded-md px-2.5 py-1.5 text-left text-stone-700 hover:bg-stone-100"
+                onClick={() => {
+                  setMenuOpen(false)
+                  setCreating(true)
+                }}
+              >
+                新建标签
+              </button>
+              {selectedCustomIndex >= 0 && (
+                <button
+                  type="button"
+                  className="block w-full rounded-md px-2.5 py-1.5 text-left text-red-500 hover:bg-red-50"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    onDelete(selectedId)
+                  }}
+                >
+                  删除当前标签
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
         {items.map((tag) => {
           const active = selectedId === tag.id
@@ -89,17 +139,6 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
             <ChevronRight size={14} />
           </button>
         </div>
-      )}
-      {editable && (
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          disabled={!ready || creating}
-          title={ready ? '新建标签' : '标签数据准备中'}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40"
-        >
-          <Plus size={15} />
-        </button>
       )}
     </div>
   )
