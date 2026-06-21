@@ -7,7 +7,7 @@ import { supabase } from './lib/supabase'
 import { friendlyDbError } from './lib/errors'
 import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
 import { loadMyMentions, loadMyCompletions, loadMentionFrequency, loadMyMentionStates } from './lib/docMentionsApi'
-import { warmCache } from './lib/resilientDocs'
+import { forgetDocCacheForTags, warmCache } from './lib/resilientDocs'
 import { periodKey } from './lib/periodKey'
 import { archiveTag, createTag as createDocTag, loadDocTags, peekDocTags, rememberDocTags, updateTagOrder } from './lib/tagsApi'
 import Inbox from './components/Inbox'
@@ -169,6 +169,7 @@ export default function Board({ session }) {
   const [docTagsReady, setDocTagsReady] = useState(false)
   const [selectedTagId, setSelectedTagId] = useState(null)
   const [docTagsScope, setDocTagsScope] = useState('')
+  const [docRefreshNonce, setDocRefreshNonce] = useState(0)
   const requestedTagRef = useRef(null)
   const currentDocTagsScope = pageUserId ? `${pageUserId}:${channel}` : ''
   const docTagsInScope = docTagsScope === currentDocTagsScope ? docTags : []
@@ -469,10 +470,12 @@ export default function Board({ session }) {
       if (!ok) return
       try {
         await archiveTag(tagId)
+        forgetDocCacheForTags(me.id, channel, [null, tag.tagId])
         const next = docTagsInScope.filter((item) => item.id !== tagId)
         rememberDocTags(me.id, channel, next)
         setDocTags(next)
         selectDocTag(null)
+        setDocRefreshNonce((n) => n + 1)
       } catch (e) {
         alert(e?.message || '删除标签失败')
       }
@@ -1100,6 +1103,7 @@ export default function Board({ session }) {
                     mentionFreq={mentionFreq}
                     mentionStates={mentionStates}
                     flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null}
+                    refreshNonce={docRefreshNonce}
                   />
                 )}
               </>

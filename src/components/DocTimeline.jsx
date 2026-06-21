@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { periodHeader } from '../lib/period'
 import { periodHeaderFromKey, periodKey } from '../lib/periodKey'
 import { listPeriods, moveBlockToToday } from '../lib/docsApi'
@@ -33,7 +33,7 @@ function setCachedPeriodKeys(owner, section, tagId = null, keys) {
 
 // 一个频道的文档时间线：当前周期可写（占首屏）、过去有内容的周期只读、往下回溯。
 // owner=正在看谁的页；section=今日/本周/本月/收集箱；isMyPage=能不能写。
-export default function DocTimeline({ owner, section, tagId = null, isMyPage, baseDate, viewportH, profiles, mentionFreq, mentionStates, flashKey }) {
+export default function DocTimeline({ owner, section, tagId = null, isMyPage, baseDate, viewportH, profiles, mentionFreq, mentionStates, flashKey, refreshNonce = 0 }) {
   const curKey = periodKey(section, 0, baseDate)
   const tagKey = tagId || 'default'
   const [pastKeys, setPastKeys] = useState([])
@@ -41,6 +41,7 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
   const currentPastKeysScope = `${owner || ''}:${section}:${curKey}:${tagKey}`
   const pastKeysInScope = pastKeysScope === currentPastKeysScope ? pastKeys : []
   const [reloadNonce, setReloadNonce] = useState(0) // 搬块后 bump → 当前块+过去块重挂、读已更新缓存
+  const refreshRef = useRef(refreshNonce)
 
   // 搬块后刷新：重拉 pastKeys（源块搬空了会消失）+ 重挂块显示新内容（moveBlockToToday 已更新缓存）
   const refresh = useCallback(() => {
@@ -71,13 +72,16 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
 
   useEffect(() => {
     const scope = currentPastKeysScope
+    const forceRefresh = refreshRef.current !== refreshNonce
+    refreshRef.current = refreshNonce
+    if (forceRefresh) setReloadNonce((n) => n + 1)
     if (section === 'stash') {
       setPastKeysScope(scope)
       setPastKeys([])
       return
     }
     let alive = true
-    const cachedKeys = getCachedPeriodKeys(owner, section, tagId)
+    const cachedKeys = forceRefresh ? undefined : getCachedPeriodKeys(owner, section, tagId)
     setPastKeysScope(scope)
     setPastKeys((cachedKeys || []).filter((k) => k !== curKey))
     listPeriods(owner, section, tagId)
@@ -96,7 +100,7 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
     return () => {
       alive = false
     }
-  }, [owner, section, curKey, tagId, currentPastKeysScope])
+  }, [owner, section, curKey, tagId, currentPastKeysScope, refreshNonce])
 
   // 收集箱：无时间线、单块
   if (section === 'stash') {

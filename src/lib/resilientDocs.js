@@ -102,6 +102,31 @@ export function peekDocCache(owner, section, periodKey, tagId = null) {
   return cacheGet(owner, section, periodKey, tagId)
 }
 
+export function forgetDocCacheForTags(owner, section, tagIds = [null]) {
+  if (!owner || !section) return
+  const tags = Array.isArray(tagIds) ? tagIds : [tagIds]
+  const wantsTag = (rawKey) => {
+    const prefix = `${owner}/${section}/`
+    if (!rawKey.startsWith(prefix)) return false
+    const rest = rawKey.slice(prefix.length)
+    return tags.some((tagId) => {
+      if (tagId) return rest.endsWith(`/${tagId}`)
+      return !rest.includes('/')
+    })
+  }
+  for (const key of [...docCache.keys()]) {
+    if (wantsTag(key)) docCache.delete(key)
+  }
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i)
+      if (!key?.startsWith(LS_CACHE_PREFIX)) continue
+      const rawKey = key.slice(LS_CACHE_PREFIX.length)
+      if (wantsTag(rawKey)) localStorage.removeItem(key)
+    }
+  } catch {}
+}
+
 // 读：本地有未同步草稿就优先用（防"断网/刷新丢字"），否则读服务器。
 // 守卫(P1-6)：本地草稿"实质为空"时绝不盲信——去服务器看一眼，服务器非空就以服务器为准、
 // 并清掉这份坏空草稿。否则一份误存的空草稿会一直遮住库里的真内容（这次事故的显空根因之一）。
