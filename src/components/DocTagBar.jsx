@@ -108,7 +108,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
             {hasTags ? <MoreHorizontal size={16} /> : <Plus size={16} />}
           </button>
           {hasTags && menuOpen && (
-            <div className="absolute right-0 top-8 z-30 w-36 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
+            <div className="absolute right-0 top-8 z-30 w-28 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
               <button
                 type="button"
                 className="block w-full rounded-md px-2.5 py-1.5 text-left text-stone-700 hover:bg-stone-100"
