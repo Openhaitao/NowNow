@@ -434,20 +434,6 @@ export default function Board({ session }) {
     }
   }, [docTags, docTagsReady, isMyPage, me?.id, selectDocTag])
 
-  const moveTag = useCallback(
-    (tagId, dir) => {
-      if (!isMyPage) return
-      const idx = docTags.findIndex((tag) => tag.id === tagId)
-      const target = idx + dir
-      if (idx <= 0 || target <= 0 || target >= docTags.length) return
-      const next = arrayMove(docTags, idx, target)
-      setDocTags(next)
-      updateTagOrder(next.filter((tag) => tag.tagId).map((tag, index) => ({ ...tag, id: tag.tagId, sort_order: index })))
-        .catch(() => loadDocTags(me.id).then(({ tags }) => setDocTags(tags)).catch(() => {}))
-    },
-    [docTags, isMyPage, me?.id],
-  )
-
   const deleteTag = useCallback(
     async (tagId) => {
       if (!isMyPage || !tagId) return
@@ -1017,7 +1003,6 @@ export default function Board({ session }) {
               ready={docTagsReady}
               onSelect={selectDocTag}
               onCreate={createTag}
-              onMove={moveTag}
               onDelete={deleteTag}
             />
           </>

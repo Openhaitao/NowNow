@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal } from 'lucide-react'
 
-export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onMove, onDelete }) {
+export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onDelete }) {
   const [creating, setCreating] = useState(false)
   const [draft, setDraft] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -9,8 +9,6 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   const inputRef = useRef(null)
   const items = tags
   const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId)
-  const canMoveLeft = selectedCustomIndex > 0
-  const canMoveRight = selectedCustomIndex >= 0 && selectedCustomIndex < tags.length - 1
 
   useEffect(() => {
     if (creating) inputRef.current?.focus()
@@ -39,45 +37,6 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
 
   return (
     <div className="mt-2 flex min-w-0 items-center gap-1.5">
-      {editable && (
-        <div ref={menuRef} className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            disabled={!ready}
-            title={ready ? '标签管理' : '标签数据准备中'}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40"
-          >
-            <MoreHorizontal size={16} />
-          </button>
-          {menuOpen && (
-            <div className="absolute left-0 top-8 z-30 w-36 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
-              <button
-                type="button"
-                className="block w-full rounded-md px-2.5 py-1.5 text-left text-stone-700 hover:bg-stone-100"
-                onClick={() => {
-                  setMenuOpen(false)
-                  setCreating(true)
-                }}
-              >
-                新建标签
-              </button>
-              {selectedCustomIndex >= 0 && (
-                <button
-                  type="button"
-                  className="block w-full rounded-md px-2.5 py-1.5 text-left text-red-500 hover:bg-red-50"
-                  onClick={() => {
-                    setMenuOpen(false)
-                    onDelete(selectedId)
-                  }}
-                >
-                  删除当前标签
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
       <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
         {items.map((tag) => {
           const active = selectedId === tag.id
@@ -118,26 +77,43 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
           </form>
         )}
       </div>
-      {editable && selectedCustomIndex >= 0 && (
-        <div className="hidden shrink-0 items-center gap-0.5 md:flex">
+      {editable && (
+        <div ref={menuRef} className="relative shrink-0">
           <button
             type="button"
-            disabled={!canMoveLeft}
-            onClick={() => onMove(selectedId, -1)}
-            title="前移"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-stone-400 hover:bg-[var(--nav-soft)] hover:text-stone-700 disabled:opacity-25"
+            onClick={() => setMenuOpen((v) => !v)}
+            disabled={!ready}
+            title={ready ? '标签管理' : '标签数据准备中'}
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40"
           >
-            <ChevronLeft size={14} />
+            <MoreHorizontal size={16} />
           </button>
-          <button
-            type="button"
-            disabled={!canMoveRight}
-            onClick={() => onMove(selectedId, 1)}
-            title="后移"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-stone-400 hover:bg-[var(--nav-soft)] hover:text-stone-700 disabled:opacity-25"
-          >
-            <ChevronRight size={14} />
-          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-8 z-30 w-36 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
+              <button
+                type="button"
+                className="block w-full rounded-md px-2.5 py-1.5 text-left text-stone-700 hover:bg-stone-100"
+                onClick={() => {
+                  setMenuOpen(false)
+                  setCreating(true)
+                }}
+              >
+                新建标签
+              </button>
+              {selectedCustomIndex >= 0 && (
+                <button
+                  type="button"
+                  className="block w-full rounded-md px-2.5 py-1.5 text-left text-red-500 hover:bg-red-50"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    onDelete(selectedId)
+                  }}
+                >
+                  删除当前标签
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
