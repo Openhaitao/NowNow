@@ -57,8 +57,8 @@ export default function DocBlock({ owner, section, periodKey, tagId = null, edit
   }, [owner, section, periodKey, tagId])
 
   if (content === undefined) {
-    // 加载中静默占位（不显示"加载中…"文字，避免开屏闪一下文案再变幽灵字）；留点高度防跳动
-    return <div className="min-h-[1.75rem]" aria-hidden />
+    // 加载中静默占位。当前周期块保持和编辑器相同高度，避免切标签 cache miss 时页面先塌再展开。
+    return <div className={fill ? 'doc-editor doc-editor-fill' : 'min-h-[1.75rem]'} aria-hidden />
   }
 
   return (

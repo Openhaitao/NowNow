@@ -4,6 +4,33 @@ import { periodHeaderFromKey, periodKey } from '../lib/periodKey'
 import { listPeriods, moveBlockToToday } from '../lib/docsApi'
 import DocBlock from './DocBlock'
 
+const PERIOD_CACHE_PREFIX = 'nownow_periodcache:'
+const periodCache = new Map()
+const periodCacheKey = (owner, section, tagId = null) => `${owner || ''}/${section}/${tagId || 'default'}`
+
+function getCachedPeriodKeys(owner, section, tagId = null) {
+  const key = periodCacheKey(owner, section, tagId)
+  if (periodCache.has(key)) return periodCache.get(key)
+  try {
+    const raw = localStorage.getItem(PERIOD_CACHE_PREFIX + key)
+    if (!raw) return undefined
+    const keys = JSON.parse(raw)
+    if (!Array.isArray(keys)) return undefined
+    periodCache.set(key, keys)
+    return keys
+  } catch {
+    return undefined
+  }
+}
+
+function setCachedPeriodKeys(owner, section, tagId = null, keys) {
+  const key = periodCacheKey(owner, section, tagId)
+  periodCache.set(key, keys)
+  try {
+    localStorage.setItem(PERIOD_CACHE_PREFIX + key, JSON.stringify(keys))
+  } catch {}
+}
+
 // 一个频道的文档时间线：当前周期可写（占首屏）、过去有内容的周期只读、往下回溯。
 // owner=正在看谁的页；section=今日/本周/本月/收集箱；isMyPage=能不能写。
 export default function DocTimeline({ owner, section, tagId = null, isMyPage, baseDate, viewportH, profiles, mentionFreq, mentionStates, flashKey }) {
@@ -20,8 +47,10 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
     const scope = currentPastKeysScope
     listPeriods(owner, section, tagId)
       .then((rows) => {
+        const keys = rows.map((r) => r.period_key)
+        setCachedPeriodKeys(owner, section, tagId, keys)
         setPastKeysScope(scope)
-        setPastKeys(rows.map((r) => r.period_key).filter((k) => k !== curKey))
+        setPastKeys(keys.filter((k) => k !== curKey))
       })
       .catch(() => {})
     setReloadNonce((n) => n + 1)
@@ -48,13 +77,16 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
       return
     }
     let alive = true
+    const cachedKeys = getCachedPeriodKeys(owner, section, tagId)
     setPastKeysScope(scope)
-    setPastKeys([])
+    setPastKeys((cachedKeys || []).filter((k) => k !== curKey))
     listPeriods(owner, section, tagId)
       .then((rows) => {
         if (!alive) return
+        const keys = rows.map((r) => r.period_key)
+        setCachedPeriodKeys(owner, section, tagId, keys)
         setPastKeysScope(scope)
-        setPastKeys(rows.map((r) => r.period_key).filter((k) => k !== curKey))
+        setPastKeys(keys.filter((k) => k !== curKey))
       })
       .catch(() => {
         if (!alive) return

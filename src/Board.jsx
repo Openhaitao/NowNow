@@ -385,6 +385,15 @@ export default function Board({ session }) {
   }, [activeProfiles, channel, baseDate, selectedDocTagId])
 
   useEffect(() => {
+    if (!pageUserId || !docTagsReadyInScope) return
+    const key = periodKey(channel, 0, baseDate)
+    warmCache([
+      { owner: pageUserId, section: channel, periodKey: key, tagId: null },
+      ...docTagsInScope.map((tag) => ({ owner: pageUserId, section: channel, periodKey: key, tagId: tag.tagId })),
+    ])
+  }, [pageUserId, channel, baseDate, docTagsInScope, docTagsReadyInScope])
+
+  useEffect(() => {
     if (!pageUserId) {
       setDocTagsScope('')
       setDocTags([])
@@ -1076,7 +1085,7 @@ export default function Board({ session }) {
                   />
                 ) : (
                   <DocTimeline
-                    key={`${pageUserId}-${channel}-${selectedTagIdInScope}`}
+                    key={`${pageUserId}-${channel}`}
                     owner={pageUserId}
                     section={channel}
                     tagId={selectedDocTagId}
