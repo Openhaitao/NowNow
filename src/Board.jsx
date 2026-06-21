@@ -9,7 +9,7 @@ import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
 import { loadMyMentions, loadMyCompletions, loadMentionFrequency, loadMyMentionStates } from './lib/docMentionsApi'
 import { forgetDocCacheForTags, warmCache } from './lib/resilientDocs'
 import { periodKey } from './lib/periodKey'
-import { archiveTag, createTag as createDocTag, loadDocTags, peekDocTags, rememberDocTags, updateTagOrder } from './lib/tagsApi'
+import { archiveTag, createTag as createDocTag, loadDocTags, peekDocTags, rememberDocTags, renameTag as renameDocTag, updateTagOrder } from './lib/tagsApi'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
@@ -478,6 +478,24 @@ export default function Board({ session }) {
         setDocRefreshNonce((n) => n + 1)
       } catch (e) {
         alert(e?.message || '删除标签失败')
+      }
+    },
+    [channel, docTagsInScope, isMyPage, me?.id, selectDocTag],
+  )
+
+  const renameTag = useCallback(
+    async (tagId, name) => {
+      if (!isMyPage || !tagId || !name?.trim()) return
+      const tag = docTagsInScope.find((item) => item.id === tagId)
+      if (!tag || tag.name === name.trim()) return
+      try {
+        const renamed = await renameDocTag(tagId, name)
+        const next = docTagsInScope.map((item) => (item.id === tagId ? renamed : item))
+        rememberDocTags(me.id, channel, next)
+        setDocTags(next)
+        selectDocTag(tagId)
+      } catch (e) {
+        alert(e?.message || '标签重命名失败')
       }
     },
     [channel, docTagsInScope, isMyPage, me?.id, selectDocTag],
@@ -1033,6 +1051,7 @@ export default function Board({ session }) {
               ready={docTagsReadyInScope}
               onSelect={selectDocTag}
               onCreate={createTag}
+              onRename={renameTag}
               onDelete={deleteTag}
             />
           </>

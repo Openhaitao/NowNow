@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { MoreHorizontal, Plus } from 'lucide-react'
 
-export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onDelete }) {
+export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onRename, onDelete }) {
   const [creating, setCreating] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [draft, setDraft] = useState('')
+  const [renameDraft, setRenameDraft] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
   const inputRef = useRef(null)
@@ -13,8 +15,11 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId)
 
   useEffect(() => {
-    if (creating) inputRef.current?.focus()
-  }, [creating])
+    if (creating || editingId) {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
+  }, [creating, editingId])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -47,11 +52,64 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
     commitDraft()
   }
 
+  async function commitRename() {
+    if (committingRef.current || !editingId) return
+    const name = renameDraft.trim()
+    const current = items.find((tag) => tag.id === editingId)
+    if (!name || !current || name === current.name) {
+      setEditingId(null)
+      setRenameDraft('')
+      return
+    }
+    committingRef.current = true
+    try {
+      await onRename(editingId, name)
+      setEditingId(null)
+      setRenameDraft('')
+    } finally {
+      committingRef.current = false
+    }
+  }
+
+  function submitRename(e) {
+    e.preventDefault()
+    commitRename()
+  }
+
+  function startRename() {
+    const tag = items.find((item) => item.id === selectedId)
+    if (!tag) return
+    setMenuOpen(false)
+    setCreating(false)
+    setDraft('')
+    setEditingId(tag.id)
+    setRenameDraft(tag.name)
+  }
+
   return (
     <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
       <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
         {items.map((tag) => {
           const active = selectedId === tag.id
+          if (editingId === tag.id) {
+            return (
+              <form key={tag.id} onSubmit={submitRename} className="shrink-0">
+                <input
+                  ref={inputRef}
+                  value={renameDraft}
+                  onChange={(e) => setRenameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setEditingId(null)
+                      setRenameDraft('')
+                    }
+                  }}
+                  onBlur={commitRename}
+                  className="h-6 w-24 rounded-full border border-stone-200 bg-white px-3 text-[13px] text-stone-800 outline-none focus:border-stone-300"
+                />
+              </form>
+            )
+          }
           return (
             <button
               key={tag.id}
@@ -78,6 +136,8 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
                 if (e.key === 'Escape') {
                   setDraft('')
                   setCreating(false)
+                  setEditingId(null)
+                  setRenameDraft('')
                 }
               }}
               onBlur={commitDraft}
@@ -93,6 +153,8 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
             type="button"
             onClick={() => {
               if (!hasTags) {
+                setEditingId(null)
+                setRenameDraft('')
                 setCreating(true)
                 return
               }
@@ -114,22 +176,33 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
                 className="block w-full rounded-md px-2.5 py-1.5 text-left text-stone-700 hover:bg-stone-100"
                 onClick={() => {
                   setMenuOpen(false)
+                  setEditingId(null)
+                  setRenameDraft('')
                   setCreating(true)
                 }}
               >
                 新建标签
               </button>
               {selectedCustomIndex >= 0 && (
-                <button
-                  type="button"
-                  className="block w-full rounded-md px-2.5 py-1.5 text-left text-red-500 hover:bg-red-50"
-                  onClick={() => {
-                    setMenuOpen(false)
-                    onDelete(selectedId)
-                  }}
-                >
-                  删除标签
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="block w-full rounded-md px-2.5 py-1.5 text-left text-stone-700 hover:bg-stone-100"
+                    onClick={startRename}
+                  >
+                    重命名
+                  </button>
+                  <button
+                    type="button"
+                    className="block w-full rounded-md px-2.5 py-1.5 text-left text-red-500 hover:bg-red-50"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      onDelete(selectedId)
+                    }}
+                  >
+                    删除标签
+                  </button>
+                </>
               )}
             </div>
           )}
