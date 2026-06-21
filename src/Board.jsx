@@ -9,7 +9,7 @@ import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
 import { loadMyMentions, loadMyCompletions, loadMentionFrequency, loadMyMentionStates } from './lib/docMentionsApi'
 import { warmCache } from './lib/resilientDocs'
 import { periodKey } from './lib/periodKey'
-import { ALL_TAG_ID, DEFAULT_TAG_ID, archiveTag, createTag as createDocTag, loadDocTags, updateTagOrder } from './lib/tagsApi'
+import { archiveTag, createTag as createDocTag, loadDocTags, updateTagOrder } from './lib/tagsApi'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
@@ -25,9 +25,7 @@ const SECTIONS = [
 ]
 
 const LAST_VIEWED_KEY = 'nownow_last_viewed'
-const SELECTED_TAG_KEY = 'nownow_selected_doc_tag'
 const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) || '{}')
-const selectedTagStorageKey = (owner, section) => `${SELECTED_TAG_KEY}:${owner}:${section}`
 
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
 // 侧栏成员行：直接按住名字拖动排序（顺序存本地，纯个人视图偏好，不进数据库）
@@ -171,6 +169,7 @@ export default function Board({ session }) {
   const [docTagsReady, setDocTagsReady] = useState(false)
   const [selectedTagId, setSelectedTagId] = useState(null)
   const [docTagsScope, setDocTagsScope] = useState('')
+  const requestedTagRef = useRef(null)
   const currentDocTagsScope = pageUserId ? `${pageUserId}:${channel}` : ''
   const docTagsInScope = docTagsScope === currentDocTagsScope ? docTags : []
   const docTagsReadyInScope = docTagsScope === currentDocTagsScope && docTagsReady
@@ -184,6 +183,8 @@ export default function Board({ session }) {
   const [offsets, setOffsets] = useState({})
   const channelOffset = offsets[channel] || 0
   const goChannel = useCallback((key) => {
+    requestedTagRef.current = null
+    setSelectedTagId(null)
     setChannel(key)
     setOffsets((o) => ({ ...o, [key]: 0 })) // 点标签名字 = 切到该频道并回到当前
   }, [])
@@ -393,21 +394,22 @@ export default function Board({ session }) {
     }
     let alive = true
     const scope = currentDocTagsScope
-    const savedRaw = localStorage.getItem(selectedTagStorageKey(pageUserId, channel))
-    const saved = savedRaw === ALL_TAG_ID || savedRaw === DEFAULT_TAG_ID ? null : savedRaw
+    const requested = requestedTagRef.current
+    const requestedMatches = requested?.owner === pageUserId && requested?.section === channel
+    const requestedTagId = requestedMatches ? requested.tagId : null
+    if (requestedMatches) requestedTagRef.current = null
     setDocTagsScope(scope)
     setDocTags([])
     setDocTagsReady(false)
-    setSelectedTagId(saved)
+    setSelectedTagId(requestedTagId)
     loadDocTags(pageUserId, channel)
       .then(({ tags, ready }) => {
         if (!alive) return
         setDocTagsScope(scope)
         setDocTags(tags)
         setDocTagsReady(ready)
-        if (!tags.some((tag) => tag.id === saved)) {
+        if (requestedTagId && !tags.some((tag) => tag.id === requestedTagId)) {
           setSelectedTagId(null)
-          localStorage.removeItem(selectedTagStorageKey(pageUserId, channel))
         }
       })
       .catch(() => {
@@ -423,13 +425,10 @@ export default function Board({ session }) {
 
   const selectDocTag = useCallback(
     (tagId) => {
+      requestedTagRef.current = null
       setSelectedTagId(tagId)
-      if (pageUserId) {
-        if (tagId) localStorage.setItem(selectedTagStorageKey(pageUserId, channel), tagId)
-        else localStorage.removeItem(selectedTagStorageKey(pageUserId, channel))
-      }
     },
-    [pageUserId, channel],
+    [],
   )
 
   const createTag = useCallback(async (name) => {
@@ -501,10 +500,9 @@ export default function Board({ session }) {
   // @通知跳转入口（给 Inbox/通知页用）：点一条 → 切到那人那频道、滚到那篇文档块
   // block id = `doc-${section}-${periodKey}`（见 DocTimeline）
   const jumpToDoc = useCallback((owner, section, periodKey, tagId = null) => {
+    requestedTagRef.current = { owner, section, tagId: tagId || null }
     viewPage(owner)
     setSelectedTagId(tagId || null)
-    if (tagId) localStorage.setItem(selectedTagStorageKey(owner, section), tagId)
-    else localStorage.removeItem(selectedTagStorageKey(owner, section))
     setChannel(section)
     setQuery('')
     // 定位到「@我」那个 mention 节点本身、滚过去并高亮它（而不是整块变蓝）。
@@ -1068,11 +1066,11 @@ export default function Board({ session }) {
                     query={query}
                     profiles={profiles}
                     onJump={(h) => {
+                      requestedTagRef.current = { owner: h.owner, section: h.section, tagId: h.tag_id || null }
                       viewPage(h.owner)
                       setSelectedTagId(h.tag_id || null)
-                      if (h.tag_id) localStorage.setItem(selectedTagStorageKey(h.owner, h.section), h.tag_id)
-                      else localStorage.removeItem(selectedTagStorageKey(h.owner, h.section))
-                      goChannel(h.section)
+                      setChannel(h.section)
+                      setOffsets((o) => ({ ...o, [h.section]: 0 }))
                       setQuery('')
                     }}
                   />

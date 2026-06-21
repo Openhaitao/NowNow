@@ -128,7 +128,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
                     onDelete(selectedId)
                   }}
                 >
-                  删除当前标签
+                  删除标签
                 </button>
               )}
             </div>

@@ -10,15 +10,22 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
   const curKey = periodKey(section, 0, baseDate)
   const tagKey = tagId || 'default'
   const [pastKeys, setPastKeys] = useState([])
+  const [pastKeysScope, setPastKeysScope] = useState('')
+  const currentPastKeysScope = `${owner || ''}:${section}:${curKey}:${tagKey}`
+  const pastKeysInScope = pastKeysScope === currentPastKeysScope ? pastKeys : []
   const [reloadNonce, setReloadNonce] = useState(0) // 搬块后 bump → 当前块+过去块重挂、读已更新缓存
 
   // 搬块后刷新：重拉 pastKeys（源块搬空了会消失）+ 重挂块显示新内容（moveBlockToToday 已更新缓存）
   const refresh = useCallback(() => {
+    const scope = currentPastKeysScope
     listPeriods(owner, section, tagId)
-      .then((rows) => setPastKeys(rows.map((r) => r.period_key).filter((k) => k !== curKey)))
+      .then((rows) => {
+        setPastKeysScope(scope)
+        setPastKeys(rows.map((r) => r.period_key).filter((k) => k !== curKey))
+      })
       .catch(() => {})
     setReloadNonce((n) => n + 1)
-  }, [owner, section, curKey, tagId])
+  }, [owner, section, curKey, tagId, currentPastKeysScope])
 
   // 点过去块的 ⬆️：把该块搬到当前周期（今天），落库走老铁的 moveBlockToToday，成功后刷新
   const carry = useCallback(
@@ -34,18 +41,30 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
   )
 
   useEffect(() => {
+    const scope = currentPastKeysScope
     if (section === 'stash') {
+      setPastKeysScope(scope)
       setPastKeys([])
       return
     }
     let alive = true
+    setPastKeysScope(scope)
+    setPastKeys([])
     listPeriods(owner, section, tagId)
-      .then((rows) => alive && setPastKeys(rows.map((r) => r.period_key).filter((k) => k !== curKey)))
-      .catch(() => alive && setPastKeys([]))
+      .then((rows) => {
+        if (!alive) return
+        setPastKeysScope(scope)
+        setPastKeys(rows.map((r) => r.period_key).filter((k) => k !== curKey))
+      })
+      .catch(() => {
+        if (!alive) return
+        setPastKeysScope(scope)
+        setPastKeys([])
+      })
     return () => {
       alive = false
     }
-  }, [owner, section, curKey, tagId])
+  }, [owner, section, curKey, tagId, currentPastKeysScope])
 
   // 收集箱：无时间线、单块
   if (section === 'stash') {
@@ -68,7 +87,7 @@ export default function DocTimeline({ owner, section, tagId = null, isMyPage, ba
         <DocBlock key={`${owner}-${section}-${curKey}-${tagKey}-${reloadNonce}`} owner={owner} section={section} periodKey={curKey} tagId={tagId} editable={isMyPage} placeholder="写点什么…" profiles={profiles} mentionFreq={mentionFreq} mentionStates={mentionStates} fill />
       </div>
       {/* 过去：只读，往下回溯 */}
-      {pastKeys.map((k) => (
+      {pastKeysInScope.map((k) => (
         <div key={`${owner}-${section}-${k}-${tagKey}-${reloadNonce}`} id={`doc-${section}-${k}`} className={'mb-3' + (flashKey === k ? ' doc-flash' : '')}>
           <div className="flex items-center gap-1.5 pb-1 pt-3 text-[13px] font-normal text-stone-400">
             {/* 每个时间点旁都带主题蓝小圆点（时间线一致感）*/}
