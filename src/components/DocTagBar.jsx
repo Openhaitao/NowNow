@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Plus } from 'lucide-react'
 
 export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onDelete }) {
   const [creating, setCreating] = useState(false)
@@ -9,6 +9,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   const inputRef = useRef(null)
   const committingRef = useRef(false)
   const items = tags
+  const hasTags = items.length > 0
   const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId)
 
   useEffect(() => {
@@ -90,14 +91,23 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
         <div ref={menuRef} className="relative shrink-0">
           <button
             type="button"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => {
+              if (!hasTags) {
+                setCreating(true)
+                return
+              }
+              setMenuOpen((v) => !v)
+            }}
             disabled={!ready}
-            title={ready ? '标签管理' : '标签数据准备中'}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40"
+            title={ready ? (hasTags ? '标签管理' : '新建标签') : '标签数据准备中'}
+            className={
+              'flex h-7 items-center justify-center bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40 ' +
+              (hasTags ? 'w-9 rounded-md' : 'w-7 rounded-full')
+            }
           >
-            <MoreHorizontal size={16} />
+            {hasTags ? <MoreHorizontal size={16} /> : <Plus size={16} />}
           </button>
-          {menuOpen && (
+          {hasTags && menuOpen && (
             <div className="absolute right-0 top-8 z-30 w-36 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
               <button
                 type="button"
