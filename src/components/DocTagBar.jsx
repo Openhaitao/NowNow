@@ -7,6 +7,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
   const inputRef = useRef(null)
+  const committingRef = useRef(false)
   const items = tags
   const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId)
 
@@ -23,16 +24,26 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
     return () => document.removeEventListener('pointerdown', close)
   }, [menuOpen])
 
-  async function submitDraft(e) {
-    e.preventDefault()
+  async function commitDraft() {
+    if (committingRef.current) return
     const name = draft.trim()
     if (!name) {
       setCreating(false)
       return
     }
-    await onCreate(name)
-    setDraft('')
-    setCreating(false)
+    committingRef.current = true
+    try {
+      await onCreate(name)
+      setDraft('')
+      setCreating(false)
+    } finally {
+      committingRef.current = false
+    }
+  }
+
+  function submitDraft(e) {
+    e.preventDefault()
+    commitDraft()
   }
 
   return (
@@ -68,9 +79,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
                   setCreating(false)
                 }
               }}
-              onBlur={() => {
-                if (!draft.trim()) setCreating(false)
-              }}
+              onBlur={commitDraft}
               placeholder="新标签"
               className="h-[25px] w-24 rounded-full border border-stone-200 bg-white px-3 text-[13px] text-stone-800 outline-none focus:border-stone-300"
             />
