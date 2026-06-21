@@ -34,7 +34,7 @@ export default function NotificationsPage({ me, pendingMembers = [], profiles, o
   function openMention(m) {
     if (!m.read_at) markMentionRead(m.id).catch(() => {})
     setMentions((xs) => xs.map((x) => (x.id === m.id ? { ...x, read_at: x.read_at || new Date().toISOString() } : x)))
-    onJumpDoc?.(m.owner, m.section, m.periodKey)
+    onJumpDoc?.(m.owner, m.section, m.periodKey, m.tagId)
   }
 
   // 勾选完成：被@人标记完成 → 原地划横线（不消失，像待办勾掉），派活人那边冒黄色「已完成」。

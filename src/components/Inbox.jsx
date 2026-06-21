@@ -58,7 +58,7 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
     setItems((xs) => xs.filter((x) => x.id !== m.id)) // 乐观移除
     cachedItems = cachedItems.filter((x) => x.id !== m.id) // 缓存同步，重挂不闪回这条
     markMentionRead(m.id).catch(() => {})
-    onJumpDoc?.(m.owner, m.section, m.periodKey)
+    onJumpDoc?.(m.owner, m.section, m.periodKey, m.tagId)
   }
 
   function dismissDone(c) {
