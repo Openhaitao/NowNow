@@ -2,7 +2,6 @@ import { supabase } from './supabase'
 
 export const DEFAULT_TAG_ID = 'default'
 export const ALL_TAG_ID = 'all'
-export const DEFAULT_TAG = { id: DEFAULT_TAG_ID, tagId: null, name: '全部', sort_order: -1, isDefault: true }
 
 function normalizeTag(row) {
   return {
@@ -32,11 +31,10 @@ export async function loadDocTags(owner) {
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
   if (error) {
-    if (missingTagTable(error)) return { tags: [DEFAULT_TAG], ready: false }
+    if (missingTagTable(error)) return { tags: [], ready: false }
     throw error
   }
-  const tags = [DEFAULT_TAG, ...(data ?? []).map(normalizeTag)]
-  return { tags, ready: true }
+  return { tags: (data ?? []).map(normalizeTag), ready: true }
 }
 
 export async function listTags(owner, options) {

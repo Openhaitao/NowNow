@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { DEFAULT_TAG_ID } from '../lib/tagsApi'
 
 export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onMove }) {
   const [creating, setCreating] = useState(false)
   const [draft, setDraft] = useState('')
   const inputRef = useRef(null)
   const items = tags
-  const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId && tag.id !== DEFAULT_TAG_ID)
-  const canMoveLeft = selectedCustomIndex > 1
-  const canMoveRight = selectedCustomIndex >= 1 && selectedCustomIndex < tags.length - 1
+  const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId)
+  const canMoveLeft = selectedCustomIndex > 0
+  const canMoveRight = selectedCustomIndex >= 0 && selectedCustomIndex < tags.length - 1
 
   useEffect(() => {
     if (creating) inputRef.current?.focus()
@@ -36,7 +35,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
             <button
               key={tag.id}
               type="button"
-              onClick={() => onSelect(tag.id)}
+              onClick={() => onSelect(active ? null : tag.id)}
               className={
                 'shrink-0 rounded-full px-3 py-1 text-[13px] leading-none transition-colors ' +
                 (active

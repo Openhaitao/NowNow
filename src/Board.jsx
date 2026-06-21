@@ -9,7 +9,7 @@ import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
 import { loadMyMentions, loadMyCompletions, loadMentionFrequency, loadMyMentionStates } from './lib/docMentionsApi'
 import { warmCache } from './lib/resilientDocs'
 import { periodKey } from './lib/periodKey'
-import { ALL_TAG_ID, DEFAULT_TAG, DEFAULT_TAG_ID, createTag as createDocTag, loadDocTags, updateTagOrder } from './lib/tagsApi'
+import { ALL_TAG_ID, DEFAULT_TAG_ID, createTag as createDocTag, loadDocTags, updateTagOrder } from './lib/tagsApi'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
@@ -167,14 +167,14 @@ export default function Board({ session }) {
   const [flashDoc, setFlashDoc] = useState(null) // @通知跳转后落地高亮的文档块 {section, periodKey}
   const [editRequest, setEditRequest] = useState(null) // 跨区接力：让某个区的第一条进入编辑
   const [channel, setChannel] = useState('today') // 当前频道：today/week/month/stash（一次只看一个）
-  const [docTags, setDocTags] = useState([DEFAULT_TAG])
+  const [docTags, setDocTags] = useState([])
   const [docTagsReady, setDocTagsReady] = useState(false)
-  const [selectedTagId, setSelectedTagId] = useState(DEFAULT_TAG_ID)
+  const [selectedTagId, setSelectedTagId] = useState(null)
   const selectedTag = useMemo(
-    () => docTags.find((tag) => tag.id === selectedTagId) || DEFAULT_TAG,
+    () => docTags.find((tag) => tag.id === selectedTagId) || null,
     [docTags, selectedTagId],
   )
-  const selectedDocTagId = selectedTagId === DEFAULT_TAG_ID ? null : selectedTag.tagId
+  const selectedDocTagId = selectedTag?.tagId || null
   // 每个频道各自的时间回看偏移（负=往前看）。‹ › 挪到了顶部频道标签旁，offset 上提到这里统一管
   const [offsets, setOffsets] = useState({})
   const channelOffset = offsets[channel] || 0
@@ -381,8 +381,8 @@ export default function Board({ session }) {
   useEffect(() => {
     if (!pageUserId) return
     let alive = true
-    const savedRaw = localStorage.getItem(selectedTagStorageKey(pageUserId)) || DEFAULT_TAG_ID
-    const saved = savedRaw === ALL_TAG_ID ? DEFAULT_TAG_ID : savedRaw
+    const savedRaw = localStorage.getItem(selectedTagStorageKey(pageUserId))
+    const saved = savedRaw === ALL_TAG_ID || savedRaw === DEFAULT_TAG_ID ? null : savedRaw
     setSelectedTagId(saved)
     loadDocTags(pageUserId)
       .then(({ tags, ready }) => {
@@ -390,15 +390,15 @@ export default function Board({ session }) {
         setDocTags(tags)
         setDocTagsReady(ready)
         if (!tags.some((tag) => tag.id === saved)) {
-          setSelectedTagId(DEFAULT_TAG_ID)
-          localStorage.setItem(selectedTagStorageKey(pageUserId), DEFAULT_TAG_ID)
+          setSelectedTagId(null)
+          localStorage.removeItem(selectedTagStorageKey(pageUserId))
         }
       })
       .catch(() => {
         if (!alive) return
-        setDocTags([DEFAULT_TAG])
+        setDocTags([])
         setDocTagsReady(false)
-        setSelectedTagId(DEFAULT_TAG_ID)
+        setSelectedTagId(null)
       })
     return () => {
       alive = false
@@ -408,7 +408,10 @@ export default function Board({ session }) {
   const selectDocTag = useCallback(
     (tagId) => {
       setSelectedTagId(tagId)
-      if (pageUserId) localStorage.setItem(selectedTagStorageKey(pageUserId), tagId)
+      if (pageUserId) {
+        if (tagId) localStorage.setItem(selectedTagStorageKey(pageUserId), tagId)
+        else localStorage.removeItem(selectedTagStorageKey(pageUserId))
+      }
     },
     [pageUserId],
   )
@@ -478,10 +481,10 @@ export default function Board({ session }) {
   // @通知跳转入口（给 Inbox/通知页用）：点一条 → 切到那人那频道、滚到那篇文档块
   // block id = `doc-${section}-${periodKey}`（见 DocTimeline）
   const jumpToDoc = useCallback((owner, section, periodKey, tagId = null) => {
-    const tagSelectionId = tagId || DEFAULT_TAG_ID
     viewPage(owner)
-    setSelectedTagId(tagSelectionId)
-    localStorage.setItem(selectedTagStorageKey(owner), tagSelectionId)
+    setSelectedTagId(tagId || null)
+    if (tagId) localStorage.setItem(selectedTagStorageKey(owner), tagId)
+    else localStorage.removeItem(selectedTagStorageKey(owner))
     setChannel(section)
     setQuery('')
     // 定位到「@我」那个 mention 节点本身、滚过去并高亮它（而不是整块变蓝）。
@@ -1045,10 +1048,10 @@ export default function Board({ session }) {
                     query={query}
                     profiles={profiles}
                     onJump={(h) => {
-                      const tagSelectionId = h.tag_id || DEFAULT_TAG_ID
                       viewPage(h.owner)
-                      setSelectedTagId(tagSelectionId)
-                      localStorage.setItem(selectedTagStorageKey(h.owner), tagSelectionId)
+                      setSelectedTagId(h.tag_id || null)
+                      if (h.tag_id) localStorage.setItem(selectedTagStorageKey(h.owner), h.tag_id)
+                      else localStorage.removeItem(selectedTagStorageKey(h.owner))
                       goChannel(h.section)
                       setQuery('')
                     }}
