@@ -1053,6 +1053,14 @@ export default function Board({ session }) {
         </div>
         {/* -ml-6 pl-6：把左侧 24px（拖把手的悬浮区）包进容器内，配合 overflow-x-hidden 不被裁掉 */}
         <div ref={scrollRef} className="paper-scroll -ml-6 flex-1 overflow-y-auto overflow-x-hidden pb-2 pl-6 pr-3">
+          {isMyPage && view === 'paper' && (
+            <Inbox
+              me={me}
+              profiles={profiles}
+              onJumpDoc={jumpToDoc}
+              scope={{ section: channel, periodKey: periodKey(channel, 0, baseDate) }}
+            />
+          )}
           {/* 所有视图统一收进 720px 主列（--doc-width）：通知/设置/正文同一阅读宽，
              左对齐和上方 tab/日期头同边界，折叠侧栏时跟着撑到左边 */}
           <div className="w-full max-w-[var(--doc-width)]">
@@ -1076,14 +1084,6 @@ export default function Board({ session }) {
               />
             ) : (
               <>
-                {isMyPage && view === 'paper' && (
-                  <Inbox
-                    me={me}
-                    profiles={profiles}
-                    onJumpDoc={jumpToDoc}
-                    scope={{ section: channel, periodKey: periodKey(channel, 0, baseDate) }}
-                  />
-                )}
                 {query.trim() ? (
                   <DocSearch
                     query={query}
