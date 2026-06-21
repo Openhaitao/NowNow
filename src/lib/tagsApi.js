@@ -8,6 +8,7 @@ function normalizeTag(row) {
     id: row.id,
     tagId: row.id,
     owner: row.owner,
+    section: row.section,
     name: row.name,
     sort_order: row.sort_order ?? 0,
     archived_at: row.archived_at ?? null,
@@ -21,12 +22,13 @@ function missingTagTable(error) {
   return msg.includes('doc_tags') || msg.includes('schema cache') || msg.includes('relation') || error?.code === '42P01'
 }
 
-// 标签属于页面 owner。默认标签是虚拟标签，不落表；doc_tags 只存用户自建标签。
-export async function loadDocTags(owner) {
+// 标签属于页面 owner + section。默认标签是虚拟标签，不落表；doc_tags 只存用户自建标签。
+export async function loadDocTags(owner, section) {
   const { data, error } = await supabase
     .from('doc_tags')
-    .select('id, owner, name, sort_order, archived_at, created_at, updated_at')
+    .select('id, owner, section, name, sort_order, archived_at, created_at, updated_at')
     .eq('owner', owner)
+    .eq('section', section)
     .is('archived_at', null)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
@@ -37,18 +39,18 @@ export async function loadDocTags(owner) {
   return { tags: (data ?? []).map(normalizeTag), ready: true }
 }
 
-export async function listTags(owner, options) {
-  const { tags } = await loadDocTags(owner, options)
+export async function listTags(owner, section) {
+  const { tags } = await loadDocTags(owner, section)
   return tags
 }
 
-export async function createTag(owner, name) {
+export async function createTag(owner, section, name) {
   const clean = name.trim()
   if (!clean) throw new Error('标签名不能为空')
   const { data, error } = await supabase
     .from('doc_tags')
-    .insert({ owner, name: clean })
-    .select('id, owner, name, sort_order, archived_at, created_at, updated_at')
+    .insert({ owner, section, name: clean })
+    .select('id, owner, section, name, sort_order, archived_at, created_at, updated_at')
     .single()
   if (error) throw error
   return normalizeTag(data)
@@ -61,7 +63,7 @@ export async function renameTag(id, name) {
     .from('doc_tags')
     .update({ name: clean, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .select('id, owner, name, sort_order, archived_at, created_at, updated_at')
+    .select('id, owner, section, name, sort_order, archived_at, created_at, updated_at')
     .single()
   if (error) throw error
   return normalizeTag(data)

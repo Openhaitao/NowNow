@@ -27,7 +27,7 @@ const SECTIONS = [
 const LAST_VIEWED_KEY = 'nownow_last_viewed'
 const SELECTED_TAG_KEY = 'nownow_selected_doc_tag'
 const loadLastViewed = () => JSON.parse(localStorage.getItem(LAST_VIEWED_KEY) || '{}')
-const selectedTagStorageKey = (owner) => `${SELECTED_TAG_KEY}:${owner}`
+const selectedTagStorageKey = (owner, section) => `${SELECTED_TAG_KEY}:${owner}:${section}`
 
 // 首次进入：凭邀请链接起名进入（没有邀请 = 进不来）
 // 侧栏成员行：直接按住名字拖动排序（顺序存本地，纯个人视图偏好，不进数据库）
@@ -381,17 +381,17 @@ export default function Board({ session }) {
   useEffect(() => {
     if (!pageUserId) return
     let alive = true
-    const savedRaw = localStorage.getItem(selectedTagStorageKey(pageUserId))
+    const savedRaw = localStorage.getItem(selectedTagStorageKey(pageUserId, channel))
     const saved = savedRaw === ALL_TAG_ID || savedRaw === DEFAULT_TAG_ID ? null : savedRaw
     setSelectedTagId(saved)
-    loadDocTags(pageUserId)
+    loadDocTags(pageUserId, channel)
       .then(({ tags, ready }) => {
         if (!alive) return
         setDocTags(tags)
         setDocTagsReady(ready)
         if (!tags.some((tag) => tag.id === saved)) {
           setSelectedTagId(null)
-          localStorage.removeItem(selectedTagStorageKey(pageUserId))
+          localStorage.removeItem(selectedTagStorageKey(pageUserId, channel))
         }
       })
       .catch(() => {
@@ -403,17 +403,17 @@ export default function Board({ session }) {
     return () => {
       alive = false
     }
-  }, [pageUserId])
+  }, [pageUserId, channel])
 
   const selectDocTag = useCallback(
     (tagId) => {
       setSelectedTagId(tagId)
       if (pageUserId) {
-        if (tagId) localStorage.setItem(selectedTagStorageKey(pageUserId), tagId)
-        else localStorage.removeItem(selectedTagStorageKey(pageUserId))
+        if (tagId) localStorage.setItem(selectedTagStorageKey(pageUserId, channel), tagId)
+        else localStorage.removeItem(selectedTagStorageKey(pageUserId, channel))
       }
     },
-    [pageUserId],
+    [pageUserId, channel],
   )
 
   const createTag = useCallback(async (name) => {
@@ -424,7 +424,7 @@ export default function Board({ session }) {
     }
     if (!name?.trim()) return
     try {
-      const tag = await createDocTag(me.id, name)
+      const tag = await createDocTag(me.id, channel, name)
       const next = [...docTags, tag]
       setDocTags(next)
       selectDocTag(tag.id)
@@ -432,7 +432,7 @@ export default function Board({ session }) {
     } catch (e) {
       alert(e?.message || '标签创建失败')
     }
-  }, [docTags, docTagsReady, isMyPage, me?.id, selectDocTag])
+  }, [channel, docTags, docTagsReady, isMyPage, me?.id, selectDocTag])
 
   const deleteTag = useCallback(
     async (tagId) => {
@@ -487,8 +487,8 @@ export default function Board({ session }) {
   const jumpToDoc = useCallback((owner, section, periodKey, tagId = null) => {
     viewPage(owner)
     setSelectedTagId(tagId || null)
-    if (tagId) localStorage.setItem(selectedTagStorageKey(owner), tagId)
-    else localStorage.removeItem(selectedTagStorageKey(owner))
+    if (tagId) localStorage.setItem(selectedTagStorageKey(owner, section), tagId)
+    else localStorage.removeItem(selectedTagStorageKey(owner, section))
     setChannel(section)
     setQuery('')
     // 定位到「@我」那个 mention 节点本身、滚过去并高亮它（而不是整块变蓝）。
@@ -1054,8 +1054,8 @@ export default function Board({ session }) {
                     onJump={(h) => {
                       viewPage(h.owner)
                       setSelectedTagId(h.tag_id || null)
-                      if (h.tag_id) localStorage.setItem(selectedTagStorageKey(h.owner), h.tag_id)
-                      else localStorage.removeItem(selectedTagStorageKey(h.owner))
+                      if (h.tag_id) localStorage.setItem(selectedTagStorageKey(h.owner, h.section), h.tag_id)
+                      else localStorage.removeItem(selectedTagStorageKey(h.owner, h.section))
                       goChannel(h.section)
                       setQuery('')
                     }}
