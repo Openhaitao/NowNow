@@ -2,6 +2,37 @@ import { supabase } from './supabase'
 
 export const DEFAULT_TAG_ID = 'default'
 export const ALL_TAG_ID = 'all'
+const TAG_CACHE_PREFIX = 'nownow_tagcache:'
+const tagCache = new Map()
+const tagCacheKey = (owner, section) => `${owner || ''}/${section || ''}`
+
+function readTagCache(owner, section) {
+  const key = tagCacheKey(owner, section)
+  if (tagCache.has(key)) return tagCache.get(key)
+  try {
+    const raw = localStorage.getItem(TAG_CACHE_PREFIX + key)
+    if (!raw) return undefined
+    const tags = JSON.parse(raw)
+    if (!Array.isArray(tags)) return undefined
+    tagCache.set(key, tags)
+    return tags
+  } catch {
+    return undefined
+  }
+}
+
+export function peekDocTags(owner, section) {
+  return readTagCache(owner, section)
+}
+
+export function rememberDocTags(owner, section, tags) {
+  const clean = Array.isArray(tags) ? tags : []
+  const key = tagCacheKey(owner, section)
+  tagCache.set(key, clean)
+  try {
+    localStorage.setItem(TAG_CACHE_PREFIX + key, JSON.stringify(clean))
+  } catch {}
+}
 
 function normalizeTag(row) {
   return {
@@ -36,7 +67,9 @@ export async function loadDocTags(owner, section) {
     if (missingTagTable(error)) return { tags: [], ready: false }
     throw error
   }
-  return { tags: (data ?? []).map(normalizeTag), ready: true }
+  const tags = (data ?? []).map(normalizeTag)
+  rememberDocTags(owner, section, tags)
+  return { tags, ready: true }
 }
 
 export async function listTags(owner, section) {

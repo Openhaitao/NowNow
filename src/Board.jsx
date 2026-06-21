@@ -9,7 +9,7 @@ import { inPeriod, offsetOf, periodHeader, periodRange } from './lib/period'
 import { loadMyMentions, loadMyCompletions, loadMentionFrequency, loadMyMentionStates } from './lib/docMentionsApi'
 import { warmCache } from './lib/resilientDocs'
 import { periodKey } from './lib/periodKey'
-import { archiveTag, createTag as createDocTag, loadDocTags, updateTagOrder } from './lib/tagsApi'
+import { archiveTag, createTag as createDocTag, loadDocTags, peekDocTags, rememberDocTags, updateTagOrder } from './lib/tagsApi'
 import Inbox from './components/Inbox'
 import NotificationsPage from './components/NotificationsPage'
 import DocTimeline from './components/DocTimeline'
@@ -407,9 +407,10 @@ export default function Board({ session }) {
     const requestedMatches = requested?.owner === pageUserId && requested?.section === channel
     const requestedTagId = requestedMatches ? requested.tagId : null
     if (requestedMatches) requestedTagRef.current = null
+    const cachedTags = peekDocTags(pageUserId, channel)
     setDocTagsScope(scope)
-    setDocTags([])
-    setDocTagsReady(false)
+    setDocTags(cachedTags || [])
+    setDocTagsReady(cachedTags !== undefined)
     setSelectedTagId(requestedTagId)
     loadDocTags(pageUserId, channel)
       .then(({ tags, ready }) => {
@@ -450,6 +451,7 @@ export default function Board({ session }) {
     try {
       const tag = await createDocTag(me.id, channel, name)
       const next = [...docTagsInScope, tag]
+      rememberDocTags(me.id, channel, next)
       setDocTags(next)
       selectDocTag(tag.id)
       updateTagOrder(next.filter((item) => item.tagId).map((item, index) => ({ ...item, id: item.tagId, sort_order: index }))).catch(() => {})
@@ -467,13 +469,15 @@ export default function Board({ session }) {
       if (!ok) return
       try {
         await archiveTag(tagId)
-        setDocTags((list) => list.filter((item) => item.id !== tagId))
+        const next = docTagsInScope.filter((item) => item.id !== tagId)
+        rememberDocTags(me.id, channel, next)
+        setDocTags(next)
         selectDocTag(null)
       } catch (e) {
         alert(e?.message || '删除标签失败')
       }
     },
-    [docTagsInScope, isMyPage, selectDocTag],
+    [channel, docTagsInScope, isMyPage, me?.id, selectDocTag],
   )
 
   // Realtime 增量应用：别人的改动按行打补丁，不整表重拉（30 人规模的流量关键）
