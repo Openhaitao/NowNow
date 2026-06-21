@@ -2,8 +2,7 @@ import { supabase } from './supabase'
 
 export const DEFAULT_TAG_ID = 'default'
 export const ALL_TAG_ID = 'all'
-export const DEFAULT_TAG = { id: DEFAULT_TAG_ID, tagId: null, name: '默认', sort_order: -1, isDefault: true }
-export const ALL_TAG = { id: ALL_TAG_ID, tagId: ALL_TAG_ID, name: '全部', sort_order: -2, isAll: true }
+export const DEFAULT_TAG = { id: DEFAULT_TAG_ID, tagId: null, name: '全部', sort_order: -1, isDefault: true }
 
 function normalizeTag(row) {
   return {
@@ -24,7 +23,7 @@ function missingTagTable(error) {
 }
 
 // 标签属于页面 owner。默认标签是虚拟标签，不落表；doc_tags 只存用户自建标签。
-export async function loadDocTags(owner, { includeAll = false } = {}) {
+export async function loadDocTags(owner) {
   const { data, error } = await supabase
     .from('doc_tags')
     .select('id, owner, name, sort_order, archived_at, created_at, updated_at')
@@ -33,14 +32,11 @@ export async function loadDocTags(owner, { includeAll = false } = {}) {
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
   if (error) {
-    if (missingTagTable(error)) {
-      const fallback = includeAll ? [ALL_TAG, DEFAULT_TAG] : [DEFAULT_TAG]
-      return { tags: fallback, ready: false }
-    }
+    if (missingTagTable(error)) return { tags: [DEFAULT_TAG], ready: false }
     throw error
   }
   const tags = [DEFAULT_TAG, ...(data ?? []).map(normalizeTag)]
-  return { tags: includeAll ? [ALL_TAG, ...tags] : tags, ready: true }
+  return { tags, ready: true }
 }
 
 export async function listTags(owner, options) {

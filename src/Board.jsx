@@ -171,11 +171,10 @@ export default function Board({ session }) {
   const [docTagsReady, setDocTagsReady] = useState(false)
   const [selectedTagId, setSelectedTagId] = useState(DEFAULT_TAG_ID)
   const selectedTag = useMemo(
-    () => docTags.find((tag) => tag.id === selectedTagId) || (selectedTagId === ALL_TAG_ID ? { id: ALL_TAG_ID, tagId: ALL_TAG_ID, name: '全部' } : DEFAULT_TAG),
+    () => docTags.find((tag) => tag.id === selectedTagId) || DEFAULT_TAG,
     [docTags, selectedTagId],
   )
-  const selectedDocTagId = selectedTagId === DEFAULT_TAG_ID || selectedTagId === ALL_TAG_ID ? null : selectedTag.tagId
-  const allTagsSelected = selectedTagId === ALL_TAG_ID
+  const selectedDocTagId = selectedTagId === DEFAULT_TAG_ID ? null : selectedTag.tagId
   // 每个频道各自的时间回看偏移（负=往前看）。‹ › 挪到了顶部频道标签旁，offset 上提到这里统一管
   const [offsets, setOffsets] = useState({})
   const channelOffset = offsets[channel] || 0
@@ -376,20 +375,21 @@ export default function Board({ session }) {
   useEffect(() => {
     if (!activeProfiles.length) return
     const key = periodKey(channel, 0, baseDate)
-    warmCache(activeProfiles.map((p) => ({ owner: p.id, section: channel, periodKey: key, tagId: allTagsSelected ? null : selectedDocTagId })))
-  }, [activeProfiles, channel, baseDate, allTagsSelected, selectedDocTagId])
+    warmCache(activeProfiles.map((p) => ({ owner: p.id, section: channel, periodKey: key, tagId: selectedDocTagId })))
+  }, [activeProfiles, channel, baseDate, selectedDocTagId])
 
   useEffect(() => {
     if (!pageUserId) return
     let alive = true
-    const saved = localStorage.getItem(selectedTagStorageKey(pageUserId)) || DEFAULT_TAG_ID
+    const savedRaw = localStorage.getItem(selectedTagStorageKey(pageUserId)) || DEFAULT_TAG_ID
+    const saved = savedRaw === ALL_TAG_ID ? DEFAULT_TAG_ID : savedRaw
     setSelectedTagId(saved)
     loadDocTags(pageUserId)
       .then(({ tags, ready }) => {
         if (!alive) return
         setDocTags(tags)
         setDocTagsReady(ready)
-        if (saved !== ALL_TAG_ID && !tags.some((tag) => tag.id === saved)) {
+        if (!tags.some((tag) => tag.id === saved)) {
           setSelectedTagId(DEFAULT_TAG_ID)
           localStorage.setItem(selectedTagStorageKey(pageUserId), DEFAULT_TAG_ID)
         }
@@ -413,13 +413,12 @@ export default function Board({ session }) {
     [pageUserId],
   )
 
-  const createTag = useCallback(async () => {
+  const createTag = useCallback(async (name) => {
     if (!isMyPage) return
     if (!docTagsReady) {
       alert('标签数据层还没准备好，稍后再试。')
       return
     }
-    const name = window.prompt('标签名')
     if (!name?.trim()) return
     try {
       const tag = await createDocTag(me.id, name)
@@ -1054,34 +1053,13 @@ export default function Board({ session }) {
                       setQuery('')
                     }}
                   />
-                ) : allTagsSelected ? (
-                  <div className="space-y-6">
-                    {docTags.map((tag) => (
-                      <section key={tag.id}>
-                        <div className="pt-3 text-[13px] font-medium text-stone-500">{tag.name}</div>
-                        <DocTimeline
-                          key={`${pageUserId}-${channel}-${tag.id}-all`}
-                          owner={pageUserId}
-                          section={channel}
-                          tagId={tag.tagId}
-                          isMyPage={false}
-                          baseDate={baseDate}
-                          viewportH={viewportH}
-                          profiles={profiles}
-                          mentionFreq={mentionFreq}
-                          mentionStates={mentionStates}
-                          flashKey={flashDoc && flashDoc.section === channel ? flashDoc.periodKey : null}
-                        />
-                      </section>
-                    ))}
-                  </div>
                 ) : (
                   <DocTimeline
                     key={`${pageUserId}-${channel}-${selectedTagId}`}
                     owner={pageUserId}
                     section={channel}
                     tagId={selectedDocTagId}
-                    isMyPage={isMyPage && !allTagsSelected}
+                    isMyPage={isMyPage}
                     baseDate={baseDate}
                     viewportH={viewportH}
                     profiles={profiles}

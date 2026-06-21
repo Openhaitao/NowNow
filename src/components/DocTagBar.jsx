@@ -1,11 +1,31 @@
+import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { ALL_TAG_ID, ALL_TAG, DEFAULT_TAG_ID } from '../lib/tagsApi'
+import { DEFAULT_TAG_ID } from '../lib/tagsApi'
 
 export default function DocTagBar({ tags, selectedId, editable, ready, onSelect, onCreate, onMove }) {
-  const items = [ALL_TAG, ...tags]
+  const [creating, setCreating] = useState(false)
+  const [draft, setDraft] = useState('')
+  const inputRef = useRef(null)
+  const items = tags
   const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId && tag.id !== DEFAULT_TAG_ID)
   const canMoveLeft = selectedCustomIndex > 1
   const canMoveRight = selectedCustomIndex >= 1 && selectedCustomIndex < tags.length - 1
+
+  useEffect(() => {
+    if (creating) inputRef.current?.focus()
+  }, [creating])
+
+  async function submitDraft(e) {
+    e.preventDefault()
+    const name = draft.trim()
+    if (!name) {
+      setCreating(false)
+      return
+    }
+    await onCreate(name)
+    setDraft('')
+    setCreating(false)
+  }
 
   return (
     <div className="mt-2 flex min-w-0 items-center gap-1.5">
@@ -28,6 +48,26 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
             </button>
           )
         })}
+        {creating && (
+          <form onSubmit={submitDraft} className="shrink-0">
+            <input
+              ref={inputRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setDraft('')
+                  setCreating(false)
+                }
+              }}
+              onBlur={() => {
+                if (!draft.trim()) setCreating(false)
+              }}
+              placeholder="新标签"
+              className="h-[25px] w-24 rounded-full border border-stone-200 bg-white px-3 text-[13px] text-stone-800 outline-none focus:border-stone-300"
+            />
+          </form>
+        )}
       </div>
       {editable && selectedCustomIndex >= 0 && (
         <div className="hidden shrink-0 items-center gap-0.5 md:flex">
@@ -54,8 +94,8 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
       {editable && (
         <button
           type="button"
-          onClick={onCreate}
-          disabled={!ready}
+          onClick={() => setCreating(true)}
+          disabled={!ready || creating}
           title={ready ? '新建标签' : '标签数据准备中'}
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40"
         >
