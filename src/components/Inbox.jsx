@@ -96,7 +96,8 @@ export default function Inbox({ me, profiles, onJumpDoc, scope = null }) {
       {visibleItems.length > 0 && (
         <div className="mt-2 rounded-md px-3.5 py-2" style={{ background: 'var(--accent-soft)' }}>
           <button onClick={toggleMentions} className={'flex w-full items-center gap-1 text-xs font-bold' + (mentionsCollapsed ? '' : ' mb-1.5')} style={{ color: 'var(--accent)' }}>
-            <InboxIcon size={13} /> @我的 · {visibleItems.length} 条
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center"><InboxIcon size={13} /></span>
+            <span className="leading-none">@我的 · {visibleItems.length} 条</span>
             <ChevronDown size={13} className={'ml-auto transition-transform ' + (mentionsCollapsed ? '-rotate-90' : '')} />
           </button>
           {!mentionsCollapsed && visibleItems.map((m) => {
@@ -140,7 +141,8 @@ export default function Inbox({ me, profiles, onJumpDoc, scope = null }) {
       {visibleDone.length > 0 && (
         <div className="mt-2 rounded-md px-3.5 py-2" style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
           <button onClick={toggleDone} className={'flex w-full items-center gap-1 text-xs font-bold' + (doneCollapsed ? '' : ' mb-1.5')} style={{ color: 'var(--warning)' }}>
-            <CheckCircle2 size={13} /> 已完成 · {visibleDone.length}
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center"><CheckCircle2 size={13} /></span>
+            <span className="leading-none">已完成 · {visibleDone.length} 条</span>
             <ChevronDown size={13} className={'ml-auto transition-transform ' + (doneCollapsed ? '-rotate-90' : '')} />
           </button>
           {!doneCollapsed && visibleDone.map((c) => {
@@ -148,6 +150,9 @@ export default function Inbox({ me, profiles, onJumpDoc, scope = null }) {
             const ctx = c.section === 'stash' ? '收集箱' : periodHeaderFromKey(c.section, c.periodKey)
             return (
               <div key={c.id} className="flex items-start gap-2 py-1 max-md:text-[15.5px]">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center" style={{ color: 'var(--warning)' }}>
+                  <CheckCircle2 size={16} />
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{c.snippet || '（无内容）'}</div>
                   <div className="mt-0.5 truncate text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
