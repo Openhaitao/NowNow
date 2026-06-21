@@ -87,7 +87,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
           </form>
         )}
       </div>
-      {editable && (
+      {editable && ready && (
         <div ref={menuRef} className="relative shrink-0">
           <button
             type="button"
