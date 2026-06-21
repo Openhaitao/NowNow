@@ -50,14 +50,18 @@ export default function Login() {
   async function doRegister(e) {
     e.preventDefault()
     setErr('')
-    if (!inviteCode.trim()) { setErr('请填写邀请码'); return }
+    const code = inviteCode.trim()
+    if (!code) { setErr('请填写邀请码'); return }
     const n = name.trim().replace(/^@/, '')
     if (!n) { setErr('先填上你的名字（上面 Hi @ 那里）'); return }
     if (/\s/.test(n)) { setErr('名字不能带空格'); return }
     if (password !== password2) { setErr('两次输入的密码不一样'); return }
     setBusy(true)
+    const { data: codeOk, error: codeErr } = await supabase.rpc('validate_invite_code', { p_code: code })
+    if (codeErr) { setBusy(false); setErr(humanize(codeErr.message)); return }
+    if (!codeOk) { setBusy(false); setErr('邀请码不对'); return }
     if (await nameTaken(n)) { setBusy(false); setErr(`@${n} 已经有人用了，换一个名字`); return }
-    localStorage.setItem('nownow_invite_code', inviteCode.trim())
+    localStorage.setItem('nownow_invite_code', code)
     localStorage.setItem('nownow_pending_name', n)
     const { data, error } = await supabase.auth.signUp({ email, password })
     if (error) {
@@ -72,7 +76,7 @@ export default function Login() {
     localStorage.setItem('nownow_last_email', email)
     if (!data.session) { setBusy(false); setSent(true); return } // 兜底：后台若开着邮箱确认
     // 注册页已收集名字+码 → 当场建 profile，跳过「起名字」页，注册完直接进主页
-    const { error: rErr } = await supabase.rpc('redeem_code', { p_code: inviteCode.trim(), p_name: n })
+    const { error: rErr } = await supabase.rpc('redeem_code', { p_code: code, p_name: n })
     if (rErr) { setBusy(false); setErr(humanize(rErr.message)); return }
     localStorage.removeItem('nownow_invite_code')
     localStorage.removeItem('nownow_pending_name')
