@@ -14,13 +14,14 @@ let cachedUserId = null
 
 // docs 世界的「@我的」：别人在自己文档里 @ 了我 → 这里列未读、点一条跳到那篇并标已读。
 // 纯通知，无认领/拒绝/任务流（那套随目标模型一起删了）。
-export default function Inbox({ me, profiles, onJumpDoc }) {
+export default function Inbox({ me, profiles, onJumpDoc, scope = null }) {
   const [items, setItems] = useState(() => (cachedUserId === me?.id ? cachedItems : []))
   const [done, setDone] = useState(() => (cachedUserId === me?.id ? cachedDone : []))
-  const [mentionsCollapsed, setMentionsCollapsed] = useState(() => localStorage.getItem('nownow_inbox_collapsed') === '1')
-  const [doneCollapsed, setDoneCollapsed] = useState(() => localStorage.getItem('nownow_done_collapsed') !== '0')
-  const toggleMentions = () => setMentionsCollapsed((v) => { localStorage.setItem('nownow_inbox_collapsed', v ? '0' : '1'); return !v })
-  const toggleDone = () => setDoneCollapsed((v) => { localStorage.setItem('nownow_done_collapsed', v ? '0' : '1'); return !v })
+  const [mentionsCollapsed, setMentionsCollapsed] = useState(true)
+  const [doneCollapsed, setDoneCollapsed] = useState(true)
+  const scopeKey = scope ? `${scope.section}:${scope.periodKey}` : 'all'
+  const toggleMentions = () => setMentionsCollapsed((v) => !v)
+  const toggleDone = () => setDoneCollapsed((v) => !v)
 
   useEffect(() => {
     let alive = true
@@ -54,7 +55,19 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
     }
   }, [])
 
-  if (items.length === 0 && done.length === 0) return null
+  useEffect(() => {
+    setMentionsCollapsed(true)
+    setDoneCollapsed(true)
+  }, [scopeKey])
+
+  const inScope = (item) => (
+    !scope ||
+    (item.section === scope.section && item.periodKey === scope.periodKey)
+  )
+  const visibleItems = items.filter(inScope)
+  const visibleDone = done.filter(inScope)
+
+  if (visibleItems.length === 0 && visibleDone.length === 0) return null
 
   function open(m) {
     onJumpDoc?.(m.owner, m.section, m.periodKey, m.tagId)
@@ -80,13 +93,13 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
 
   return (
     <>
-      {items.length > 0 && (
+      {visibleItems.length > 0 && (
         <div className="mt-5 rounded-lg px-4 py-3" style={{ background: 'var(--accent-soft)' }}>
           <button onClick={toggleMentions} className={'flex w-full items-center gap-1 text-xs font-bold' + (mentionsCollapsed ? '' : ' mb-1.5')} style={{ color: 'var(--accent)' }}>
-            <InboxIcon size={13} /> @我的 · {items.length} 条
+            <InboxIcon size={13} /> @我的 · {visibleItems.length} 条
             <ChevronDown size={13} className={'ml-auto transition-transform ' + (mentionsCollapsed ? '-rotate-90' : '')} />
           </button>
-          {!mentionsCollapsed && items.map((m) => {
+          {!mentionsCollapsed && visibleItems.map((m) => {
             const from = profiles?.find((p) => p.id === m.author)
             const ctx = m.section === 'stash' ? '收集箱' : periodHeaderFromKey(m.section, m.periodKey)
             const who = from?.display_name || '有人'
@@ -124,13 +137,13 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
         </div>
       )}
       {/* 黄色「已完成」：我派的活被对方完成了。snippet + who 完成了 · 日期；完成的不用跳，只留 × 点掉。 */}
-      {done.length > 0 && (
-        <div className={(items.length > 0 ? 'mt-3' : 'mt-5') + ' rounded-lg px-4 py-3'} style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
+      {visibleDone.length > 0 && (
+        <div className={(visibleItems.length > 0 ? 'mt-3' : 'mt-5') + ' rounded-lg px-4 py-3'} style={{ background: 'color-mix(in srgb, var(--warning) 16%, var(--surface-elevated))' }}>
           <button onClick={toggleDone} className={'flex w-full items-center gap-1 text-xs font-bold' + (doneCollapsed ? '' : ' mb-1.5')} style={{ color: 'var(--warning)' }}>
-            <CheckCircle2 size={13} /> 已完成 · {done.length}
+            <CheckCircle2 size={13} /> 已完成 · {visibleDone.length}
             <ChevronDown size={13} className={'ml-auto transition-transform ' + (doneCollapsed ? '-rotate-90' : '')} />
           </button>
-          {!doneCollapsed && done.map((c) => {
+          {!doneCollapsed && visibleDone.map((c) => {
             const who = profiles?.find((p) => p.id === c.mentioned)?.display_name || '有人'
             const ctx = c.section === 'stash' ? '收集箱' : periodHeaderFromKey(c.section, c.periodKey)
             return (

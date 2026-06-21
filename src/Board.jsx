@@ -1076,7 +1076,14 @@ export default function Board({ session }) {
               />
             ) : (
               <>
-                {isMyPage && view === 'paper' && <Inbox me={me} profiles={profiles} onJumpDoc={jumpToDoc} />}
+                {isMyPage && view === 'paper' && (
+                  <Inbox
+                    me={me}
+                    profiles={profiles}
+                    onJumpDoc={jumpToDoc}
+                    scope={{ section: channel, periodKey: periodKey(channel, 0, baseDate) }}
+                  />
+                )}
                 {query.trim() ? (
                   <DocSearch
                     query={query}
