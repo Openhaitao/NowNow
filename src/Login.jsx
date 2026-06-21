@@ -76,7 +76,10 @@ export default function Login() {
     if (rErr) { setBusy(false); setErr(humanize(rErr.message)); return }
     localStorage.removeItem('nownow_invite_code')
     localStorage.removeItem('nownow_pending_name')
-    // 不复位 busy：让 App 直接切主页（profile 已建）
+    localStorage.setItem('nownow_last_name', n)
+    // signUp 会先触发 SIGNED_IN，App 可能在 redeem_code 建 profile 完成前就切到 Board，
+    // 从而短暂误判 needSetup=true。profile 建完后冷启动一次，保证首页首查就能看到 profile。
+    window.location.replace('/')
   }
 
   async function doLogin(e) {
