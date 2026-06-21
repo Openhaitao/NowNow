@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown, Inbox as InboxIcon, CheckCircle2, X } from 'lucide-react'
+import { ChevronDown, Inbox as InboxIcon, CheckCircle2, Square, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { loadMyMentions, markMentionRead, loadMyCompletions, ackCompletion } from '../lib/docMentionsApi'
+import { loadMyMentions, markMentionRead, completeMention, loadMyCompletions, ackCompletion } from '../lib/docMentionsApi'
 import { periodHeaderFromKey } from '../lib/periodKey'
 
 const SECTION_LABELS = { today: '今日', week: '本周', month: '本月', stash: '收集箱' }
@@ -27,10 +27,10 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
     const refresh = () => {
       loadMyMentions()
         .then((rows) => {
-          const unread = rows.filter((r) => !r.read_at)
-          cachedItems = unread
+          const active = rows.filter((r) => !r.completed_at && !r.read_at)
+          cachedItems = active
           cachedUserId = me?.id
-          if (alive) setItems(unread)
+          if (alive) setItems(active)
         })
         .catch(() => {})
       // 我派的活被对方完成（黄色），和 @ 同一条 realtime 一起刷
@@ -57,10 +57,19 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
   if (items.length === 0 && done.length === 0) return null
 
   function open(m) {
+    onJumpDoc?.(m.owner, m.section, m.periodKey, m.tagId)
+  }
+
+  function complete(m) {
     setItems((xs) => xs.filter((x) => x.id !== m.id)) // 乐观移除
     cachedItems = cachedItems.filter((x) => x.id !== m.id) // 缓存同步，重挂不闪回这条
+    completeMention(m.id).catch(() => {})
+  }
+
+  function dismissMention(m) {
+    setItems((xs) => xs.filter((x) => x.id !== m.id)) // 乐观移除
+    cachedItems = cachedItems.filter((x) => x.id !== m.id)
     markMentionRead(m.id).catch(() => {})
-    onJumpDoc?.(m.owner, m.section, m.periodKey, m.tagId)
   }
 
   function dismissDone(c) {
@@ -82,22 +91,34 @@ export default function Inbox({ me, profiles, onJumpDoc }) {
             const ctx = m.section === 'stash' ? '收集箱' : periodHeaderFromKey(m.section, m.periodKey)
             const who = from?.display_name || '有人'
             return (
-              <button key={m.id} onClick={() => open(m)} className="block w-full py-1 text-left hover:opacity-80 max-md:text-[15.5px]">
-                {m.snippet ? (
-                  <>
-                    <div className="truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{m.snippet}</div>
-                    <div className="mt-0.5 flex items-center gap-2 text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
-                      <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink-muted)' }}>{who}</b> @了你 · {ctx}</span>
-                      <span className="shrink-0" style={{ color: 'var(--accent)' }}>去看看</span>
+              <div key={m.id} className="flex items-start gap-2 py-1 max-md:text-[15.5px]">
+                <button
+                  type="button"
+                  onClick={() => complete(m)}
+                  title="标记完成"
+                  className="mt-0.5 shrink-0 text-stone-400 transition-colors hover:text-[var(--accent)]"
+                >
+                  <Square size={16} />
+                </button>
+                <button onClick={() => open(m)} className="block min-w-0 flex-1 text-left hover:opacity-80">
+                  {m.snippet ? (
+                    <>
+                      <div className="truncate text-[13.5px]" style={{ color: 'var(--ink)' }}>{m.snippet}</div>
+                      <div className="mt-0.5 truncate text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>
+                        <b style={{ color: 'var(--ink-muted)' }}>{who}</b> @了你 · {ctx}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2 text-[13.5px]" style={{ color: 'var(--ink-muted)' }}>
+                      <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink)' }}>{who}</b> 在「{SECTION_LABELS[m.section] || ''}」@了你</span>
+                      <span className="shrink-0 text-[11.5px]" style={{ color: 'var(--ink-faint)' }}>{ctx}</span>
                     </div>
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 text-[13.5px]" style={{ color: 'var(--ink-muted)' }}>
-                    <span className="min-w-0 flex-1 truncate"><b style={{ color: 'var(--ink)' }}>{who}</b> 在「{SECTION_LABELS[m.section] || ''}」@了你</span>
-                    <span className="shrink-0 text-[11.5px]" style={{ color: 'var(--accent)' }}>{ctx} · 去看看</span>
-                  </div>
-                )}
-              </button>
+                  )}
+                </button>
+                <button onClick={() => dismissMention(m)} title="删除这条通知" className="mt-0.5 shrink-0 text-stone-400 hover:text-stone-600">
+                  <X size={14} />
+                </button>
+              </div>
             )
           })}
         </div>
