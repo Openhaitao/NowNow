@@ -84,14 +84,6 @@ export async function updateTagOrder(items) {
 
 // Phase 1 删除=归档标签，并把该标签下的内容移回默认标签，避免内容跟着隐藏。
 export async function archiveTag(id) {
-  const { error: moveErr } = await supabase
-    .from('docs')
-    .update({ tag_id: null, updated_at: new Date().toISOString() })
-    .eq('tag_id', id)
-  if (moveErr) throw moveErr
-  const { error } = await supabase
-    .from('doc_tags')
-    .update({ archived_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq('id', id)
+  const { error } = await supabase.rpc('archive_doc_tag', { p_tag_id: id })
   if (error) throw error
 }
