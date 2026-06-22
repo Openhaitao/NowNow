@@ -63,6 +63,10 @@ npm run deploy:staging
 npm run deploy:production
 ```
 
+`deploy:production` 会先跑生产 schema preflight：如果当前前端代码依赖尚未在生产库完成的表、
+字段或 RPC（例如文档标签相关 migration），发布会在 build/deploy 前失败。生产迁移必须先在
+Supabase SQL Editor 跑完并通过探针，再部署前端。
+
 ## 开发
 
 ```bash
