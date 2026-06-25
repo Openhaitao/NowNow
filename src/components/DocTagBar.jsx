@@ -10,7 +10,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   const menuRef = useRef(null)
   const inputRef = useRef(null)
   const committingRef = useRef(false)
-  const mainTag = { id: null, name: 'Main', system: true }
+  const mainTag = { id: null, name: 'main', system: true }
   const items = [mainTag, ...tags]
   const hasCustomTags = tags.length > 0
   const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId)
