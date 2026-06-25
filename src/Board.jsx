@@ -172,9 +172,11 @@ export default function Board({ session }) {
   const [docRefreshNonce, setDocRefreshNonce] = useState(0)
   const requestedTagRef = useRef(null)
   const currentDocTagsScope = pageUserId ? `${pageUserId}:${channel}` : ''
-  const docTagsInScope = docTagsScope === currentDocTagsScope ? docTags : []
-  const docTagsReadyInScope = docTagsScope === currentDocTagsScope && docTagsReady
-  const selectedTagIdInScope = docTagsScope === currentDocTagsScope ? selectedTagId : null
+  const docTagsScopeMatches = docTagsScope === currentDocTagsScope
+  const cachedDocTagsInScope = pageUserId ? peekDocTags(pageUserId, channel) : undefined
+  const docTagsInScope = docTagsScopeMatches ? docTags : (cachedDocTagsInScope || [])
+  const docTagsReadyInScope = docTagsScopeMatches ? docTagsReady : cachedDocTagsInScope !== undefined
+  const selectedTagIdInScope = docTagsScopeMatches ? selectedTagId : null
   const selectedTag = useMemo(
     () => docTagsInScope.find((tag) => tag.id === selectedTagIdInScope) || null,
     [docTagsInScope, selectedTagIdInScope],

@@ -148,11 +148,12 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
           </form>
         )}
       </div>
-      {editable && ready && (
-        <div ref={menuRef} className="relative shrink-0">
+      {editable && (
+        <div ref={menuRef} className="relative flex w-9 shrink-0 justify-end">
           <button
             type="button"
             onClick={() => {
+              if (!ready) return
               if (!hasCustomTags) {
                 setEditingId(null)
                 setRenameDraft('')
