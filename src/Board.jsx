@@ -1014,9 +1014,9 @@ export default function Board({ session }) {
                   key={s.key}
                   onClick={() => goChannel(s.key)}
                   className={
-                    'rounded-full px-3 py-1 text-[14px] leading-none transition-colors ' +
+                    'flex h-7 items-center rounded-full px-3 text-[14px] leading-none transition-colors ' +
                     (channel === s.key
-                      ? 'bg-[var(--nav-soft)] font-medium text-stone-900'
+                      ? 'bg-[var(--nav-soft)] text-stone-900'
                       : 'text-stone-500 hover:bg-[var(--nav-soft)] hover:text-stone-900')
                   }
                 >

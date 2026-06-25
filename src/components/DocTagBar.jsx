@@ -117,9 +117,9 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
               type="button"
               onClick={() => onSelect(tag.system ? null : (active ? null : tag.id))}
               className={
-                'shrink-0 rounded-full px-3 py-0.5 text-[13px] leading-none transition-colors ' +
+                'flex h-6 shrink-0 items-center rounded-full px-3 text-[13px] leading-none transition-colors ' +
                 (active
-                  ? 'bg-[var(--nav-soft)] font-medium text-stone-900'
+                  ? 'bg-[var(--nav-soft)] text-stone-900'
                   : 'text-stone-500 hover:bg-[var(--nav-soft)] hover:text-stone-900')
               }
             >
@@ -165,8 +165,8 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
             disabled={!ready}
             title={ready ? (hasCustomTags ? '标签管理' : '新建标签') : '标签数据准备中'}
             className={
-              'flex h-6 items-center justify-center bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40 ' +
-              (hasCustomTags ? 'w-9 rounded-md' : 'w-7 rounded-full')
+              'flex h-6 w-9 items-center justify-center bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40 ' +
+              (hasCustomTags ? 'rounded-md' : 'rounded-full')
             }
           >
             {hasCustomTags ? <MoreHorizontal size={16} /> : <Plus size={16} />}
