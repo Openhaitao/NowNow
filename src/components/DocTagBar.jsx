@@ -10,8 +10,9 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   const menuRef = useRef(null)
   const inputRef = useRef(null)
   const committingRef = useRef(false)
-  const items = tags
-  const hasTags = items.length > 0
+  const mainTag = { id: null, name: 'main', system: true }
+  const items = [mainTag, ...tags]
+  const hasCustomTags = tags.length > 0
   const selectedCustomIndex = tags.findIndex((tag) => tag.id === selectedId)
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   async function commitRename() {
     if (committingRef.current || !editingId) return
     const name = renameDraft.trim()
-    const current = items.find((tag) => tag.id === editingId)
+    const current = tags.find((tag) => tag.id === editingId)
     if (!name || !current || name === current.name) {
       setEditingId(null)
       setRenameDraft('')
@@ -77,7 +78,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
   }
 
   function startRename() {
-    const tag = items.find((item) => item.id === selectedId)
+    const tag = tags.find((item) => item.id === selectedId)
     if (!tag) return
     setMenuOpen(false)
     setCreating(false)
@@ -91,7 +92,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
       <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
         {items.map((tag) => {
           const active = selectedId === tag.id
-          if (editingId === tag.id) {
+          if (!tag.system && editingId === tag.id) {
             return (
               <form key={tag.id} onSubmit={submitRename} className="shrink-0">
                 <input
@@ -112,9 +113,9 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
           }
           return (
             <button
-              key={tag.id}
+              key={tag.id || 'main'}
               type="button"
-              onClick={() => onSelect(active ? null : tag.id)}
+              onClick={() => onSelect(tag.system ? null : (active ? null : tag.id))}
               className={
                 'shrink-0 rounded-full px-3 py-0.5 text-[13px] leading-none transition-colors ' +
                 (active
@@ -152,7 +153,7 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
           <button
             type="button"
             onClick={() => {
-              if (!hasTags) {
+              if (!hasCustomTags) {
                 setEditingId(null)
                 setRenameDraft('')
                 setCreating(true)
@@ -161,15 +162,15 @@ export default function DocTagBar({ tags, selectedId, editable, ready, onSelect,
               setMenuOpen((v) => !v)
             }}
             disabled={!ready}
-            title={ready ? (hasTags ? '标签管理' : '新建标签') : '标签数据准备中'}
+            title={ready ? (hasCustomTags ? '标签管理' : '新建标签') : '标签数据准备中'}
             className={
               'flex h-6 items-center justify-center bg-[var(--nav-soft)] text-stone-500 hover:text-stone-900 disabled:opacity-40 ' +
-              (hasTags ? 'w-9 rounded-md' : 'w-7 rounded-full')
+              (hasCustomTags ? 'w-9 rounded-md' : 'w-7 rounded-full')
             }
           >
-            {hasTags ? <MoreHorizontal size={16} /> : <Plus size={16} />}
+            {hasCustomTags ? <MoreHorizontal size={16} /> : <Plus size={16} />}
           </button>
-          {hasTags && menuOpen && (
+          {hasCustomTags && menuOpen && (
             <div className="absolute right-0 top-7 z-30 w-28 rounded-lg border border-stone-200 bg-white p-1 text-[13px] shadow-lg">
               <button
                 type="button"
